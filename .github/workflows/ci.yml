@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Release preflight (version + repository identity)
+        run: node scripts/verify-release.mjs
+      - run: pnpm run check
+      - name: Verify generated Host and client bundles are committed
+        run: git diff --exit-code -- lib/index.js lib/client.js
+      - name: Verify install artifact
+        run: mkdir -p .artifacts && pnpm pack --pack-destination .artifacts

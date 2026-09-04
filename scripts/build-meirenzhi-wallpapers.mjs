@@ -1,0 +1,167 @@
+#!/usr/bin/env node
+/**
+ * Build the meirenzhi bundled wallpaper module (implementation plan Task 1).
+ *
+ * Usage:
+ *   node scripts/build-meirenzhi-wallpapers.mjs [--src <dir>] [--out <file>]
+ * Defaults:
+ *   --src /home/ubuntu/tmp/凡人修仙传
+ *   --out src/client/skins/meirenzhi/wallpapers.js
+ *
+ * 素材契约（方案 B，产品负责人 2026-09-01 裁决）：固定 scale=2560:-2 +
+ * libwebp -quality 80，不做逐图降质、不回退宽度。字节护栏是源图漂移检测，
+ * 超限即失败，绝不自动降质：
+ *   单张 ≤ 640,000 字节（2026-09-01 实测最大 610,842）
+ *   合计 ≤ 2,300,000 字节（2026-09-05 精简 6 张后实测 2,210,918）
+ *
+ * 壁纸为 AI 生成同人图，非官方《凡人修仙传》素材；不标注生成工具。
+ *
+ * Failure hygiene (execution-review Y2): every failure path THROWS so the
+ * single finally below always removes the temp work dir and the same-dir
+ * temp output — process.exit() is never used inside the guarded region.
+ */
+
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import process from "node:process";
+
+const args = process.argv.slice(2);
+const option = (name, fallback) => {
+  const index = args.indexOf(name);
+  return index === -1 ? fallback : args[index + 1];
+};
+
+const srcDir = resolve(option("--src", "/home/ubuntu/tmp/凡人修仙传"));
+const outPath = resolve(option("--out", "src/client/skins/meirenzhi/wallpapers.js"));
+const ENCODE_WIDTH = 2560;
+const ENCODE_QUALITY = 80;
+const MAX_SINGLE_BYTES = 640_000;
+const MAX_TOTAL_BYTES = 2_300_000;
+
+// Grid order (builtinChoices order): factory default yuntai leads,
+// then the solo portraits by number (2026-09-05 slimming: group photos
+// trimmed to the factory default only, three solo portraits removed).
+const SOURCES = [
+  ["001.jpg", "yuntai"],
+  ["005慕沛灵.jpg", "mupeiling"],
+  ["006紫灵.jpg", "ziling"],
+  ["007南宫婉.jpg", "nangongwan"],
+  ["008南宫阙.jpg", "nangongque"],
+  ["009银月.jpg", "yinyue"],
+];
+
+const CONST_NAME = (key) => `WALLPAPER_${key.toUpperCase()}`;
+
+function fail(message) {
+  // THROW, never process.exit(): exit() skips finally blocks and would leak
+  // the mkdtemp work dir (execution-review finding Y2).
+  throw new Error(`build-meirenzhi-wallpapers: ${message}`);
+}
+
+function probeSize(webpPath) {
+  // ffprobe ships with ffmpeg; csv=s=x prints "WIDTHxHEIGHT" for stream v:0.
+  const csv = execFileSync("ffprobe", [
+    "-v", "error",
+    "-select_streams", "v:0",
+    "-show_entries", "stream=width,height",
+    "-of", "csv=s=x:p=0",
+    webpPath,
+  ], { encoding: "utf8" }).trim();
+  const [width, height] = csv.split("x").map((value) => Number.parseInt(value, 10));
+  if (!Number.isFinite(width) || !Number.isFinite(height)) fail(`cannot probe size of ${webpPath}`);
+  return { width, height };
+}
+
+let workDir = null;
+let tempOut = null;
+let committed = false;
+
+try {
+  // ---- preflight (before any temp state exists) ----
+  if (!existsSync(srcDir)) fail(`source dir not found: ${srcDir}`);
+  for (const [file] of SOURCES) {
+    if (!existsSync(join(srcDir, file))) fail(`missing source image: ${join(srcDir, file)}`);
+  }
+
+  workDir = mkdtempSync(join(tmpdir(), "mrz-wallpapers-"));
+  // Atomic delivery: write the temp file NEXT TO the target, then rename over
+  // it — a crash mid-write can never truncate an existing module.
+  tempOut = `${outPath}.tmp-${process.pid}`;
+
+  // ---- transcode + drift guards ----
+  const rows = [];
+  for (const [file, key] of SOURCES) {
+    const src = join(srcDir, file); // 文件名含中文：路径原样传给 ffmpeg，不做任何归一化。
+    const webp = join(workDir, `${key}.webp`);
+    execFileSync("ffmpeg", [
+      "-y", "-loglevel", "error",
+      "-i", src,
+      "-vf", `scale=${ENCODE_WIDTH}:-2`,
+      "-c:v", "libwebp", "-quality", String(ENCODE_QUALITY),
+      webp,
+    ]);
+    const bytes = readFileSync(webp);
+    if (bytes.length > MAX_SINGLE_BYTES) {
+      fail(`${file}: ${bytes.length} bytes exceeds the ${MAX_SINGLE_BYTES}-byte drift guard — was the source image replaced?`);
+    }
+    const sha256 = createHash("sha256").update(readFileSync(src)).digest("hex");
+    const { width, height } = probeSize(webp);
+    rows.push({ key, sha256, width, height, bytes: bytes.length, data: bytes });
+  }
+
+  const total = rows.reduce((sum, row) => sum + row.bytes, 0);
+  if (total > MAX_TOTAL_BYTES) {
+    fail(`total ${total} bytes exceeds the ${MAX_TOTAL_BYTES}-byte drift guard — was the source image replaced?`);
+  }
+
+  // ---- emit module (machine-readable markers as standalone line comments) ----
+  const provenance = rows.map((row) => {
+    return ` *   ${row.key.padEnd(12)} ${row.sha256} / ${row.width}x${row.height} / q${ENCODE_QUALITY} / ${row.bytes}`;
+  });
+  const body = rows.map((row) => {
+    return `export const ${CONST_NAME(row.key)} = "data:image/webp;base64,${row.data.toString("base64")}";`;
+  });
+  const header = `/**
+ * Bundled 美人志 (meirenzhi) wallpaper artwork — 6 pieces (1 group + 5 solo).
+ * AI 生成同人图，非官方《凡人修仙传》素材；不标注生成工具。
+ * Generated by scripts/build-meirenzhi-wallpapers.mjs — DO NOT EDIT BY HAND.
+ * 方案 B (product-owner ruling 2026-09-01): WebP q${ENCODE_QUALITY}, width ${ENCODE_WIDTH}, no per-image search.
+ * Per-image provenance (source sha256 / encoded size / quality / webp bytes):
+${provenance.join("\n")}
+ *   TOTAL        ${total} bytes
+ */
+// TOTAL_WEBP_BYTES=${total}
+// ENCODE_WIDTH=${ENCODE_WIDTH}
+// ENCODE_QUALITY=${ENCODE_QUALITY}
+`;
+
+  // ---- atomic delivery + summary ----
+  mkdirSync(dirname(outPath), { recursive: true });
+  writeFileSync(tempOut, header + body.join("\n") + "\n");
+  renameSync(tempOut, outPath);
+  committed = true;
+
+  for (const row of rows) {
+    console.log(`${row.key.padEnd(12)} ${row.width}x${row.height}  ${row.bytes} bytes`);
+  }
+  console.log(`TOTAL        ${total} bytes (guard ≤ ${MAX_TOTAL_BYTES})`);
+  console.log(`✓ wrote ${outPath}`);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+} finally {
+  // Runs on EVERY path (throw included) — failure never leaks temp state.
+  if (workDir !== null) rmSync(workDir, { recursive: true, force: true });
+  if (!committed && tempOut !== null) rmSync(tempOut, { force: true });
+}

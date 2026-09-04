@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub Release after every gate passes
+      id-token: write # npm trusted publishing (OIDC, ADR-0005)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          # No registry-url on purpose: setup-node ≤ v6 injects a placeholder
+          # NODE_AUTH_TOKEN when it is set, which shadows OIDC. The default
+          # registry is registry.npmjs.org already.
+      - name: Verify tag ↔ package version identity
+        run: node scripts/verify-release.mjs "${GITHUB_REF_NAME}"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+      - name: Verify generated Host and client bundles are committed
+        run: git diff --exit-code -- lib/index.js lib/client.js
+      - name: Pack the install artifact
+        run: mkdir -p .artifacts && pnpm pack --pack-destination .artifacts
+      - name: Minimal host load test from the packed artifact
+        run: |
+          set -eu
+          tar -xzf .artifacts/iasiv5-dsh-skins-*.tgz
+          node --check package/lib/index.js
+          node --input-type=module -e "
+            import { apply, name } from './package/lib/index.js';
+            if (name !== '@iasiv5/dsh-skins') throw new Error('bad package name: ' + name);
+            if (typeof apply !== 'function') throw new Error('apply() missing');
+            console.log('artifact host load OK:', name);
+          "
+      - name: Publish to npm via OIDC trusted publishing
+        run: |
+          # Node 22 bundles npm 10.x; trusted publishing requires npm >= 11.5.1.
+          # pnpm 10 publish delegates to `npm publish` under the hood, so the
+          # OIDC exchange happens in npm. Provenance is automatic (public repo
+          # + public package). --no-git-checks: the tag checkout is detached.
+          npm install -g npm@11
+          pnpm publish --no-git-checks
+      - name: Create the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: .artifacts/iasiv5-dsh-skins-*.tgz
+          generate_release_notes: true
+      - name: Delete the failed tag
+        if: failure()
+        run: git push origin ":${GITHUB_REF_NAME}"
