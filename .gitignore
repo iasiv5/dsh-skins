@@ -3,3 +3,5 @@ node_modules/
 .artifacts/
 *.log
 .DS_Store
+app.js
+boot.html
