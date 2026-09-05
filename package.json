@@ -1,7 +1,7 @@
 {
   "name": "@iasiv5/dsh-skins",
   "description": "Modular DSH Web skin pack with official fallback, OpenBMC and UEFI appearances, and verified stable-Release updates",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "homepage": "https://github.com/iasiv5/dsh-skins#readme",
   "repository": {
     "type": "git",
@@ -70,7 +70,8 @@
     "test": "pnpm run build && node smoke-test.cjs && node --test tests/*.test.mjs",
     "verify:readme": "node scripts/verify-readme-pairing.mjs",
     "verify:bundle": "node scripts/verify-bundle-guard.mjs",
-    "check": "pnpm run build && node --check lib/client.js && node --check lib/index.js && pnpm run test && pnpm run verify:readme && pnpm run verify:bundle"
+    "verify:hooks": "node scripts/verify-upstream-hooks.mjs",
+    "check": "pnpm run build && node --check lib/client.js && node --check lib/index.js && pnpm run test && pnpm run verify:readme && pnpm run verify:bundle && pnpm run verify:hooks"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
