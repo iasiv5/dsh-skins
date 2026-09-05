@@ -8,7 +8,11 @@ import { createUefiHarness } from "./skins/uefi-harness/index.js";
 import { createTgcfSkin } from "./skins/tgcf/index.js";
 
 window.__ModuleLoader__.load({
-  id: "dsh-skins",
+  // MUST equal the package.json `name` (and the roster row `name` in
+  // cordis.patch.yml): the boot page emits __DSH_BOOT__ entries keyed by the
+  // package name, and dsh-client-modules rejects a bundle whose registration
+  // does not match its graph-row id ("loaded without registering …").
+  id: "@iasiv5/dsh-skins",
   factory: (require) => {
     const jsxRuntime = require("react/jsx-runtime");
     const react = require("react");

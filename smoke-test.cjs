@@ -85,8 +85,13 @@ global.window = {
 
 // ---- load the plugin ----
 eval(pluginSrc);
-const mod = registrations["dsh-skins"];
-if (!mod) throw new Error("plugin did not register under id dsh-skins");
+// The registration id MUST equal the package name — the DSH boot page keys
+// __DSH_BOOT__ entries by package name, and dsh-client-modules rejects any
+// other id ("loaded without registering …"). Derive the expectation from
+// package.json so a future rename cannot silently drift again.
+const expectedId = JSON.parse(fs.readFileSync(path.join(__dirname, "package.json"), "utf8")).name;
+const mod = registrations[expectedId];
+if (!mod) throw new Error(`plugin did not register under id ${expectedId}`);
 console.log("✓ module registered; inject =", JSON.stringify(mod.inject));
 
 // ---- skin registry ----

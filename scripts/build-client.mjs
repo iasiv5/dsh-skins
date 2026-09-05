@@ -28,12 +28,18 @@ const hostOptions = {
 };
 
 async function validateOutputs() {
+  const { name } = JSON.parse(await readFile("package.json", "utf8"));
   const [client, host] = await Promise.all([
     readFile(clientOptions.outfile, "utf8"),
     readFile(hostOptions.outfile, "utf8"),
   ]);
-  if (!client.includes('id: "dsh-skins"') || !client.includes("window.__ModuleLoader__.load")) {
-    throw new Error("generated client bundle is missing the DSH module wrapper");
+  // The registration id must equal the package name: the boot page keys
+  // __DSH_BOOT__ entries by package name, and dsh-client-modules throws
+  // "loaded without registering" when a bundle registers under any other id.
+  if (!client.includes(`id: "${name}"`) || !client.includes("window.__ModuleLoader__.load")) {
+    throw new Error(
+      `generated client bundle is missing the DSH module wrapper: expected registration id "${name}" (src/client/index.js must register under the package.json name)`,
+    );
   }
   if (!host.includes("/dsh-skins/update") || !host.includes("self-update routes")) {
     throw new Error("generated host bundle is missing the self-update routes");
