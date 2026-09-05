@@ -239,6 +239,17 @@ export function createOpenBmcHarness(jsxRuntime) {
     border-color: rgba(62, 193, 232, 0.38);
     box-shadow: 0 1px 6px rgba(62, 193, 232, 0.10);
   }
+  /* 目标面板气泡（goal stack > bubble，与用户气泡同族描边）。ADR-0006
+   * v1.0.4 amendment：主人目测 goal 无描边观感不佳，裁决扩入；同款并集
+   * 策略，守卫清单已登记 goal 精确哈希与 _stack 结构前提。 */
+  body[data-dsh-openbmc-skin] :is([class*="oRe1gG_bubble"], [class*="_stack"] > [class*="_bubble"]) {
+    border: 1px solid rgba(0, 131, 176, 0.38);
+    box-shadow: 0 1px 4px rgba(0, 131, 176, 0.10);
+  }
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] :is([class*="oRe1gG_bubble"], [class*="_stack"] > [class*="_bubble"]) {
+    border-color: rgba(62, 193, 232, 0.38);
+    box-shadow: 0 1px 6px rgba(62, 193, 232, 0.10);
+  }
   /* 助手消息流式输出中：左侧品牌色呼吸光条（box-shadow 不产生布局位移） */
   body[data-dsh-openbmc-skin] [data-streaming] {
     border-radius: 4px;

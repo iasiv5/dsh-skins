@@ -17,6 +17,8 @@
  *   2. structural   the chat module still has exactly one *_bubble class
  *                   (the user bubble) and a *userStack* container class
  *                   (union branch 2 preconditions)
+ *   2b. goal        the goal-panel bubble hook: oRe1gG_bubble exact hash and
+ *                   a *_stack container class (ADR-0006 v1.0.4 amendment)
  *   3. whitelist    the page-wide *_bubble inventory across every installed
  *                   @deepseek-ai package stays ⊆ {Sixlwa_bubble,
  *                   oRe1gG_bubble}; a new _bubble class is a new
@@ -81,6 +83,19 @@ if (chat === "") {
 	}
 }
 
+// 2b. goal-panel bubble hook (ADR-0006 v1.0.4 amendment)
+const goal = readAll("dsh-client-ui-goal");
+if (goal === "") {
+	problems.push("dsh-client-ui-goal is not installed under the runtime — the goal-bubble hook manifest cannot be evaluated (layout change?)");
+} else {
+	if (!goal.includes("oRe1gG_bubble")) {
+		problems.push('goal exact-hash branch dead: "oRe1gG_bubble" no longer in dsh-client-ui-goal — re-derive the hash and update src/client/skins/* (ADR-0006 amendment)');
+	}
+	if (!/[A-Za-z0-9]*_stack/.test(goal)) {
+		problems.push('goal structural branch dead: no *_stack container class in dsh-client-ui-goal — the "stack > bubble" DOM shape changed (ADR-0006 amendment)');
+	}
+}
+
 // 3. page-wide *_bubble whitelist
 const BUBBLE_WHITELIST = new Set(["Sixlwa_bubble", "oRe1gG_bubble"]); // chat user bubble; goal-panel bubble
 const foundBubbles = new Map(); // token -> Set<pkg>
@@ -117,4 +132,4 @@ if (problems.length > 0) {
 	process.exit(1);
 }
 const bubbles = [...foundBubbles.keys()].sort().join(", ");
-console.log(`✓ upstream hooks OK: Sixlwa_bubble alive; chat *_bubble = [Sixlwa_bubble]; userStack alive; page *_bubble = {${bubbles}}; dark attr alive (${packages.size} @deepseek-ai packages scanned)`);
+console.log(`✓ upstream hooks OK: Sixlwa_bubble alive; chat *_bubble = [Sixlwa_bubble]; userStack alive; goal oRe1gG_bubble + _stack alive; page *_bubble = {${bubbles}}; dark attr alive (${packages.size} @deepseek-ai packages scanned)`);

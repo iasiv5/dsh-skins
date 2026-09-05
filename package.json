@@ -1,7 +1,7 @@
 {
   "name": "@iasiv5/dsh-skins",
   "description": "Modular DSH Web skin pack with official fallback, OpenBMC and UEFI appearances, and verified stable-Release updates",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "homepage": "https://github.com/iasiv5/dsh-skins#readme",
   "repository": {
     "type": "git",
@@ -57,11 +57,11 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
-    "@deepseek-ai/dsh-client-connection": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-runtime": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-conversation": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-sidebar": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-theme": "^0.1.1-rc.2"
+    "@deepseek-ai/dsh-client-connection": "^0.1.1-rc.2 || ^0.1.2-rc.1",
+    "@deepseek-ai/dsh-client-runtime": "^0.1.1-rc.2 || ^0.1.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-conversation": "^0.1.1-rc.2 || ^0.1.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-sidebar": "^0.1.1-rc.2 || ^0.1.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-theme": "^0.1.1-rc.2 || ^0.1.2-rc.1"
   },
   "license": "MIT",
   "scripts": {

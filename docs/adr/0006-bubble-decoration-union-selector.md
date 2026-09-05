@@ -20,4 +20,4 @@ date: 2026-09-05
 
 ## Amendments
 
-- 无（首版）。
+- **2026-09-05（v1.0.4）**：主人目测 goal 面板气泡无描边观感不佳，推翻首版「goal 维持不描边」的附带结论，扩描边至目标气泡——四皮肤各增 `:is([class*="oRe1gG_bubble"], [class*="_stack"] > [class*="_bubble"])` 明暗两条（RGBA 与用户气泡同族；实测 goal DOM 为 stack > bubble 直接嵌套，`_stack` 子串与 chat 的 `_userStack` 不冲突），守卫清单同步登记 goal 精确哈希与 `_stack` 结构前提。同版将五条 dsh-client peer 范围扩为 `^0.1.1-rc.2 || ^0.1.2-rc.1`（semver 预发布元组规则实证：单边 `^0.1.1-rc.2` 拒绝 `0.1.2-rc.1`，纯声明修正，loader 行为不变）。

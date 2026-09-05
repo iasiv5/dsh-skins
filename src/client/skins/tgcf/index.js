@@ -59,6 +59,11 @@ const CSS = [
   // check 时钉住。失效仅影响描边装饰，token 填充不受影响。
   `${SCOPE} :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]){border:1px solid rgba(195, 39, 43, 0.38);box-shadow:0 1px 4px rgba(195, 39, 43, 0.10)}`,
   `body[data-dsh-tgcf-skin][data-ds-dark-theme] :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]){border-color:rgba(224, 86, 74, 0.38);box-shadow:0 1px 6px rgba(224, 86, 74, 0.10)}`,
+  // 目标面板气泡（goal stack > bubble，与用户气泡同族描边）。ADR-0006 v1.0.4
+  // amendment：主人目测 goal 无描边观感不佳，裁决扩入；同款并集策略，守卫
+  // 清单已登记 goal 精确哈希与 _stack 结构前提。
+  `${SCOPE} :is([class*="oRe1gG_bubble"], [class*="_stack"] > [class*="_bubble"]){border:1px solid rgba(195, 39, 43, 0.38);box-shadow:0 1px 4px rgba(195, 39, 43, 0.10)}`,
+  `body[data-dsh-tgcf-skin][data-ds-dark-theme] :is([class*="oRe1gG_bubble"], [class*="_stack"] > [class*="_bubble"]){border-color:rgba(224, 86, 74, 0.38);box-shadow:0 1px 6px rgba(224, 86, 74, 0.10)}`,
 ].join("\n");
 
 /** Default panel glass colours (素白 / 墨黑) derived from the palette. */

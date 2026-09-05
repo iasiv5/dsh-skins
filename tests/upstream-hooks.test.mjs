@@ -10,11 +10,14 @@ import { readFileSync } from "node:fs";
 
 const client = readFileSync("lib/client.js", "utf8");
 const UNION = ':is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"])';
+const GOAL_UNION = ':is([class*="oRe1gG_bubble"], [class*="_stack"] > [class*="_bubble"])';
 
 test("bubble decoration: union selector ships in all four skins (light + dark)", () => {
-	// 2 rules per skin × 4 skins — the exact-hash and structural branches
-	// always ship together; a skin missing the union is a fix regressions.
-	assert.equal(client.split(UNION).length - 1, 8);
+	// 2 rules per skin × 4 skins, per surface (chat user bubble + goal-panel
+	// bubble, v1.0.4) — the exact-hash and structural branches always ship
+	// together; a skin missing a union is a fix regression.
+	assert.equal(client.split(UNION).length - 1, 8, "chat user-bubble union");
+	assert.equal(client.split(GOAL_UNION).length - 1, 8, "goal-panel bubble union");
 });
 
 test("bubble decoration: the dead rc.2 hash gdEzaW must never return", () => {

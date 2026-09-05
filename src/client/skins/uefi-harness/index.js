@@ -123,6 +123,17 @@ body[data-dsh-uefi-harness] :is([class*="Sixlwa_bubble"], [class*="userStack"] >
 body[data-dsh-uefi-harness][data-ds-dark-theme] :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]) {
   border-color: rgba(169, 156, 255, 0.38);
   box-shadow: 0 1px 6px rgba(169, 156, 255, 0.10);
+}
+/* 目标面板气泡（goal stack > bubble，与用户气泡同族描边）。ADR-0006
+ * v1.0.4 amendment：主人目测 goal 无描边观感不佳，裁决扩入；同款并集
+ * 策略，守卫清单已登记 goal 精确哈希与 _stack 结构前提。 */
+body[data-dsh-uefi-harness] :is([class*="oRe1gG_bubble"], [class*="_stack"] > [class*="_bubble"]) {
+  border: 1px solid rgba(101, 83, 216, 0.38);
+  box-shadow: 0 1px 4px rgba(101, 83, 216, 0.10);
+}
+body[data-dsh-uefi-harness][data-ds-dark-theme] :is([class*="oRe1gG_bubble"], [class*="_stack"] > [class*="_bubble"]) {
+  border-color: rgba(169, 156, 255, 0.38);
+  box-shadow: 0 1px 6px rgba(169, 156, 255, 0.10);
 }`;
 
   /** 背景原画 · 鎏金电路板微距（480x346 原摄 → 1920x1384 WebP，70KB；4x 虚化景深读作 bokeh，仅四角微压靛影以保留金色辉光） */
