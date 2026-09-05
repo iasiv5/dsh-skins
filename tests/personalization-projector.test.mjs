@@ -345,9 +345,10 @@ test("the REAL tgcf factory projects single scrim, static palette and static fav
   // keeps the deep vermilion fill; highlight rides the same families.
   assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-bubble"], { light: "rgba(195, 39, 43, 0.10)", dark: "#8E2A2F" });
   assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-bubble-highlight"], { light: "rgba(195, 39, 43, 0.18)", dark: "rgba(170, 55, 60, 0.92)" });
-  // 泡泡边框（openbmc 同款）：staticCss 携带明暗两套品牌色描边。
-  assert.ok(result.effects.staticCss.includes(".gdEzaW_bubble{border:1px solid rgba(195, 39, 43, 0.38)"));
-  assert.ok(result.effects.staticCss.includes("[data-ds-dark-theme] .gdEzaW_bubble{border-color:rgba(224, 86, 74, 0.38)"));
+  // 泡泡边框（openbmc 同款）：staticCss 携带明暗两套品牌色描边。挂接为
+  // :is() 并集（ADR-0006），金值随 1.0.3 换锚更新。
+  assert.ok(result.effects.staticCss.includes(':is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]){border:1px solid rgba(195, 39, 43, 0.38)'));
+  assert.ok(result.effects.staticCss.includes('[data-ds-dark-theme] :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]){border-color:rgba(224, 86, 74, 0.38)'));
   // Control states tint with the vermilion family (ruling #16).
   assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-interactive-bg-hover"], { light: "rgba(195,39,43,0.08)", dark: "rgba(224,86,74,0.14)" });
   assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-bg-overlay"], { light: "rgba(255,252,246,0.82)", dark: "rgba(24,16,16,0.88)" });

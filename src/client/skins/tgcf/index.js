@@ -53,11 +53,12 @@ const CSS = [
   // 墨黑/素白 (same values panelBase tints the glass with).
   `${SCOPE} .dsh-tgcf-badge{display:inline-flex;align-items:center;background:#181010;border-radius:4px;padding:0 5px;font-size:10px;line-height:16px;font-weight:600;letter-spacing:.08em;color:#FFFCF6}`,
   `body[data-dsh-tgcf-skin][data-ds-dark-theme] .dsh-tgcf-badge{background:#FFFCF6;color:#181010}`,
-  // 用户气泡描边 + 轻投影（openbmc 同款泡泡边框：框出用户输入区）。哈希类
-  // gdEzaW_bubble 随 conversation 插件版本构建，版本升级若失效仅影响描边
-  // 装饰，token 填充不受影响。
-  `${SCOPE} .gdEzaW_bubble{border:1px solid rgba(195, 39, 43, 0.38);box-shadow:0 1px 4px rgba(195, 39, 43, 0.10)}`,
-  `body[data-dsh-tgcf-skin][data-ds-dark-theme] .gdEzaW_bubble{border-color:rgba(224, 86, 74, 0.38);box-shadow:0 1px 6px rgba(224, 86, 74, 0.10)}`,
+  // 用户气泡描边 + 轻投影（openbmc 同款泡泡边框：框出用户输入区）。挂接用
+  // :is() 并集（精确哈希 ∪ 结构化，见 docs/adr/0006）：哈希漂移与 DOM 结构
+  // 变化两种单点故障各有一支兜底，钩子前提由 verify-upstream-hooks 守卫在
+  // check 时钉住。失效仅影响描边装饰，token 填充不受影响。
+  `${SCOPE} :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]){border:1px solid rgba(195, 39, 43, 0.38);box-shadow:0 1px 4px rgba(195, 39, 43, 0.10)}`,
+  `body[data-dsh-tgcf-skin][data-ds-dark-theme] :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]){border-color:rgba(224, 86, 74, 0.38);box-shadow:0 1px 6px rgba(224, 86, 74, 0.10)}`,
 ].join("\n");
 
 /** Default panel glass colours (素白 / 墨黑) derived from the palette. */

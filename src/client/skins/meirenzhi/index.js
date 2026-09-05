@@ -34,11 +34,12 @@ const CSS = [
   // 暗=雾白底玄夜字。#12121A/#FAF9F6 与面板底色族同源。
   `${SCOPE} .dsh-mrz-badge{display:inline-flex;align-items:center;background:#12121A;border-radius:4px;padding:0 5px;font-size:10px;line-height:16px;font-weight:600;letter-spacing:.08em;color:#FAF9F6}`,
   `body[data-dsh-meirenzhi-skin][data-ds-dark-theme] .dsh-mrz-badge{background:#FAF9F6;color:#12121A}`,
-  // 用户气泡描边 + 轻投影（openbmc 同款泡泡边框：框出用户输入区）。哈希类
-  // gdEzaW_bubble 随 conversation 插件版本构建，版本升级若失效仅影响描边
-  // 装饰，token 填充不受影响。
-  `${SCOPE} .gdEzaW_bubble{border:1px solid rgba(184, 67, 63, 0.38);box-shadow:0 1px 4px rgba(184, 67, 63, 0.10)}`,
-  `body[data-dsh-meirenzhi-skin][data-ds-dark-theme] .gdEzaW_bubble{border-color:rgba(229, 138, 128, 0.38);box-shadow:0 1px 6px rgba(229, 138, 128, 0.10)}`,
+  // 用户气泡描边 + 轻投影（openbmc 同款泡泡边框：框出用户输入区）。挂接用
+  // :is() 并集（精确哈希 ∪ 结构化，见 docs/adr/0006）：哈希漂移与 DOM 结构
+  // 变化两种单点故障各有一支兜底，钩子前提由 verify-upstream-hooks 守卫在
+  // check 时钉住。失效仅影响描边装饰，token 填充不受影响。
+  `${SCOPE} :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]){border:1px solid rgba(184, 67, 63, 0.38);box-shadow:0 1px 4px rgba(184, 67, 63, 0.10)}`,
+  `body[data-dsh-meirenzhi-skin][data-ds-dark-theme] :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]){border-color:rgba(229, 138, 128, 0.38);box-shadow:0 1px 6px rgba(229, 138, 128, 0.10)}`,
   // Ambient motion: a slow glow-breath riding the runtime's wallpaper ::before
   // layer + two drifting fireflies on the #root pseudo budget (same shape and
   // cost as the tgcf butterflies); prefers-reduced-motion kills all of it.

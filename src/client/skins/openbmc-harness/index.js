@@ -226,13 +226,16 @@ export function createOpenBmcHarness(jsxRuntime) {
   body[data-dsh-openbmc-skin][data-ds-dark-theme] {
     /* 暗色气泡填充由 ③ 暗色块的深冰蓝接管（rgba(20,41,60,.90)），此处不再重定义 */
   }
-  /* 用户气泡描边 + 轻投影（哈希类 gdEzaW_bubble 随 conversation 插件版本构建，
-   * 版本升级若失效仅影响描边装饰，token 填充仍然生效） */
-  body[data-dsh-openbmc-skin] .gdEzaW_bubble {
+  /* 用户气泡描边 + 轻投影（框出用户输入区）。挂接用 :is() 并集（精确哈希 ∪
+   * 结构化，见 docs/adr/0006）：哈希漂移与 DOM 结构变化两种单点故障各有一支
+   * 兜底，钩子前提由 verify-upstream-hooks 守卫在 check 时钉住。失效仅影响
+   * 描边装饰，token 填充仍然生效；结构分支不命中 goal 面板气泡（其容器
+   * _stack 不含 userStack 子串，ADR-0006 实测），goal 维持不描边。 */
+  body[data-dsh-openbmc-skin] :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]) {
     border: 1px solid rgba(0, 131, 176, 0.38);
     box-shadow: 0 1px 4px rgba(0, 131, 176, 0.10);
   }
-  body[data-dsh-openbmc-skin][data-ds-dark-theme] .gdEzaW_bubble {
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]) {
     border-color: rgba(62, 193, 232, 0.38);
     box-shadow: 0 1px 6px rgba(62, 193, 232, 0.10);
   }

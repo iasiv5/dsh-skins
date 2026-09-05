@@ -112,14 +112,15 @@ body[data-dsh-uefi-harness] [data-streaming] {
   border-radius: 4px;
   box-shadow: inset 3px 0 0 var(--dsw-alias-brand-primary);
 }
-/* 用户气泡描边 + 轻投影（openbmc 同款泡泡边框：框出用户输入区）。哈希类
- * gdEzaW_bubble 随 conversation 插件版本构建，版本升级若失效仅影响描边
- * 装饰，token 填充仍然生效。 */
-body[data-dsh-uefi-harness] .gdEzaW_bubble {
+/* 用户气泡描边 + 轻投影（openbmc 同款泡泡边框：框出用户输入区）。挂接用
+ * :is() 并集（精确哈希 ∪ 结构化，见 docs/adr/0006）：哈希漂移与 DOM 结构
+ * 变化两种单点故障各有一支兜底，钩子前提由 verify-upstream-hooks 守卫在
+ * check 时钉住。失效仅影响描边装饰，token 填充仍然生效。 */
+body[data-dsh-uefi-harness] :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]) {
   border: 1px solid rgba(101, 83, 216, 0.38);
   box-shadow: 0 1px 4px rgba(101, 83, 216, 0.10);
 }
-body[data-dsh-uefi-harness][data-ds-dark-theme] .gdEzaW_bubble {
+body[data-dsh-uefi-harness][data-ds-dark-theme] :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]) {
   border-color: rgba(169, 156, 255, 0.38);
   box-shadow: 0 1px 6px rgba(169, 156, 255, 0.10);
 }`;
