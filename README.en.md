@@ -4,7 +4,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/iasiv5/dsh-skins/ci.yml?branch=main&label=CI)](../../actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/iasiv5/dsh-skins?label=License)](./LICENSE)
 [![npm](https://img.shields.io/npm/v/@iasiv5/dsh-skins?label=npm)](https://www.npmjs.com/package/@iasiv5/dsh-skins)
-[![DSH Web](https://img.shields.io/badge/DSH%20Web-0.1.1--rc.2%20verified-2563eb)](#faq)
+[![DSH Web](https://img.shields.io/badge/DSH%20Web-0.1.2--rc.1%20verified-2563eb)](#faq)
 
 English · [中文](./README.md)
 
@@ -179,7 +179,7 @@ Pick "DeepSeek Harness (Official)" in the skin switcher, or open `/?skin=officia
 Updates follow a "back up first, then install" transaction: any verification failure automatically restores the previous version, and the popover shows the failure reason (in Chinese and English). If it still fails, update manually with `dsh plugin --profile web update @iasiv5/dsh-skins`.
 
 **Which DSH Web versions are supported?**
-Verified with DSH Web `0.1.1-rc.2`. Later rc builds of the same series are expected to work, but unverified versions carry no promise.
+Verified with DSH Web `0.1.2-rc.1`. Later rc builds of the same series are expected to work, but unverified versions carry no promise.
 
 **Does my appearance preference sync across browsers?**
 In the browser on the DSH host machine (loopback), the preference is persisted by the DSH Host and shared naturally. Other remote browsers keep the preference in their own `localStorage` — independent per browser, never overwritten.

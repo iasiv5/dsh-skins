@@ -4,7 +4,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/iasiv5/dsh-skins/ci.yml?branch=main&label=CI)](../../actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/iasiv5/dsh-skins?label=License)](./LICENSE)
 [![npm](https://img.shields.io/npm/v/@iasiv5/dsh-skins?label=npm)](https://www.npmjs.com/package/@iasiv5/dsh-skins)
-[![DSH Web](https://img.shields.io/badge/DSH%20Web-0.1.1--rc.2%20verified-2563eb)](#faq)
+[![DSH Web](https://img.shields.io/badge/DSH%20Web-0.1.2--rc.1%20verified-2563eb)](#faq)
 
 [English](./README.en.md) · 中文
 
@@ -179,7 +179,7 @@ URL 也能切皮肤：`/?skin=official`、`/?skin=meirenzhi`、`/?skin=openbmc`�
 更新遵循「先备份、再安装」的事务流程，任何校验失败都会自动恢复原版本，弹层显示失败原因（中英双语）。仍失败时可用 `dsh plugin --profile web update @iasiv5/dsh-skins` 手动更新。
 
 **支持哪些 DSH Web 版本？**
-已使用 DSH Web `0.1.1-rc.2` 验证。同系列 rc 版本理论上兼容，未经验证的版本不作承诺。
+已使用 DSH Web `0.1.2-rc.1` 验证。同系列 rc 版本理论上兼容，未经验证的版本不作承诺。
 
 **外观偏好在不同的浏览器间同步吗？**
 在 DSH 所在机器的浏览器（loopback）上，偏好由 DSH Host 持久化，天然共享。其他远程浏览器由插件将偏好存入本地 `localStorage`，各浏览器独立、互不覆盖。

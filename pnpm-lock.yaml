@@ -9,19 +9,19 @@ importers:
   .:
     dependencies:
       '@deepseek-ai/dsh-client-connection':
-        specifier: ^0.1.1-rc.2
+        specifier: ^0.1.1-rc.2 || ^0.1.2-rc.1
         version: 0.1.1-rc.2(9b40f28fccfb9ee3f86188afc9586c29)
       '@deepseek-ai/dsh-client-runtime':
-        specifier: ^0.1.1-rc.2
+        specifier: ^0.1.1-rc.2 || ^0.1.2-rc.1
         version: 0.1.1-rc.2(cb4cb8169c074f46f5e849113e8ad34d)
       '@deepseek-ai/dsh-client-ui-conversation':
-        specifier: ^0.1.1-rc.2
+        specifier: ^0.1.1-rc.2 || ^0.1.2-rc.1
         version: 0.1.1-rc.2(7bf1aab074a15e252a07d54a203dc0c0)
       '@deepseek-ai/dsh-client-ui-sidebar':
-        specifier: ^0.1.1-rc.2
+        specifier: ^0.1.1-rc.2 || ^0.1.2-rc.1
         version: 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-client-locale@0.1.1-rc.2(3a5d049ec3569b9e4c3b8d4d3063a904))(@deepseek-ai/dsh-client-runtime@0.1.1-rc.2(cb4cb8169c074f46f5e849113e8ad34d))(@deepseek-ai/dsh-client-ui-layout@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-client-runtime@0.1.1-rc.2(cb4cb8169c074f46f5e849113e8ad34d))(@deepseek-ai/dsh-client-ui-theme@0.1.1-rc.2(de75e4685ca753d4611f166d08ebbeb5))(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)))(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))
       '@deepseek-ai/dsh-client-ui-theme':
-        specifier: ^0.1.1-rc.2
+        specifier: ^0.1.1-rc.2 || ^0.1.2-rc.1
         version: 0.1.1-rc.2(de75e4685ca753d4611f166d08ebbeb5)
     devDependencies:
       '@deepseek-ai/cordis':
