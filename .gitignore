@@ -1,6 +1,7 @@
 node_modules/
 .pnpm-store/
 .artifacts/
+pkgcheck/
 *.log
 .DS_Store
 app.js
