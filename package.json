@@ -1,7 +1,7 @@
 {
   "name": "@iasiv5/dsh-skins",
-  "description": "Modular DSH Web skin pack with official fallback, OpenBMC and UEFI appearances, and verified stable-Release updates",
-  "version": "1.0.4",
+  "description": "DSH Web 皮肤插件：多套品牌皮肤侧栏热切换，一键回到官方界面。",
+  "version": "1.0.5",
   "homepage": "https://github.com/iasiv5/dsh-skins#readme",
   "repository": {
     "type": "git",
