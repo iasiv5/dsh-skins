@@ -44,7 +44,23 @@ jobs:
             if (typeof apply !== 'function') throw new Error('apply() missing');
             console.log('artifact host load OK:', name);
           "
+      - name: Check whether the version is already on npm (rerun safety)
+        id: npm-state
+        run: |
+          # Idempotent re-release guard: a re-pushed tag (e.g. after a partial
+          # publish or a cleanup-tag deletion) must not crash on "previously
+          # published version" — that failure would trigger the tag-delete
+          # step below and remove the tag again. Skip publish when the exact
+          # version is already on the registry; the GitHub Release step still
+          # runs, so the release/artifact stay consistent either way.
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view --registry https://registry.npmjs.org "@iasiv5/dsh-skins@${VERSION}" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Publish to npm via OIDC trusted publishing
+        if: steps.npm-state.outputs.published != 'true'
         run: |
           # Node 22 bundles npm 10.x; trusted publishing requires npm >= 11.5.1.
           # pnpm 10 publish delegates to `npm publish` under the hood, so the
