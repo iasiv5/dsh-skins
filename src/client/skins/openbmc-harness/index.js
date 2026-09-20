@@ -229,11 +229,13 @@ export function createOpenBmcHarness(jsxRuntime) {
   /* ---------- ④b 品牌徽章：官方 ▐HARNESS▌ 同构反色片（HTML/CSS 绘制） ----------
    * 壳里不存在 --dsw-alias-label-primary-inverted 令牌（那是官方 BrandWordmark
    * 的内部实现细节），内联 var() 取不到值会让字色整体失效——改为皮肤自带
-   * 规则 + 明暗两套显式颜色（与 tgcf 的 NO TABOOS 徽章同一模式）。 */
+   * 规则 + 明暗两套显式颜色（与 tgcf 的 NO TABOOS 徽章同一模式）。
+   * 圆角 4px：官方 SVG rect 虽是 rx=2，但实测对比需在 14px 高度上取 4px
+   * 才有官方观感的弧度（tgcf 徽章同值）。 */
   body[data-dsh-openbmc-skin] .dsh-openbmc-badge {
     display: inline-flex; align-items: center;
     background: #14202B; color: #F7FAFC;
-    border-radius: 2px; padding: 0 5px;
+    border-radius: 4px; padding: 0 5px;
     font-size: 10px; line-height: 14px; font-weight: 650; letter-spacing: .08em;
   }
   body[data-dsh-openbmc-skin][data-ds-dark-theme] .dsh-openbmc-badge {
