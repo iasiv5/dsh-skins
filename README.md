@@ -10,7 +10,7 @@
 
 为 DeepSeek Harness Web 换上可热切换的品牌皮肤，随时一键回到官方界面。
 
-![凡人修仙传 · 美人志 — 出厂默认壁纸「云台雅集」](docs/assets/preview-meirenzhi-1.webp)
+![凡人修仙传 · 美人志 — 内置默认壁纸「云台雅集」](docs/assets/preview-meirenzhi-1.webp)
 
 ## 30 秒上手
 
@@ -25,7 +25,7 @@ dsh plugin --profile web add @iasiv5/dsh-skins
 3. 刷新页面。
 4. 点击侧栏底部的「皮肤切换」，挑选皮肤。
 
-首次安装且尚无已保存的选择时，默认启用「凡人修仙传 · 美人志」（出厂皮肤）。需要可复现安装时，固定到精确版本（与一键更新落地后的形态完全一致）：
+首次安装且尚无已保存的选择时，默认启用「OpenBMC Studio」（出厂皮肤，v1.0.6 起；此前为美人志）。需要可复现安装时，固定到精确版本（与一键更新落地后的形态完全一致）：
 
 ```sh
 dsh plugin --profile web add @iasiv5/dsh-skins@1.0.0
@@ -62,15 +62,15 @@ dsh plugin --profile web remove @iasiv5/dsh-skins    # 卸载
 | 选择 ID | 类型 | 描述 |
 |---|---|---|
 | `official` | 内置选项 | 素笺玄墨 · 留白生辉 · 本色天成 |
-| `meirenzhi` | 正式皮肤 · 出厂默认 | 云鬓花颜 · 霞衣夜月 · 凡尘问道 |
-| `openbmc` | 正式皮肤 | 冰绡叠浪 · 风雷入画 · 缥碧盈卷 |
+| `meirenzhi` | 正式皮肤 | 云鬓花颜 · 霞衣夜月 · 凡尘问道 |
+| `openbmc` | 正式皮肤 · 出厂默认 | 冰绡叠浪 · 风雷入画 · 缥碧盈卷 |
 | `uefi-harness` | 正式皮肤 | 紫电初醒 · 流霞渐染 · 绀青成韵 |
 | `tgcf` | 正式皮肤 | 千灯引路 · 朱红鎏金 · 长夜同明 |
 
 - `official` 恢复 DeepSeek Harness 官方品牌、背景与 favicon，并保留皮肤切换器与官方明暗配色。
 - `meirenzhi`（凡人修仙传 · 美人志）是**非官方粉丝作品**，与《凡人修仙传》版权方无关联、未获授权；内置 6 张壁纸均为 AI 生成粉丝画作，掌天瓶站点图标采用产品主人提供的图样，BEAUTY 徽章由 HTML/CSS 绘制，萤火粒子由 CSS 伪元素与径向渐变绘制，均不含官方素材。绯红鎏金亮暗双态，出厂标语「风起凡尘 · 红颜问道」。
-- `openbmc`（OpenBMC Harness）：品牌位沿用 OpenBMC 项目官方 logo 的字标字形与蓝绿品牌渐变，仅作标识用途，权利归 OpenBMC 项目所有；背景铺「左风右雷」风雷原画，冰蓝缥碧亮暗双态，出厂标语「察于未萌 · 治于未乱」。
-- `uefi-harness`（UEFI Harness）：品牌位用 UEFI Forum 官方标志（权利说明见「已知边界」）；背景铺「集成电路」电路板原画，紫电绀青亮暗双态，出厂标语「启于固件 · 行于万象」。
+- `openbmc`（OpenBMC Studio）：品牌位沿用 OpenBMC 项目官方 logo 的字标字形与蓝绿品牌渐变，仅作标识用途，权利归 OpenBMC 项目所有；背景铺「左风右雷」风雷原画，冰蓝缥碧亮暗双态，出厂标语「察于未萌 · 治于未乱」。
+- `uefi-harness`（UEFI Studio）：品牌位用 UEFI Forum 官方标志（权利说明见「已知边界」）；背景铺「集成电路」电路板原画，紫电绀青亮暗双态，出厂标语「启于固件 · 行于万象」。
 - `tgcf`（天官赐福 · 百无禁忌）是**非官方粉丝作品**，与《天官赐福》版权方无关联、未获授权；出厂壁纸为 AI 生成粉丝画作，站点图标与飘蝶装饰均为原创代码绘制的 SVG，不含任何官方素材。暗色朱红鎏金、亮色素白金线，出厂标语「百无禁忌」。
 - 每套皮肤明暗各一套配色，跟随「外观配色」自动切换。
 
@@ -78,15 +78,15 @@ dsh plugin --profile web remove @iasiv5/dsh-skins    # 卸载
 
 以下均为浏览器实拍，四套扩展皮肤新旧俱备；图中壁纸随时可在个性化面板里更换（见下一节）。
 
-### 凡人修仙传 · 美人志（出厂默认）
+### 凡人修仙传 · 美人志
 
 | | |
 |---|---|
-| ![云台雅集 · 合照（出厂默认壁纸）](docs/assets/preview-meirenzhi-1.webp) | ![紫灵（亮色）](docs/assets/preview-meirenzhi-2.webp) |
+| ![云台雅集 · 合照（默认壁纸）](docs/assets/preview-meirenzhi-1.webp) | ![紫灵（亮色）](docs/assets/preview-meirenzhi-2.webp) |
 | ![南宫阙（深色）](docs/assets/preview-meirenzhi-3.webp) | ![银月（亮色）](docs/assets/preview-meirenzhi-4.webp) |
 | ![慕沛灵（亮色）](docs/assets/preview-meirenzhi-5.webp) | ![南宫婉（亮色）](docs/assets/preview-meirenzhi-6.webp) |
 
-单人壁纸依次为：紫灵、南宫阙（深色）、银月、慕沛灵、南宫婉；首张为出厂默认「云台雅集 · 合照」。
+单人壁纸依次为：紫灵、南宫阙（深色）、银月、慕沛灵、南宫婉；首张为该皮肤默认「云台雅集 · 合照」。
 
 ### 天官赐福 · 百无禁忌
 
@@ -94,11 +94,11 @@ dsh plugin --profile web remove @iasiv5/dsh-skins    # 卸载
 |---|---|
 | ![花城 · 银蝶灯笼（深色）](docs/assets/preview-tgcf-1.webp) | ![谢怜 · 云海宫阙（亮色）](docs/assets/preview-tgcf-2.webp) |
 
-### OpenBMC Harness
+### OpenBMC Studio（出厂默认）
 
 ![左风右雷（出厂壁纸 · 深色）](docs/assets/preview-openbmc-1.webp)
 
-### UEFI Harness
+### UEFI Studio
 
 ![集成电路（出厂壁纸）](docs/assets/preview-uefi-1.webp)
 

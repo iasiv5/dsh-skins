@@ -118,7 +118,7 @@ export function createTgcfSkin(jsxRuntime) {
   }
 
   function TgcfName() {
-    // Harness badge language (official/openbmc HARNESS 反色块): the brand
+    // Harness badge language (official/openbmc STUDIO 反色块): the brand
     // text keeps its gradient, then a solid inverted badge "NO TABOOS"
     // rides after it — 4px radius, 10px caps, .08em tracking like the
     // reference badge. Black/white inversion is theme-aware via the

@@ -81,8 +81,8 @@ export function createSkinRuntime() {
       }
     } catch {}
     // Factory default (出厂皮肤): the first registered skin wins until the user
-    // explicitly chooses an appearance — meirenzhi since its introduction,
-    // openbmc before that. Stored selections and ?skin= keep priority.
+    // explicitly chooses an appearance — openbmc since v1.0.6 (Studio rebrand),
+    // meirenzhi before that. Stored selections and ?skin= keep priority.
     return order[0];
   }
 

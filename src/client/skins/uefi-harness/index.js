@@ -1,5 +1,5 @@
 /**
- * UEFI Harness skin.
+ * UEFI Studio skin (id: uefi-harness).
  * It is intentionally self-contained and can be deleted without touching any
  * other skin. The mark and favicon carry the UEFI Forum's official red cube
  * logo (source and trademark note in README known limits); the rest of the
@@ -10,7 +10,7 @@ import { resolveImageRef } from "../../../shared/personalization/catalog.js";
 // Official UEFI Forum logo — the red cube with white "uefi" letters, embedded
 // as two vector paths traced from uefi.org's published uefi_logo_red.gif
 // (retrieved via Wikimedia Commons "Logo of the UEFI Forum.svg"; trademark of
-// the UEFI Forum, used here solely to identify the UEFI Harness skin).
+// the UEFI Forum, used here solely to identify the UEFI Studio skin).
 const LOGO_VIEWBOX = "0 0 367.92 424.8";
 const LOGO_WHITE =
   "M183.505 7.5l12.515.016 59.87 34.233.632 13.683 23.938.38L339.524 89.6l16.386 30.31 5.136 192.808L349.92 329.3l-56.88 32.657-19.564-1.81-13.315 20.69-56.41 32.404-89.687-32.764L4.375 312.71 7.5 109.59z";
@@ -41,7 +41,7 @@ export function createUefiHarness({ jsx }) {
         jsx("span", { children: "UEFI" }),
         jsx("span", {
           style: { border: "1px solid currentColor", borderRadius: "4px", padding: "0 5px", fontSize: "10px", lineHeight: "16px", letterSpacing: ".08em" },
-          children: "HARNESS",
+          children: "STUDIO",
         }),
       ],
     });
@@ -1136,7 +1136,7 @@ body[data-dsh-uefi-harness][data-ds-dark-theme] :is([class*="oRe1gG_bubble"], [c
     return {
       bodyAttribute: "dshUefiHarness",
       slogans: values.slogan ?? SLOGANS,
-      titleBrand: "UEFI Harness",
+      titleBrand: "UEFI Studio",
       favicon: { href: favicon, mime: "image/svg+xml" },
       backdrop: { imageLight, imageDark, overlayLight: null, overlayDark: null, blur: blurPx },
       tokenOverrides,
@@ -1148,7 +1148,7 @@ body[data-dsh-uefi-harness][data-ds-dark-theme] :is([class*="oRe1gG_bubble"], [c
 
   return {
     id: "uefi-harness",
-    label: "UEFI Harness",
+    label: "UEFI Studio",
     description: {
       zh: "紫电初醒 · 流霞渐染 · 绀青成韵",
       en: "Violet spark · gilded backdrop · violet-blue palette",
@@ -1158,7 +1158,7 @@ body[data-dsh-uefi-harness][data-ds-dark-theme] :is([class*="oRe1gG_bubble"], [c
     Name: UefiName,
     favicon,
     faviconMime: "image/svg+xml",
-    title: "UEFI Harness",
+    title: "UEFI Studio",
     css,
     art: BACKGROUND_ART,
     scrimLight: SCRIM_LIGHT,

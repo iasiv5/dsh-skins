@@ -173,8 +173,8 @@ const ctx = {
 	effect(setup, label) { const d = setup(); effects.push({ label, d }); },
 };
 mod.apply(ctx);
-if (window.__DSH_SKINS__.active() !== "meirenzhi") throw new Error("first load must land on the factory skin (meirenzhi)");
-console.log("✓ factory skin (meirenzhi) mounts on first load");
+if (window.__DSH_SKINS__.active() !== "openbmc") throw new Error("first load must land on the factory skin (openbmc, the v1.0.6 default)");
+console.log("✓ factory skin (openbmc) mounts on first load");
 if (themeSnapshot.preference !== "dark") throw new Error("remote fallback should restore dark, got " + themeSnapshot.preference);
 if (window.__DSH_SKINS__.themePreference() !== "dark") throw new Error("diagnostic preference should report dark");
 ctx.theme.setTheme("light");
@@ -187,6 +187,17 @@ const styleTag = (id) => head.children.find((c) => c.tagName === "style" && c.da
 const skinSlots = slotRegistrations.filter((r) => r.opts.priority !== undefined);
 if (skinSlots.length !== 3) throw new Error("expected 3 brand slot registrations, got " + skinSlots.length);
 console.log("✓ slots registered:", skinSlots.map((r) => r.opts.name).join(", "));
+
+// Factory boot lands on openbmc: verify its style tag and bare tab rebrand,
+// then switch to meirenzhi explicitly — the deep per-skin checks below ride
+// meirenzhi, and the switch itself exercises the live-switch path.
+const tagOpenbmc = styleTag("openbmc");
+if (!tagOpenbmc) throw new Error("openbmc style tag missing on factory boot");
+if (document.title !== "OpenBMC Studio") throw new Error("openbmc factory boot must rebrand the bare tab title, got " + document.title);
+console.log("✓ factory boot rebrand:", tagOpenbmc.dataset.pluginCss, "→", document.title);
+window.__DSH_SKINS__.select("meirenzhi");
+if (window.__DSH_SKINS__.active() !== "meirenzhi") throw new Error("select(meirenzhi) must stick");
+
 const tagMeirenzhi = styleTag("meirenzhi");
 if (!tagMeirenzhi) throw new Error("meirenzhi style tag missing");
 console.log("✓ per-skin style tag:", tagMeirenzhi.dataset.pluginCss);
@@ -211,7 +222,7 @@ console.log("✓ tab title:", document.title);
 // simulate its "<session> — DeepSeek Harness" projection and let the skin's
 // title observer convert the brand segment while keeping the session segment.
 document.title = "标题实验 — DeepSeek Harness";
-for (const o of global.__mutationObservers) if (typeof o.cb === "function") o.cb();
+for (const o of global.__mutationObservers) if (!o.disconnected && typeof o.cb === "function") o.cb();
 if (document.title !== "标题实验 — 美人志") throw new Error("renderer projection must keep the session segment and rebrand the product segment, got " + document.title);
 console.log("✓ session-aware tab title:", document.title);
 
@@ -279,7 +290,7 @@ console.log("✓ skin descriptions and slot label localize with the active UI lo
 
 // Force the popover open. useState order: open, active skin, box,
 // personalize view, theme preference.
-stateOverrides = [true, "meirenzhi", { left: 20, bottom: 50 }, null, "dark"];
+stateOverrides = [true, "openbmc", { left: 20, bottom: 50 }, null, "dark"]; // active = factory default
 const openTree = switcher.comp({ wide: true });
 const portal = openTree.props.children[1];
 if (!portal?.$$portal) throw new Error("open switcher should render a portal");
@@ -324,13 +335,13 @@ if (gears.length !== 4) throw new Error("every catalog skin exposes a personaliz
 if (typeof updatePanelNode?.type !== "function") throw new Error("update panel must render after the skin cards");
 if (skinCards[0].props.children[0].props.children !== "DeepSeek Harness（官方）") throw new Error("official appearance must be the first skin card");
 if (skinCards[0].props["aria-checked"] !== false) throw new Error("official appearance must not be selected on first load");
-if (skinCards[1].props["aria-checked"] !== true) throw new Error("meirenzhi (factory skin) must remain selected on first load");
-if (skinCards[1].props.children[0].props.children !== "凡人修仙传 · 美人志") throw new Error("meirenzhi must be registered second (factory skin first in the list)");
+if (skinCards[1].props["aria-checked"] !== true) throw new Error("openbmc (factory skin) must remain selected on first load");
+if (skinCards[1].props.children[0].props.children !== "OpenBMC Studio") throw new Error("openbmc must be listed second (factory skin leads the skins)");
 if (skinCards[4].props.children[0].props.children !== "天官赐福") throw new Error("tgcf must be registered and listed last");
 themeCards[2].props.onClick();
 if (themeSnapshot.preference !== "system") throw new Error("system button must call official theme.setTheme");
 if (storage.get("dsh-skins:theme-preference") !== "system") throw new Error("system selection must persist remotely");
-console.log("✓ popover: appearance(3) + skins(5: official first, meirenzhi second, tgcf last) + gears(4); system theme persisted");
+console.log("✓ popover: appearance(3) + skins(5: official first, openbmc second, tgcf last) + gears(4); system theme persisted");
 
 // ---- update panel states: local development, available Release, up to date ----
 stateOverrides = [{
@@ -413,9 +424,10 @@ if (!bgUefi.includes("url(")) throw new Error("UEFI backdrop must carry the gild
 if (!bgUefi.includes("linear-gradient")) throw new Error("UEFI backdrop must stack a veil scrim over the wallpaper");
 if (body.dataset.dshOpenbmcSkin !== undefined || body.dataset.dshUefiHarness !== "") throw new Error("UEFI body scope not active");
 const skinSlotsAfterSwitch = slotRegistrations.filter((r) => r.opts.priority !== undefined);
-if (skinSlotsAfterSwitch.length !== 6) throw new Error("brand slots should re-register after switch (3+3), got " + skinSlotsAfterSwitch.length);
-console.log("✓ switched to independent UEFI Harness via public selector; backdrop = gilded circuit art + veil scrim");
-if (document.title !== "标题实验 — UEFI Harness") throw new Error("uefi mount must rebrand the session-aware tab title, got " + document.title);
+// 3 mounts × 3 brand slots: openbmc factory boot → meirenzhi (deep checks) → uefi-harness.
+if (skinSlotsAfterSwitch.length !== 9) throw new Error("brand slots should re-register after switch (3×3), got " + skinSlotsAfterSwitch.length);
+console.log("✓ switched to independent UEFI Studio via public selector; backdrop = gilded circuit art + veil scrim");
+if (document.title !== "标题实验 — UEFI Studio") throw new Error("uefi mount must rebrand the session-aware tab title, got " + document.title);
 console.log("✓ UEFI body scope attr after switch:", body.dataset.dshUefiHarness === "");
 
 // ---- openbmc: personalization-aware since ADR-0004, default-anchor check ----

@@ -20,7 +20,9 @@ window.__ModuleLoader__.load({
 
     const runtime = createSkinRuntime();
     const skinById = new Map();
-    for (const factory of [createMeirenzhiSkin, createOpenBmcHarness, createUefiHarness, createTgcfSkin]) {
+    // Registration order IS the factory-default order: the first skin wins for
+    // users with no stored choice (v1.0.6 起 openbmc 领头，meirenzhi 之前是默认).
+    for (const factory of [createOpenBmcHarness, createMeirenzhiSkin, createUefiHarness, createTgcfSkin]) {
       const skin = factory(jsxRuntime);
       if (skin.builtinAssets === undefined) {
         // Legacy skins resolve their builtin art ref through their own baked

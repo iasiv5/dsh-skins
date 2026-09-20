@@ -25,7 +25,7 @@ dsh plugin --profile web add @iasiv5/dsh-skins
 3. Refresh the page.
 4. Click **Skin Switcher** at the bottom of the sidebar and pick a skin.
 
-On a fresh install with no saved choice, 美人志 (meirenzhi, "Mortal's Journey · Beauty Chronicle") is the factory-default skin. For reproducible installs, pin the exact version (identical to what a one-click update lands on):
+On a fresh install with no saved choice, OpenBMC Studio (the `openbmc` skin) is the factory-default skin (since v1.0.6; meirenzhi before that). For reproducible installs, pin the exact version (identical to what a one-click update lands on):
 
 ```sh
 dsh plugin --profile web add @iasiv5/dsh-skins@1.0.0
@@ -62,15 +62,15 @@ This section answers: which skins exist and what each feels like.
 | Choice ID | Kind | Description |
 |---|---|---|
 | `official` | built-in option | Plain paper & dark ink · breathing white space · naturally itself |
-| `meirenzhi` | full skin · factory default | Jade faces & flowered looks · moonlit silks by night · asking the Dao in mortal dust |
-| `openbmc` | full skin | Ice-silk waves · storm-wing backdrop · ice-blue palette |
+| `meirenzhi` | full skin | Jade faces & flowered looks · moonlit silks by night · asking the Dao in mortal dust |
+| `openbmc` | full skin · factory default | Ice-silk waves · storm-wing backdrop · ice-blue palette |
 | `uefi-harness` | full skin | Violet spark · sunset wash · indigo-blue palette |
 | `tgcf` | full skin | A thousand lights · vermilion & gold · night shared bright |
 
 - `official` restores the official DeepSeek Harness branding, backdrop and favicon, while keeping the skin switcher and the official light/dark palettes.
 - `meirenzhi` (凡人修仙传 · A Mortal's Journey: Beauty Chronicle) is an **unofficial fan work** with no affiliation with or authorization from the copyright holders; the 6 bundled wallpapers are AI-generated fan art, the Reach-for-the-Sky Vial site icon embeds the owner-provided emblem artwork, the BEAUTY badge is rendered with HTML/CSS, and the fireflies use CSS pseudo-elements and radial gradients — no official artwork is bundled. Vermilion-and-gold in both light and dark, slogan "From mortal dust, immortals bloom" (风起凡尘 · 红颜问道).
-- `openbmc` (OpenBMC Harness): the brand slots reuse the OpenBMC project's official logo letterforms and blue-green brand gradient, used solely for identification; all rights remain with the OpenBMC project. The backdrop is the "Left Wind, Right Thunder" storm artwork, ice-blue in both light and dark, slogan "Govern before the storm" (察于未萌 · 治于未乱).
-- `uefi-harness` (UEFI Harness): the brand slots carry the UEFI Forum's official logo (rights note under "Known limits"). The backdrop is the "Integrated Circuits" circuit-board artwork, violet-and-indigo in both light and dark, slogan "Boot before everything" (启于固件 · 行于万象).
+- `openbmc` (OpenBMC Studio): the brand slots reuse the OpenBMC project's official logo letterforms and blue-green brand gradient, used solely for identification; all rights remain with the OpenBMC project. The backdrop is the "Left Wind, Right Thunder" storm artwork, ice-blue in both light and dark, slogan "Govern before the storm" (察于未萌 · 治于未乱).
+- `uefi-harness` (UEFI Studio): the brand slots carry the UEFI Forum's official logo (rights note under "Known limits"). The backdrop is the "Integrated Circuits" circuit-board artwork, violet-and-indigo in both light and dark, slogan "Boot before everything" (启于固件 · 行于万象).
 - `tgcf` (Heaven Official's Blessing · No Taboos) is an **unofficial fan work** with no affiliation with or authorization from the copyright holders; the factory wallpapers are AI-generated fan art, while the site icon and drifting-butterfly decoration are original code-drawn SVG — no official artwork is bundled. Vermilion-and-gold dark mode, pale-gold light mode, slogan "No Taboos".
 - Every skin ships one palette per light/dark mode and follows the appearance setting automatically.
 
@@ -78,7 +78,7 @@ This section answers: which skins exist and what each feels like.
 
 All captures below are real browser screenshots covering all four extension skins, new and old alike; every wallpaper can be swapped any time from the personalization panel (next section).
 
-### 凡人修仙传 · 美人志 (factory default)
+### 凡人修仙传 · 美人志
 
 | | |
 |---|---|
@@ -94,11 +94,11 @@ Solo portraits in order: Ziling, Nangong Que (dark), Yinyue, Mu Peiling and Nang
 |---|---|
 | ![Hua Cheng · Silver Butterflies and Lanterns (dark)](docs/assets/preview-tgcf-1.webp) | ![Xie Lian · Sea of Clouds and Palaces (light)](docs/assets/preview-tgcf-2.webp) |
 
-### OpenBMC Harness
+### OpenBMC Studio (factory default)
 
 !["Left Wind, Right Thunder" (factory wallpaper, dark)](docs/assets/preview-openbmc-1.webp)
 
-### UEFI Harness
+### UEFI Studio
 
 !["Integrated Circuits" (factory wallpaper)](docs/assets/preview-uefi-1.webp)
 
