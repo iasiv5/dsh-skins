@@ -82,8 +82,9 @@ export function createOpenBmcHarness(jsxRuntime) {
 
   /* 品牌名：沿用官方 "deepseek ▐HARNESS▌" 的排版语言 ——
    * "OpenBMC" 用 openbmc 官方 logo 的字标字形（O/p/e/n/B 主色、M/C 次级色，
-   * 随主题 token 自适应），"STUDIO" 徽章改为 HTML/CSS 反色片（与 uefi-harness
-   * 的徽章同构），品牌更名后不再逐字节复刻官方 BrandWordmark 字形。 */
+   * 随主题 token 自适应），"STUDIO" 徽章为 HTML 反色片（.dsh-openbmc-badge，
+   * 皮肤 CSS 提供明暗两套显式颜色），品牌更名后不再逐字节复刻官方
+   * BrandWordmark 字形。 */
   function OpenBmcName() {
     return jsx("span", {
       style: { display: "inline-flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap" },
@@ -105,16 +106,7 @@ export function createOpenBmcHarness(jsxRuntime) {
           ],
         }),
         jsx("span", {
-          style: {
-            background: "currentColor",
-            color: "var(--dsw-alias-label-primary-inverted)",
-            borderRadius: "2px",
-            padding: "0 5px",
-            fontSize: "10px",
-            lineHeight: "14px",
-            fontWeight: 650,
-            letterSpacing: ".08em",
-          },
+          className: "dsh-openbmc-badge",
           children: "STUDIO",
         }),
       ],
@@ -232,6 +224,20 @@ export function createOpenBmcHarness(jsxRuntime) {
   "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
     --ds-font-family-code: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code",
   Menlo, Consolas, monospace;
+  }
+
+  /* ---------- ④b 品牌徽章：官方 ▐HARNESS▌ 同构反色片（HTML/CSS 绘制） ----------
+   * 壳里不存在 --dsw-alias-label-primary-inverted 令牌（那是官方 BrandWordmark
+   * 的内部实现细节），内联 var() 取不到值会让字色整体失效——改为皮肤自带
+   * 规则 + 明暗两套显式颜色（与 tgcf 的 NO TABOOS 徽章同一模式）。 */
+  body[data-dsh-openbmc-skin] .dsh-openbmc-badge {
+    display: inline-flex; align-items: center;
+    background: #14202B; color: #F7FAFC;
+    border-radius: 2px; padding: 0 5px;
+    font-size: 10px; line-height: 14px; font-weight: 650; letter-spacing: .08em;
+  }
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .dsh-openbmc-badge {
+    background: #F7FAFC; color: #14202B;
   }
 
   /* ---------- ⑥ 会话气泡装饰：品牌描边 + 流式呼吸光条 ---------- */
