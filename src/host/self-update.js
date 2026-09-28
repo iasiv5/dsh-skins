@@ -386,7 +386,7 @@ export function createSelfUpdater(options, dependencies = {}) {
       const previousManifest = readInstalledManifest(profileDir);
       previousVersion = previousManifest?.version ?? currentVersion;
       if (detectInstallSource(previousSpec).kind !== "npm") {
-        throw codedError("UPDATE_SOURCE_CHANGED", "更新开始前安装来源已变化，请重新打开皮肤切换器");
+        throw codedError("UPDATE_SOURCE_CHANGED", "更新开始前安装来源已变化，请重新打开主题切换器");
       }
       validatePluginManifest(previousManifest, previousVersion);
       snapshot = captureProfileSnapshot(profileDir);
