@@ -26,6 +26,11 @@
  *                   a re-review instead of silently widening the selector
  *   4. dark hook    body[data-ds-dark-theme] is still shipped by the theme
  *                   package (every dark variant rule keys off it)
+ *   5. service API  the client/host service methods this plugin consumes are
+ *                   still exported by the corresponding runtime packages:
+ *                   theme.overrideTokens, locale.register/translate,
+ *                   slots.inject/register, connection.isLoopback,
+ *                   webServer.register, webRuntime.trustedHosts
  *
  * Runtime resolution: $DSH_RUNTIME_ROOT, else ~/.local/share/dsh-runtime.
  * No runtime installed → yellow skip, exit 0 (CI has no runtime; absence is
@@ -126,10 +131,34 @@ if (theme === "") {
 	problems.push('dark hook dead: "data-ds-dark-theme" no longer shipped by dsh-client-ui-theme — every [data-ds-dark-theme] rule in src/client/skins/* is orphaned');
 }
 
+// 5. service API anchors (2026-09-28 audit): methods skins calls on injected
+// services. Scoped per package so generic names ("register") stay meaningful;
+// a missing anchor means that injected-service call site will throw at runtime.
+const SERVICE_API_ANCHORS = [
+	["dsh-client-ui-theme", ["overrideTokens"], "theme.overrideTokens"],
+	["dsh-client-locale", ["register", "translate"], "locale.register / locale.translate"],
+	["dsh-client-ui-slots", ["inject", "register"], "slots.inject / slots.register"],
+	["dsh-client-connection", ["isLoopback"], "connection.isLoopback"],
+	["dsh-host-webserver", ["register"], "webServer.register"],
+	["dsh-web-app", ["trustedHosts"], "webRuntime.trustedHosts"],
+];
+for (const [pkg, anchors, label] of SERVICE_API_ANCHORS) {
+	const source = readAll(pkg);
+	if (source === "") {
+		problems.push(`${pkg} is not installed under the runtime — the service-API anchor for ${label} cannot be evaluated`);
+		continue;
+	}
+	for (const anchor of anchors) {
+		if (!source.includes(anchor)) {
+			problems.push(`service API drift: ${label} — "${anchor}" no longer found in ${pkg}; the skins call site will fail at runtime`);
+		}
+	}
+}
+
 // --- report ----------------------------------------------------------------
 if (problems.length > 0) {
 	for (const problem of problems) console.error(`${RED}upstream-hooks: ${problem}${RESET}`);
 	process.exit(1);
 }
 const bubbles = [...foundBubbles.keys()].sort().join(", ");
-console.log(`✓ upstream hooks OK: Sixlwa_bubble alive; chat *_bubble = [Sixlwa_bubble]; userStack alive; goal oRe1gG_bubble + _stack alive; page *_bubble = {${bubbles}}; dark attr alive (${packages.size} @deepseek-ai packages scanned)`);
+console.log(`✓ upstream hooks OK: Sixlwa_bubble alive; chat *_bubble = [Sixlwa_bubble]; userStack alive; goal oRe1gG_bubble + _stack alive; page *_bubble = {${bubbles}}; dark attr alive; service-API anchors alive (${packages.size} @deepseek-ai packages scanned)`);
