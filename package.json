@@ -1,7 +1,7 @@
 {
   "name": "@iasiv5/dsh-skins",
   "description": "DSH Web 皮肤插件：多套品牌皮肤侧栏热切换。",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "homepage": "https://github.com/iasiv5/dsh-skins#readme",
   "repository": {
     "type": "git",
