@@ -8,7 +8,7 @@ export const NS = "dsh-skins.ui";
  */
 export const DICTS = {
   zh: {
-    "skins.switch": "皮肤切换",
+    "skins.switch": "主题切换",
     "skins.title": "选择皮肤",
     "skins.official.label": "DeepSeek Harness（官方）",
     "skins.official.description": "素笺玄墨 · 留白生辉 · 本色天成",
@@ -134,7 +134,7 @@ export const DICTS = {
     "host.rollback.bundleMissing": "恢复后的 bundle 注册校验失败",
   },
   en: {
-    "skins.switch": "Skin Switcher",
+    "skins.switch": "Theme Switcher",
     "skins.title": "Choose Skin",
     "skins.official.label": "DeepSeek Harness (Official)",
     "skins.official.description": "Plain paper & dark ink · breathing white space · naturally itself",

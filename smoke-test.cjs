@@ -231,20 +231,20 @@ if (!injectedSlotKeys.includes("sidebar.footer.action")) throw new Error("sideba
 const switcher = slotRegistrations.find((r) => r.opts.id === "skins-switcher");
 if (!switcher) throw new Error("sidebar switcher not registered");
 if (switcher.opts.name !== "sidebar.footer.action") throw new Error("switcher slot name wrong: " + switcher.opts.name);
-if (registeredDictObjects["dsh-skins.ui"].zh["skins.switch"] !== "皮肤切换") throw new Error("zh dict missing skins.switch");
-if (registeredDictObjects["dsh-skins.ui"].en["skins.switch"] !== "Skin Switcher") throw new Error("en dict missing skins.switch");
+if (registeredDictObjects["dsh-skins.ui"].zh["skins.switch"] !== "主题切换") throw new Error("zh dict missing skins.switch");
+if (registeredDictObjects["dsh-skins.ui"].en["skins.switch"] !== "Theme Switcher") throw new Error("en dict missing skins.switch");
 if (registeredDictObjects["dsh-skins.ui"].zh["appearance.title"] !== "外观配色") throw new Error("zh dict missing appearance.title");
 if (registeredDictObjects["dsh-skins.ui"].zh["appearance.system"] !== "跟随系统") throw new Error("zh dict missing appearance.system");
 if (registeredDictObjects["dsh-skins.ui"].zh["skins.official.label"] !== "DeepSeek Harness（官方）") throw new Error("zh dict missing official skin label");
 if (registeredDictObjects["dsh-skins.ui"].en["skins.official.label"] !== "DeepSeek Harness (Official)") throw new Error("en dict missing official skin label");
 const swTree = switcher.comp({ wide: true }); // t 传空 → 引擎内置词条兜底
 const swBtn = swTree.props.children[0];
-if (swBtn.type !== "button" || swBtn.props["aria-label"] !== "皮肤切换") throw new Error("switcher button wrong");
-if (swBtn.props.children[1] === null || swBtn.props.children[1].props.children !== "皮肤切换") throw new Error("switcher label missing in wide mode");
+if (swBtn.type !== "button" || swBtn.props["aria-label"] !== "主题切换") throw new Error("switcher button wrong");
+if (swBtn.props.children[1] === null || swBtn.props.children[1].props.children !== "主题切换") throw new Error("switcher label missing in wide mode");
 const railTree = switcher.comp({ wide: false });
 if (!String(railTree.props.className).includes("rail")) throw new Error("collapsed sidebar should get rail class");
 if (railTree.props.children[0].props.children[1] !== null) throw new Error("rail mode should hide the label");
-console.log("✓ sidebar switcher registered (order " + switcher.opts.order + "); button 皮肤切换; rail mode hides label");
+console.log("✓ sidebar switcher registered (order " + switcher.opts.order + "); button 主题切换; rail mode hides label");
 
 // zh/en dictionary parity gate — no key may exist in only one language.
 const zhKeys = Object.keys(registeredDictObjects["dsh-skins.ui"].zh);
@@ -282,9 +282,9 @@ for (const [id, text] of [["official", officialZh], ["openbmc", openbmcZh], ["ue
 }
 
 // slot registration label resolves through the locale service
-if (switcher.opts.label() !== "皮肤切换") throw new Error("slot label must resolve to zh, got " + switcher.opts.label());
+if (switcher.opts.label() !== "主题切换") throw new Error("slot label must resolve to zh, got " + switcher.opts.label());
 activeLocale = "en";
-if (switcher.opts.label() !== "Skin Switcher") throw new Error("slot label must resolve to en, got " + switcher.opts.label());
+if (switcher.opts.label() !== "Theme Switcher") throw new Error("slot label must resolve to en, got " + switcher.opts.label());
 activeLocale = "zh";
 console.log("✓ skin descriptions and slot label localize with the active UI locale");
 
