@@ -64,6 +64,14 @@ const CSS = [
   // 清单已登记 goal 精确哈希与 _stack 结构前提。
   `${SCOPE} :is([class*="oRe1gG_bubble"], [class*="_stack"] > [class*="_bubble"]){border:1px solid rgba(195, 39, 43, 0.38);box-shadow:0 1px 4px rgba(195, 39, 43, 0.10)}`,
   `body[data-dsh-tgcf-skin][data-ds-dark-theme] :is([class*="oRe1gG_bubble"], [class*="_stack"] > [class*="_bubble"]){border-color:rgba(224, 86, 74, 0.38);box-shadow:0 1px 6px rgba(224, 86, 74, 0.10)}`,
+  // 弹窗毛玻璃（dsh-quota-watch 同款配方）：宿主 Modal（设置页各弹窗、风险
+  // 确认、灯箱）与 dsh-m / dsh-skins 弹层面板底色偏透，下层文字干扰阅读；
+  // 统一 86% 不透明皮肤底（素白/墨黑）+ blur14 提饱和，下层内容只余柔光。
+  // 宿主弹窗经 CSS modules 哈希 → role/aria 定位；.dshm-*/.dsh-skins-pop 为
+  // 各插件自有稳定类名。--dsw-mask-blur 点亮官方默认 none 的遮罩模糊。
+  `${SCOPE}{--dsw-mask-blur:blur(10px)}`,
+  `${SCOPE} [role="dialog"][aria-modal="true"],${SCOPE} .dshm-panel,${SCOPE} .dshm-compat-dialog,${SCOPE} .dshm-dshchip-tip,${SCOPE} .dsh-skins-pop{background:color-mix(in srgb,rgb(255, 252, 246) 86%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
+  `${SCOPE}[data-ds-dark-theme] [role="dialog"][aria-modal="true"],${SCOPE}[data-ds-dark-theme] .dshm-panel,${SCOPE}[data-ds-dark-theme] .dshm-compat-dialog,${SCOPE}[data-ds-dark-theme] .dshm-dshchip-tip,${SCOPE}[data-ds-dark-theme] .dsh-skins-pop{background:color-mix(in srgb,rgb(24, 16, 16) 86%,transparent)}`,
 ].join("\n");
 
 /** Default panel glass colours (素白 / 墨黑) derived from the palette. */

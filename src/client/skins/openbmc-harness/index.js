@@ -296,7 +296,31 @@ export function createOpenBmcHarness(jsxRuntime) {
     --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
   }
   /* 注意：不要用类名选择器定位侧栏元素 —— 插件样式经 CSS modules 哈希，
-   * 类名不可预测；一律通过 token 或 data-* 属性作用。 */`;
+   * 类名不可预测；一律通过 token 或 data-* 属性作用。 */
+
+  /* ---------- ⑧ 弹窗毛玻璃（dsh-quota-watch 同款配方） ----------
+   * 宿主 Modal（设置页各弹窗、风险确认、灯箱）与 dsh-m / dsh-skins 的弹层面板
+   * 底色偏透，下层文字会干扰阅读：统一改为 86% 不透明皮肤底色 + blur14 提饱和，
+   * 下层内容被盖住只余柔光。遮罩/对话框由宿主 CSS modules 渲染，类名不可测 →
+   * role/aria 属性定位；.dshm-* / .dsh-skins-pop 是各插件自有稳定类名词汇。
+   * --dsw-mask-blur 点亮官方默认 none 的遮罩模糊，弹窗四周页面一并磨砂。 */
+  body[data-dsh-openbmc-skin] { --dsw-mask-blur: blur(10px); }
+  body[data-dsh-openbmc-skin] [role="dialog"][aria-modal="true"],
+  body[data-dsh-openbmc-skin] .dshm-panel,
+  body[data-dsh-openbmc-skin] .dshm-compat-dialog,
+  body[data-dsh-openbmc-skin] .dshm-dshchip-tip,
+  body[data-dsh-openbmc-skin] .dsh-skins-pop {
+    background: color-mix(in srgb, rgb(247, 250, 252) 86%, transparent);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  }
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] [role="dialog"][aria-modal="true"],
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .dshm-panel,
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .dshm-compat-dialog,
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .dshm-dshchip-tip,
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .dsh-skins-pop {
+    background: color-mix(in srgb, rgb(12, 26, 38) 86%, transparent);
+  }`;
 
   /* ================================================================
    * ⑤ 背景图片 — 固定全视口背景 + 明暗自适应遮罩

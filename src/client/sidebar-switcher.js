@@ -148,7 +148,10 @@ const SHELL_CSS = [
   '.dsh-skins-switcher-btn svg{flex:none;width:16px;height:16px}',
   '.dsh-skins-switcher-wrap.rail .dsh-skins-switcher-btn svg{width:18px;height:18px}',
   '.dsh-skins-switcher-btn span{white-space:nowrap;overflow:hidden}',
-  '.dsh-skins-pop{position:fixed;z-index:60;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;width:min(390px,calc(100vw - 24px));max-height:calc(100vh - 24px);padding:14px;border:1px solid var(--dsw-alias-border-l2);border-radius:14px;background:var(--dsw-alias-bg-overlay);color:var(--dsw-alias-label-primary);box-shadow:var(--dsw-shadow-lv3,0 8px 24px rgba(0,0,0,.14));overflow-y:auto;transition:width .2s ease-out}',
+  // 毛玻璃弹层（dsh-quota-watch 同款配方）：86% 不透明底 + blur14 提饱和，
+  // 下层文字被底色盖住、只余柔光，弹层文字保持清晰可读；首条 solid 声明
+  // 兜底不支持 color-mix 的浏览器。
+  '.dsh-skins-pop{position:fixed;z-index:60;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;width:min(390px,calc(100vw - 24px));max-height:calc(100vh - 24px);padding:14px;border:1px solid var(--dsw-alias-border-l2);border-radius:14px;background:var(--dsw-alias-bg-elevated,var(--dsw-alias-bg-overlay));background:color-mix(in srgb,var(--dsw-alias-bg-base,#1f1f1f) 86%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);color:var(--dsw-alias-label-primary);box-shadow:var(--dsw-shadow-lv3,0 8px 24px rgba(0,0,0,.14));overflow-y:auto;transition:width .2s ease-out}',
   // Slim themed scrollbars for the shell's own scroll region (list-only
   // popover): thin + token-colored thumb, WebKit and Firefox both covered.
   '.dsh-skins-pop{scrollbar-width:thin;scrollbar-color:var(--dsw-alias-border-l2) transparent}',

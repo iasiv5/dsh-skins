@@ -446,8 +446,13 @@ if (!obmcBackdrop || obmcBackdrop.removed) throw new Error("openbmc backdrop sty
 if (!obmcBackdrop.textContent.includes("linear-gradient(rgba(247, 250, 252, 0.15)")) throw new Error("openbmc default scrim must equal the baked string at P=55");
 const obmcCss = styleTag("openbmc");
 if (!obmcCss || obmcCss.removed) throw new Error("openbmc static css missing");
-if (obmcCss.textContent.includes("backdrop-filter")) throw new Error("no glass rule at the default P=55 (blur 0)");
-console.log("✓ openbmc active: baked-default token layer + backdrop + no glass at default P");
+// The WALLPAPER glass rule stays P-gated (absent at the default P=55), while
+// the modal frosted-glass rules (popup readability) ship unconditionally.
+if (obmcCss.textContent.includes('[id="root"]{backdrop-filter')) throw new Error("no wallpaper glass rule at the default P=55 (blur 0)");
+if (!obmcCss.textContent.includes("--dsw-mask-blur: blur(10px)")) throw new Error("openbmc must frost host modal masks (popup readability)");
+if (!obmcCss.textContent.includes("color-mix(in srgb, rgb(247, 250, 252) 86%, transparent)")) throw new Error("openbmc popup family must use the quota-watch recipe (86% opaque base + blur)");
+if (!obmcCss.textContent.includes(".dshm-panel") || !obmcCss.textContent.includes(".dsh-skins-pop")) throw new Error("openbmc popup family must cover dsh-m and dsh-skins panels");
+console.log("✓ openbmc active: baked-default token layer + backdrop + no wallpaper glass at default P + popup frost family");
 
 // ---- tgcf: personalization-aware skin, token layer + backdrop + hot-update ----
 // Direct UEFI → openbmc → TGCF switch (no official detour): teardown-first
