@@ -44,9 +44,10 @@ test("v2 overlay-frost union present in all four skins (ADR-0007)", () => {
         `${id}: frost rule missing for ${hook}`,
       );
     }
-    // c. dsh-m 0.7.x floating surfaces
+    // c. dsh-m floating surfaces (0.7.x pops + 0.8.x sticky chips bar)
     assert.ok(css.includes(".dsvm-filterpop"), `${id}: .dsvm-filterpop missing`);
     assert.ok(css.includes(".dsvm-modalbox"), `${id}: .dsvm-modalbox missing`);
+    assert.ok(css.includes(".dsvm-chipswrap"), `${id}: .dsvm-chipswrap missing`);
     // d. plugin mask blur (no tint — masks keep their own fill)
     assert.ok(/\.dshm-overlay[^{}]*\{backdrop-filter:var\(--dsw-mask-blur/.test(css), `${id}: .dshm-overlay mask blur missing`);
     assert.ok(/\.dsvm-overlay[^{}]*\{backdrop-filter:var\(--dsw-mask-blur/.test(css), `${id}: .dsvm-overlay mask blur missing`);

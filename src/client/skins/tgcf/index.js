@@ -82,12 +82,14 @@ const CSS = [
   // 浮层毛玻璃 v2（补漏，ADR-0007）：v1 只盖宿主 Modal 与 .dshm-*/.dsh-skins-pop；
   // 逐面排查后的剩余缺口——dockkit 悬浮窗壳 _float_（bg-layer-2 皮肤下 α≈0.6
   // 且无 blur）、宿主对话框非 modal 变体（无 aria-modal，用 _dialog_ 结构兜底）、
-  // dsh-m 0.7.x 的 .dsvm-filterpop/.dsvm-modalbox（fill 基于 bg-base 的
-  // color-mix，皮肤下实际 α≈0.5）。插件遮罩 .dshm-overlay/.dsvm-overlay 点亮
+  // dsh-m 的 .dsvm-filterpop/.dsvm-modalbox（fill 基于 bg-base 的
+  // color-mix，皮肤下实际 α≈0.5）与 0.8.x 吸顶分类条 .dsvm-chipswrap
+  // （sticky + bg-base α0.55 无 blur，卡片滚过即透字）。插件遮罩
+  // .dshm-overlay/.dsvm-overlay 点亮
   // --dsw-mask-blur，弹窗四周一并磨砂。结构钩子由 verify-upstream-hooks 钉住。
   `${SCOPE} .dshm-overlay,${SCOPE} .dsvm-overlay{backdrop-filter:var(--dsw-mask-blur, blur(10px));-webkit-backdrop-filter:var(--dsw-mask-blur, blur(10px))}`,
-  `${SCOPE} [class*="_float_"],${SCOPE} [class*="_dialog_"],${SCOPE} .dsvm-filterpop,${SCOPE} .dsvm-modalbox{background:color-mix(in srgb,rgb(255, 252, 246) 86%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
-  `${SCOPE}[data-ds-dark-theme] [class*="_float_"],${SCOPE}[data-ds-dark-theme] [class*="_dialog_"],${SCOPE}[data-ds-dark-theme] .dsvm-filterpop,${SCOPE}[data-ds-dark-theme] .dsvm-modalbox{background:color-mix(in srgb,rgb(24, 16, 16) 86%,transparent)}`,
+  `${SCOPE} [class*="_float_"],${SCOPE} [class*="_dialog_"],${SCOPE} .dsvm-filterpop,${SCOPE} .dsvm-modalbox,${SCOPE} .dsvm-chipswrap{background:color-mix(in srgb,rgb(255, 252, 246) 86%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
+  `${SCOPE}[data-ds-dark-theme] [class*="_float_"],${SCOPE}[data-ds-dark-theme] [class*="_dialog_"],${SCOPE}[data-ds-dark-theme] .dsvm-filterpop,${SCOPE}[data-ds-dark-theme] .dsvm-modalbox,${SCOPE}[data-ds-dark-theme] .dsvm-chipswrap{background:color-mix(in srgb,rgb(24, 16, 16) 86%,transparent)}`,
 ].join("\n");
 
 /** Default panel glass colours (素白 / 墨黑) derived from the palette. */

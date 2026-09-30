@@ -338,8 +338,10 @@ export function createOpenBmcHarness(jsxRuntime) {
    *      清晰透出（官方壳是实心 token 所以无此问题）；
    *   b. 宿主对话框结构兜底 _dialog_：非 modal 变体不带 aria-modal，v1 的
    *      role/aria 定位不命中；
-   *   c. dsh-m 0.7.x 的 .dsvm-filterpop / .dsvm-modalbox：fill 是 bg-base 的
-   *      color-mix（86–94%），皮肤下 bg-base 本身半透，实际 α≈0.47–0.52。
+   *   c. dsh-m 的 .dsvm-filterpop / .dsvm-modalbox：fill 是 bg-base 的
+   *      color-mix（86–94%），皮肤下 bg-base 本身半透，实际 α≈0.47–0.52；
+   *      0.8.x 新增吸顶分类条 .dsvm-chipswrap 同病（sticky + bg-base α0.55
+   *      无 blur，卡片列表从条下滚过即透字）。
    * 另给 .dshm-overlay / .dsvm-overlay 插件遮罩点亮 --dsw-mask-blur（宿主
    * 遮罩已由 v1 点亮，插件自绘遮罩 token 默认 none），弹窗四周一并磨砂，
    * 即使 blur 在弱 GPU 上退化，86% 实底也兜住可读性。结构钩子由
@@ -352,7 +354,8 @@ export function createOpenBmcHarness(jsxRuntime) {
   body[data-dsh-openbmc-skin] [class*="_float_"],
   body[data-dsh-openbmc-skin] [class*="_dialog_"],
   body[data-dsh-openbmc-skin] .dsvm-filterpop,
-  body[data-dsh-openbmc-skin] .dsvm-modalbox {
+  body[data-dsh-openbmc-skin] .dsvm-modalbox,
+  body[data-dsh-openbmc-skin] .dsvm-chipswrap {
     background: color-mix(in srgb, rgb(247, 250, 252) 86%, transparent);
     backdrop-filter: blur(14px) saturate(1.3);
     -webkit-backdrop-filter: blur(14px) saturate(1.3);
@@ -360,7 +363,8 @@ export function createOpenBmcHarness(jsxRuntime) {
   body[data-dsh-openbmc-skin][data-ds-dark-theme] [class*="_float_"],
   body[data-dsh-openbmc-skin][data-ds-dark-theme] [class*="_dialog_"],
   body[data-dsh-openbmc-skin][data-ds-dark-theme] .dsvm-filterpop,
-  body[data-dsh-openbmc-skin][data-ds-dark-theme] .dsvm-modalbox {
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .dsvm-modalbox,
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .dsvm-chipswrap {
     background: color-mix(in srgb, rgb(12, 26, 38) 86%, transparent);
   }`;
 

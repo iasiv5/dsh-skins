@@ -31,3 +31,4 @@ date: 2026-10-01
 ## Amendments
 
 - **2026-10-01（v1.2.0）**：实测补第二类缺口——**下拉菜单面**。host Menu primitives 的 `_material` 层填 `--dsw-menu-surface-fill`（官方默认仅 45–58% α）并整面 `backdrop-filter: var(--dsw-menu-backdrop-filter)`（blur40 saturate150%）；官方壳实心所以清晰，透纱皮肤下 blur 直接把壁纸吃进菜单——暗色发灰、亮壁纸发白，菜单文字不可读（用户实拍：官方清晰 vs 四皮肤下拉看不清）。裁决：四皮肤以各自菜单 tint 族（同 `--dsw-specific-menu` rgb）在 **0.94 α** 接管 `--dsw-menu-surface-fill` 与 `--dsw-alias-menu-group-header-fill`，tgcf/meirenzhi 顺带补齐此前缺失的 `--dsw-specific-menu`（宿主 select 列表框 `._media_` 消费）。菜单保持浮层族固定值（不随通透度旋钮），blur40 保留只管边缘磨砂。
+- **2026-10-01（v1.2.2）**：dsh-m 0.8.x 新增吸顶分类条 `.dsvm-chipswrap`（`position: sticky` + `background: var(--dsw-alias-bg-base)`，皮肤下 α0.55 无 blur），市场卡片列表从条下滚过即透字（用户实拍复现，headless 复现一致）——并入 v2 冻层并集（86% 实底 + blur14）。0.8.x 移除的 `.dshm-dshchip-tip`/`.dsvm-overlay` 选择器保留（空匹配无害，兼容旧版插件）。
