@@ -31,6 +31,11 @@
  *                   theme.overrideTokens, locale.register/translate,
  *                   slots.inject/register, connection.isLoopback,
  *                   webServer.register, webRuntime.trustedHosts
+ *   6. overlay CSS  the v2 overlay-frost structural hooks still exist in the
+ *                   dsh-web-frontend dist stylesheet: _float_ shell local
+ *                   name, _dialog_ local name, the _float* local-name
+ *                   whitelist, and the --dsw-mask-blur /
+ *                   --dsw-menu-backdrop-filter token definitions (ADR-0007)
  *
  * Runtime resolution: $DSH_RUNTIME_ROOT, else ~/.local/share/dsh-runtime.
  * No runtime installed → yellow skip, exit 0 (CI has no runtime; absence is
@@ -102,7 +107,10 @@ if (goal === "") {
 }
 
 // 3. page-wide *_bubble whitelist
-const BUBBLE_WHITELIST = new Set(["Sixlwa_bubble", "oRe1gG_bubble"]); // chat user bubble; goal-panel bubble
+// ROF66W_bubble (0.2.0-rc.2 audit): user-questions QuestionReplyView reply
+// bubble — themed via --dsw-specific-bubble, its container local name is
+// `_row`, so branch 2 ([class*="userStack"] > …) can never sweep it.
+const BUBBLE_WHITELIST = new Set(["Sixlwa_bubble", "oRe1gG_bubble", "ROF66W_bubble"]);
 const foundBubbles = new Map(); // token -> Set<pkg>
 for (const [pkg, files] of packages) {
 	for (const file of files) {
@@ -155,10 +163,59 @@ for (const [pkg, anchors, label] of SERVICE_API_ANCHORS) {
 	}
 }
 
+// 6. frontend dist CSS hooks (ADR-0007): the v2 overlay-frost union pins
+// structural local names that live in the web-frontend stylesheet, not in
+// lib/*.js — resolved from the dsh-web-frontend package's dist/assets.
+const frontendDir = (() => {
+	const entry = readdirSync(pnpmDir).find((e) => e.startsWith("@deepseek-ai+dsh-web-frontend@"));
+	if (!entry) return null;
+	return join(pnpmDir, entry, "node_modules/@deepseek-ai/dsh-web-frontend/dist/assets");
+})();
+if (!frontendDir || !existsSync(frontendDir)) {
+	console.error(`upstream-hooks: frontend dist not found under the runtime — ADR-0007 CSS-hook checks skipped`);
+} else {
+	const css = readdirSync(frontendDir)
+		.filter((f) => f.endsWith(".css"))
+		.map((f) => readFileSync(join(frontendDir, f), "utf8"))
+		.join("\n");
+	// 6a. the dockkit float-window shell local name (v2 selector a)
+	if (!/\._float_[A-Za-z0-9]+_\d+\{/.test(css)) {
+		problems.push('overlay hook dead: "._float_<hash>" no longer in dsh-web-frontend dist CSS — the dockkit float shell class drifted, re-derive [class*="_float_"] (ADR-0007)');
+	}
+	// 6b. the host dialog local name (v2 selector b)
+	if (!/\._dialog_[A-Za-z0-9]+_\d+\{/.test(css)) {
+		problems.push('overlay hook dead: "._dialog_<hash>" no longer in dsh-web-frontend dist CSS — the host dialog class drifted, re-derive [class*="_dialog_"] (ADR-0007)');
+	}
+	// 6c. _float* local-name whitelist: v2 selector a must not grow false
+	// positives. floatTitle/floatBody/floatResize/floatHeader/floatingCell
+	// contain the "_float" prefix but not the "_float_" substring (next char
+	// is a letter) — the selector only ever hits the shell.
+	const FLOAT_WHITELIST = new Set(["float", "floatBody", "floatHeader", "floatResize", "floatTitle", "floatingCell"]);
+	const foundFloats = new Set([...css.matchAll(/\._(float[A-Za-z0-9]*)_[A-Za-z0-9]+_\d+\{/g)].map((m) => m[1]));
+	for (const token of foundFloats) {
+		if (!FLOAT_WHITELIST.has(token)) {
+			problems.push(`new *_float* class ${token} in dsh-web-frontend — new false-positive surface for [class*="_float_"], re-review the ADR-0007 selectors`);
+		}
+	}
+	for (const token of FLOAT_WHITELIST) {
+		if (!foundFloats.has(token)) {
+			problems.push(`whitelisted float class _${token}_ vanished from the frontend dist — update FLOAT_WHITELIST (ADR-0007 manifest)`);
+		}
+	}
+	// 6d. the two self-frost tokens the skins rely on without overriding are
+	// defined by the theme client, not the frontend stylesheet
+	const themeCss = readAll("dsh-client-ui-theme");
+	for (const token of ["--dsw-mask-blur", "--dsw-menu-backdrop-filter"]) {
+		if (!themeCss.includes(`${token}:`)) {
+			problems.push(`overlay token dead: "${token}" no longer defined by dsh-client-ui-theme — mask/menu self-frost assumptions broke (ADR-0007)`);
+		}
+	}
+}
+
 // --- report ----------------------------------------------------------------
 if (problems.length > 0) {
 	for (const problem of problems) console.error(`${RED}upstream-hooks: ${problem}${RESET}`);
 	process.exit(1);
 }
 const bubbles = [...foundBubbles.keys()].sort().join(", ");
-console.log(`✓ upstream hooks OK: Sixlwa_bubble alive; chat *_bubble = [Sixlwa_bubble]; userStack alive; goal oRe1gG_bubble + _stack alive; page *_bubble = {${bubbles}}; dark attr alive; service-API anchors alive (${packages.size} @deepseek-ai packages scanned)`);
+console.log(`✓ upstream hooks OK: Sixlwa_bubble alive; chat *_bubble = [Sixlwa_bubble]; userStack alive; goal oRe1gG_bubble + _stack alive; page *_bubble = {${bubbles}}; dark attr alive; service-API anchors alive; overlay hooks alive (_float_/_dialog_/_float* whitelist/mask+menu tokens) (${packages.size} @deepseek-ai packages scanned)`);

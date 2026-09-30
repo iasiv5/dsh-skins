@@ -57,6 +57,13 @@ const CSS = [
   `${SCOPE} #root::after{content:"";position:fixed;right:17%;bottom:23%;width:14px;height:14px;z-index:-1;`
     + `background:radial-gradient(circle, rgba(250,249,246,.9) 0%, rgba(250,249,246,0) 70%);opacity:.12;animation:dsh-mrz-drift-b 47s ease-in-out infinite;pointer-events:none}`,
   `@media (prefers-reduced-motion:reduce){${SCOPE}::before,${SCOPE} #root::before,${SCOPE} #root::after{animation:none}}`,
+  // 下拉菜单面（host Menu primitives 的 _material 层）：官方默认
+  // --dsw-menu-surface-fill 仅 45–58% α 且整面 backdrop blur(40px)，透纱皮肤
+  // 下壁纸直接吃进菜单（发灰发白、字看不清）。暖雾白/玄夜较实面板族接管，
+  // specific-menu（宿主 select 列表框消费）同族补齐；blur 保留只管边缘磨砂
+  // （ADR-0007 amendment）。
+  `${SCOPE}{--dsw-menu-surface-fill:rgba(250, 249, 246, 0.94);--dsw-alias-menu-group-header-fill:rgba(250, 249, 246, 0.94);--dsw-specific-menu:rgba(250, 249, 246, 0.94)}`,
+  `${SCOPE}[data-ds-dark-theme]{--dsw-menu-surface-fill:rgba(18, 18, 26, 0.94);--dsw-alias-menu-group-header-fill:rgba(18, 18, 26, 0.94);--dsw-specific-menu:rgba(18, 18, 26, 0.94)}`,
   // 弹窗毛玻璃（dsh-quota-watch 同款配方）：宿主 Modal（设置页各弹窗、风险
   // 确认、灯箱）与 dsh-m / dsh-skins 弹层面板底色偏透，下层文字干扰阅读；
   // 统一 86% 不透明皮肤底（暖雾白/玄夜）+ blur14 提饱和，下层内容只余柔光。
@@ -65,6 +72,15 @@ const CSS = [
   `${SCOPE}{--dsw-mask-blur:blur(10px)}`,
   `${SCOPE} [role="dialog"][aria-modal="true"],${SCOPE} .dshm-panel,${SCOPE} .dshm-compat-dialog,${SCOPE} .dshm-dshchip-tip,${SCOPE} .dsh-skins-pop{background:color-mix(in srgb,rgb(250, 249, 246) 86%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
   `${SCOPE}[data-ds-dark-theme] [role="dialog"][aria-modal="true"],${SCOPE}[data-ds-dark-theme] .dshm-panel,${SCOPE}[data-ds-dark-theme] .dshm-compat-dialog,${SCOPE}[data-ds-dark-theme] .dshm-dshchip-tip,${SCOPE}[data-ds-dark-theme] .dsh-skins-pop{background:color-mix(in srgb,rgb(18, 18, 26) 86%,transparent)}`,
+  // 浮层毛玻璃 v2（补漏，ADR-0007）：v1 只盖宿主 Modal 与 .dshm-*/.dsh-skins-pop；
+  // 逐面排查后的剩余缺口——dockkit 悬浮窗壳 _float_（bg-layer-2 皮肤下 α≈0.6
+  // 且无 blur）、宿主对话框非 modal 变体（无 aria-modal，用 _dialog_ 结构兜底）、
+  // dsh-m 0.7.x 的 .dsvm-filterpop/.dsvm-modalbox（fill 基于 bg-base 的
+  // color-mix，皮肤下实际 α≈0.5）。插件遮罩 .dshm-overlay/.dsvm-overlay 点亮
+  // --dsw-mask-blur，弹窗四周一并磨砂。结构钩子由 verify-upstream-hooks 钉住。
+  `${SCOPE} .dshm-overlay,${SCOPE} .dsvm-overlay{backdrop-filter:var(--dsw-mask-blur, blur(10px));-webkit-backdrop-filter:var(--dsw-mask-blur, blur(10px))}`,
+  `${SCOPE} [class*="_float_"],${SCOPE} [class*="_dialog_"],${SCOPE} .dsvm-filterpop,${SCOPE} .dsvm-modalbox{background:color-mix(in srgb,rgb(250, 249, 246) 86%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
+  `${SCOPE}[data-ds-dark-theme] [class*="_float_"],${SCOPE}[data-ds-dark-theme] [class*="_dialog_"],${SCOPE}[data-ds-dark-theme] .dsvm-filterpop,${SCOPE}[data-ds-dark-theme] .dsvm-modalbox{background:color-mix(in srgb,rgb(18, 18, 26) 86%,transparent)}`,
 ].join("\n");
 
 /** Panel glass: warm mist white (light) / deep night blue-violet (dark). */

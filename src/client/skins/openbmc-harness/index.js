@@ -161,7 +161,13 @@ export function createOpenBmcHarness(jsxRuntime) {
     --dsw-specific-sidebar-nav-item-active: rgba(220, 235, 245, 0.90);
     --dsw-specific-sidebar-nav-item-active-accent: #9cc8e0;
 
-    /* 输入/菜单/选择器/提示 同系冰蓝 */
+    /* 输入/菜单/选择器/提示 同系冰蓝。
+     * 菜单面（host Menu primitives 的 _material 层）官方默认仅 45–58% α，
+     * 且整面 backdrop blur(40px)——透纱皮肤下会把壁纸吃进菜单（发灰发白、
+     * 字看不清）；浮层族固定较实（ADR-0007 amendment），与 specific-menu
+     * 同族同 α，blur 保留只管边缘磨砂。 */
+    --dsw-menu-surface-fill: rgba(242, 247, 251, 0.94);
+    --dsw-alias-menu-group-header-fill: rgba(242, 247, 251, 0.94);
     --dsw-specific-input-major: rgba(255, 255, 255, 0.60);
     --dsw-specific-login-input: rgba(255, 255, 255, 0.60);
     --dsw-specific-menu: rgba(242, 247, 251, 0.94);
@@ -198,7 +204,9 @@ export function createOpenBmcHarness(jsxRuntime) {
     --dsw-specific-sidebar-nav-item-active: rgba(20, 47, 68, 0.90);
     --dsw-specific-sidebar-nav-item-active-accent: #29526f;
 
-    /* 输入/菜单/选择器/提示 同系深冰蓝 */
+    /* 输入/菜单/选择器/提示 同系深冰蓝（菜单面较实同 v1 注） */
+    --dsw-menu-surface-fill: rgba(14, 33, 48, 0.94);
+    --dsw-alias-menu-group-header-fill: rgba(14, 33, 48, 0.94);
     --dsw-specific-input-major: rgba(18, 42, 60, 0.65);
     --dsw-specific-login-input: rgba(18, 42, 60, 0.65);
     --dsw-specific-menu: rgba(14, 33, 48, 0.94);
@@ -319,6 +327,40 @@ export function createOpenBmcHarness(jsxRuntime) {
   body[data-dsh-openbmc-skin][data-ds-dark-theme] .dshm-compat-dialog,
   body[data-dsh-openbmc-skin][data-ds-dark-theme] .dshm-dshchip-tip,
   body[data-dsh-openbmc-skin][data-ds-dark-theme] .dsh-skins-pop {
+    background: color-mix(in srgb, rgb(12, 26, 38) 86%, transparent);
+  }
+
+  /* ---------- ⑧b 浮层毛玻璃 v2（补漏，ADR-0007） ----------
+   * v1 只盖了宿主 Modal（role/aria 定位）与 .dshm-* / .dsh-skins-pop 弹层；
+   * 对 0.2.0-rc.2 前端 dist 与已装插件 client CSS 逐面排查后仍有三类浮层缺口：
+   *   a. dockkit 悬浮窗壳 _float_：背景走 --dsw-alias-bg-layer-2（皮肤下
+   *      α≈0.56–0.64）且全程无 blur——悬浮窗内容直接坐在薄壳上，下层文字
+   *      清晰透出（官方壳是实心 token 所以无此问题）；
+   *   b. 宿主对话框结构兜底 _dialog_：非 modal 变体不带 aria-modal，v1 的
+   *      role/aria 定位不命中；
+   *   c. dsh-m 0.7.x 的 .dsvm-filterpop / .dsvm-modalbox：fill 是 bg-base 的
+   *      color-mix（86–94%），皮肤下 bg-base 本身半透，实际 α≈0.47–0.52。
+   * 另给 .dshm-overlay / .dsvm-overlay 插件遮罩点亮 --dsw-mask-blur（宿主
+   * 遮罩已由 v1 点亮，插件自绘遮罩 token 默认 none），弹窗四周一并磨砂，
+   * 即使 blur 在弱 GPU 上退化，86% 实底也兜住可读性。结构钩子由
+   * verify-upstream-hooks 钉住（_float_ / _dialog_ 清单见守卫脚本）。 */
+  body[data-dsh-openbmc-skin] .dshm-overlay,
+  body[data-dsh-openbmc-skin] .dsvm-overlay {
+    backdrop-filter: var(--dsw-mask-blur, blur(10px));
+    -webkit-backdrop-filter: var(--dsw-mask-blur, blur(10px));
+  }
+  body[data-dsh-openbmc-skin] [class*="_float_"],
+  body[data-dsh-openbmc-skin] [class*="_dialog_"],
+  body[data-dsh-openbmc-skin] .dsvm-filterpop,
+  body[data-dsh-openbmc-skin] .dsvm-modalbox {
+    background: color-mix(in srgb, rgb(247, 250, 252) 86%, transparent);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  }
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] [class*="_float_"],
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] [class*="_dialog_"],
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .dsvm-filterpop,
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .dsvm-modalbox {
     background: color-mix(in srgb, rgb(12, 26, 38) 86%, transparent);
   }`;
 

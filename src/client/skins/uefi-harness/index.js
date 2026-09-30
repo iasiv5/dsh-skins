@@ -68,6 +68,9 @@ body[data-dsh-uefi-harness] {
   --dsw-specific-sidebar-nav-item-hover: rgba(101, 83, 216, 0.09);
   --dsw-specific-sidebar-nav-item-active: rgba(101, 83, 216, 0.15);
   --dsw-specific-sidebar-nav-item-active-accent: #8b7cff;
+  /* 菜单面较实（openbmc 同注：官方默认 45–58% α 会透过 blur40 吃壁纸，ADR-0007 amendment） */
+  --dsw-menu-surface-fill: rgba(248, 247, 255, 0.94);
+  --dsw-alias-menu-group-header-fill: rgba(248, 247, 255, 0.94);
   --dsw-specific-input-major: rgba(255, 255, 255, 0.62);
   --dsw-specific-menu: rgba(248, 247, 255, 0.94);
   --dsw-specific-selector: rgba(232, 228, 255, 0.78);
@@ -95,6 +98,8 @@ body[data-dsh-uefi-harness][data-ds-dark-theme] {
   --dsw-specific-sidebar-nav-item-hover: rgba(169, 156, 255, 0.10);
   --dsw-specific-sidebar-nav-item-active: rgba(169, 156, 255, 0.17);
   --dsw-specific-sidebar-nav-item-active-accent: #6657a8;
+  --dsw-menu-surface-fill: rgba(28, 22, 55, 0.94);
+  --dsw-alias-menu-group-header-fill: rgba(28, 22, 55, 0.94);
   --dsw-specific-input-major: rgba(42, 34, 78, 0.55);
   --dsw-specific-menu: rgba(28, 22, 55, 0.94);
   --dsw-specific-selector: rgba(51, 40, 96, 0.78);
@@ -157,6 +162,40 @@ body[data-dsh-uefi-harness][data-ds-dark-theme] .dshm-panel,
 body[data-dsh-uefi-harness][data-ds-dark-theme] .dshm-compat-dialog,
 body[data-dsh-uefi-harness][data-ds-dark-theme] .dshm-dshchip-tip,
 body[data-dsh-uefi-harness][data-ds-dark-theme] .dsh-skins-pop {
+  background: color-mix(in srgb, rgb(23, 18, 45) 86%, transparent);
+}
+
+/* ---------- 浮层毛玻璃 v2（补漏，ADR-0007） ----------
+ * v1 只盖了宿主 Modal（role/aria 定位）与 .dshm-* / .dsh-skins-pop 弹层；
+ * 对 0.2.0-rc.2 前端 dist 与已装插件 client CSS 逐面排查后仍有三类浮层缺口：
+ *   a. dockkit 悬浮窗壳 _float_：背景走 --dsw-alias-bg-layer-2（皮肤下
+ *      α≈0.56–0.64）且全程无 blur——悬浮窗内容直接坐在薄壳上，下层文字
+ *      清晰透出（官方壳是实心 token 所以无此问题）；
+ *   b. 宿主对话框结构兜底 _dialog_：非 modal 变体不带 aria-modal，v1 的
+ *      role/aria 定位不命中；
+ *   c. dsh-m 0.7.x 的 .dsvm-filterpop / .dsvm-modalbox：fill 是 bg-base 的
+ *      color-mix（86–94%），皮肤下 bg-base 本身半透，实际 α≈0.47–0.52。
+ * 另给 .dshm-overlay / .dsvm-overlay 插件遮罩点亮 --dsw-mask-blur（宿主
+ * 遮罩已由 v1 点亮，插件自绘遮罩 token 默认 none），弹窗四周一并磨砂，
+ * 即使 blur 在弱 GPU 上退化，86% 实底也兜住可读性。结构钩子由
+ * verify-upstream-hooks 钉住（_float_ / _dialog_ 清单见守卫脚本）。 */
+body[data-dsh-uefi-harness] .dshm-overlay,
+body[data-dsh-uefi-harness] .dsvm-overlay {
+  backdrop-filter: var(--dsw-mask-blur, blur(10px));
+  -webkit-backdrop-filter: var(--dsw-mask-blur, blur(10px));
+}
+body[data-dsh-uefi-harness] [class*="_float_"],
+body[data-dsh-uefi-harness] [class*="_dialog_"],
+body[data-dsh-uefi-harness] .dsvm-filterpop,
+body[data-dsh-uefi-harness] .dsvm-modalbox {
+  background: color-mix(in srgb, rgb(248, 247, 255) 86%, transparent);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+}
+body[data-dsh-uefi-harness][data-ds-dark-theme] [class*="_float_"],
+body[data-dsh-uefi-harness][data-ds-dark-theme] [class*="_dialog_"],
+body[data-dsh-uefi-harness][data-ds-dark-theme] .dsvm-filterpop,
+body[data-dsh-uefi-harness][data-ds-dark-theme] .dsvm-modalbox {
   background: color-mix(in srgb, rgb(23, 18, 45) 86%, transparent);
 }`;
 
