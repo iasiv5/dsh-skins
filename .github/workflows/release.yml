@@ -67,7 +67,24 @@ jobs:
           # OIDC exchange happens in npm. Provenance is automatic (public repo
           # + public package). --no-git-checks: the tag checkout is detached.
           npm install -g npm@11
-          pnpm publish --no-git-checks
+          set +e
+          OUT=$(pnpm publish --no-git-checks 2>&1); rc=$?
+          set -e
+          printf '%s\n' "$OUT"
+          # npm's staged-publishing flow (observed 2026-10-01 on v1.2.3): an
+          # accepted OIDC publish sits in npm's staging queue for many minutes
+          # ("Your package is being processed and may take a few minutes to
+          # become available.") while `npm view` still 404s — the rerun-safety
+          # guard above cannot see it, so a rerun inside that window dies with
+          # 409 "Cannot publish over previously staged version". Staged means
+          # ACCEPTED and finalizing asynchronously: treat exactly that case as
+          # success so the tag-delete cleanup below never strips the tag of a
+          # release that is about to go live. Any other failure still fails.
+          if [ "$rc" -ne 0 ] && printf '%s' "$OUT" | grep -q 'previously staged version'; then
+            echo "::notice::version is staged at npm and finalizing asynchronously; nothing left to publish."
+          elif [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi
       - name: Create the GitHub Release
         uses: softprops/action-gh-release@v2
         with:
