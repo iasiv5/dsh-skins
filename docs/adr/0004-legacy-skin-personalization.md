@@ -58,7 +58,7 @@ supersedes: design-1.0.0-personalization.md §9a 终态裁决（未立过 ADR）
 7. **Q7** scrim 载体保持在 `imageLight/Dark` 字符串内按 P 计算，不迁 overlay 通道。
 8. **Q8** 曲线三段式：线性主 alpha + 每 token 固定增量（默认 P 精确回烘焙值）、默认 P=55 由烘焙 bg-base 反推、blur 以默认点为锚二次爬坡（上限 24px）；浮层族固定。
 9. **Q9** 「自定义皮肤」= 本仓库未来代码级皮肤；用户运行时主题包不复活（ADR-0002 不逆转）。
-10. **Q10** 文档四件：ADR-0004、design v2.7 注记、`CONTEXT.md` 官方皮肤词条、catalog §9a 注释改写。
+10. **Q10** 文档四件：ADR-0004、design v2.7 注记、`GLOSSARY.md` 官方皮肤词条、catalog §9a 注释改写。
 11. **Q11** 落入未发布的 1.0.0，升级故事保持单段。
 12. **Q12** `project()` 内联实现（字面量烘焙表），不提共享 helper。
 13. **Q13** `makeLegacyProjector` 删除。
