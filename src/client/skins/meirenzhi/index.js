@@ -80,9 +80,18 @@ const CSS = [
   // （sticky + bg-base α0.55 无 blur，卡片滚过即透字）。插件遮罩
   // .dshm-overlay/.dsvm-overlay 点亮
   // --dsw-mask-blur，弹窗四周一并磨砂。结构钩子由 verify-upstream-hooks 钉住。
-  `${SCOPE} .dshm-overlay,${SCOPE} .dsvm-overlay{backdrop-filter:var(--dsw-mask-blur, blur(10px));-webkit-backdrop-filter:var(--dsw-mask-blur, blur(10px))}`,
+  `${SCOPE} .dshm-overlay,${SCOPE} .dsvm-overlay,${SCOPE} .lc-ov-backdrop,${SCOPE} .lc-modal-backdrop{backdrop-filter:var(--dsw-mask-blur, blur(10px));-webkit-backdrop-filter:var(--dsw-mask-blur, blur(10px))}`,
   `${SCOPE} [class*="_float_"],${SCOPE} [class*="_dialog_"],${SCOPE} .dsvm-filterpop,${SCOPE} .dsvm-modalbox,${SCOPE} .dsvm-chipswrap{background:color-mix(in srgb,rgb(250, 249, 246) 86%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
   `${SCOPE}[data-ds-dark-theme] [class*="_float_"],${SCOPE}[data-ds-dark-theme] [class*="_dialog_"],${SCOPE}[data-ds-dark-theme] .dsvm-filterpop,${SCOPE}[data-ds-dark-theme] .dsvm-modalbox,${SCOPE}[data-ds-dark-theme] .dsvm-chipswrap{background:color-mix(in srgb,rgb(18, 18, 26) 86%,transparent)}`,
+  // 浮层毛玻璃 v3（补漏，ADR-0007 amendment）：dsh-context（上下文洞察）的
+  // 面卡直接以 --dsw-alias-bg-layer-1/3 作底（meirenzhi/tgcf 未覆盖该 token →
+  // 宿主实心，故此前无症状）、自带 0 blur 且不带 role/aria（v1 定位不命中）：
+  // overview/modal 弹层卡 .lc-ov-card/.lc-modal-card（fixed 遮罩也不消费
+  // --dsw-mask-blur）与侧栏右栏内嵌卡 .lc-card/.lc-settings-card。四皮肤同构
+  // 接管为皮肤 tint 86% 实底 + blur14（浮层族同构），遮罩已在 v2 补点。
+  // lc-* 为该插件自有稳定类名（同 .dshm-* 前提，不入宿主守卫）。
+  `${SCOPE} .lc-ov-card,${SCOPE} .lc-modal-card,${SCOPE} .lc-card,${SCOPE} .lc-settings-card{background:color-mix(in srgb,rgb(250, 249, 246) 86%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
+  `${SCOPE}[data-ds-dark-theme] .lc-ov-card,${SCOPE}[data-ds-dark-theme] .lc-modal-card,${SCOPE}[data-ds-dark-theme] .lc-card,${SCOPE}[data-ds-dark-theme] .lc-settings-card{background:color-mix(in srgb,rgb(18, 18, 26) 86%,transparent)}`,
 ].join("\n");
 
 /** Panel glass: warm mist white (light) / deep night blue-violet (dark). */

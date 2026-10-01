@@ -9,13 +9,16 @@
  * Ratcheted at 1.0.1: origin/main had 768,496 non-wallpaper bytes (451 under
  * the old ceiling); this change adds 2,289 bytes (1,838 over). New baseline
  * 770,785 = measured code bytes; the 20,480 accidental-growth slack is restored.
+ * Ratcheted at 1.2.3: ADR-0007 v3 amendment (dsh-context overlay + sidebar
+ * cards) adds 5,575 bytes across the four skins (HEAD 1.2.2 build 3,735,107 →
+ * 3,740,682); baseline 770,785 → 776,360, slack restored.
  * Wired into `pnpm run check` as the last step (after build, so lib is fresh).
  */
 import { readFileSync } from "node:fs";
 
 const WALLPAPERS = "src/client/skins/meirenzhi/wallpapers.js";
 const CLIENT = "lib/client.js";
-const BASELINE_CLIENT_BYTES = 770_785;
+const BASELINE_CLIENT_BYTES = 776_360;
 const SLACK_BYTES = 20_480;
 const MAX_TOTAL_WEBP_BYTES = 4_700_000;
 

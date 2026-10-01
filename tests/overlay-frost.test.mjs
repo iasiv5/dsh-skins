@@ -69,6 +69,42 @@ test("v2 union carries a dark-theme variant per skin", () => {
   }
 });
 
+test("v3 dsh-context overlay cards frosted in all four skins (ADR-0007 amendment)", () => {
+  // dsh-context (上下文洞察) paints its surfaces with --dsw-alias-bg-layer-1/3
+  // and no blur of its own; its fixed backdrops carry no role/aria and don't
+  // consume --dsw-mask-blur. The lc-* classes are the plugin's own stable names
+  // (same standing as .dshm-* — no host guard). Covered: overview/modal cards
+  // (user photo #1) AND the sidebar-embedded cards (user photo #2).
+  const darkTints = {
+    tgcf: "rgb(24,16,16)86%",
+    openbmc: "rgb(12,26,38)86%",
+    meirenzhi: "rgb(18,18,26)86%",
+    uefi: "rgb(23,18,45)86%",
+  };
+  for (const { id, css } of skins) {
+    // overview / modal / sidebar-embedded cards carry the frost declaration
+    // in the SAME rule block
+    for (const hook of [".lc-ov-card", ".lc-modal-card", ".lc-card", ".lc-settings-card"]) {
+      assert.ok(
+        new RegExp(`${hook.replaceAll(".", "\\.")}[^{}]*\\{[^{}]*backdrop-filter:blur\\(14px\\)saturate\\(1\\.3\\)`).test(css),
+        `${id}: frost rule missing for ${hook}`,
+      );
+    }
+    // fixed backdrops ride the shared mask-blur treatment (no tint)
+    for (const mask of [".lc-ov-backdrop", ".lc-modal-backdrop"]) {
+      assert.ok(
+        new RegExp(`${mask.replaceAll(".", "\\.")}[^{}]*\\{backdrop-filter:var\\(--dsw-mask-blur`).test(css),
+        `${id}: ${mask} mask blur missing`,
+      );
+    }
+    // dark-theme variant per skin
+    assert.ok(
+      new RegExp(`data-ds-dark-theme\\][^{]*\\.lc-ov-card[^{}]*\\{[^{}]*color-mix\\(insrgb,${darkTints[id].replaceAll(/([()])/g, "\\$&")}`).test(css),
+      `${id}: dark frost tint for .lc-ov-card missing`,
+    );
+  }
+});
+
 test("float selector cannot sweep floatTitle/floatBody/floatResize", () => {
   // The structural hook keys on the trailing underscore; the guard enforces
   // the live inventory, this pins the reasoning.

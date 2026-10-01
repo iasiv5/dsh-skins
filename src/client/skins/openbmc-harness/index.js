@@ -347,7 +347,9 @@ export function createOpenBmcHarness(jsxRuntime) {
    * 即使 blur 在弱 GPU 上退化，86% 实底也兜住可读性。结构钩子由
    * verify-upstream-hooks 钉住（_float_ / _dialog_ 清单见守卫脚本）。 */
   body[data-dsh-openbmc-skin] .dshm-overlay,
-  body[data-dsh-openbmc-skin] .dsvm-overlay {
+  body[data-dsh-openbmc-skin] .dsvm-overlay,
+  body[data-dsh-openbmc-skin] .lc-ov-backdrop,
+  body[data-dsh-openbmc-skin] .lc-modal-backdrop {
     backdrop-filter: var(--dsw-mask-blur, blur(10px));
     -webkit-backdrop-filter: var(--dsw-mask-blur, blur(10px));
   }
@@ -365,6 +367,31 @@ export function createOpenBmcHarness(jsxRuntime) {
   body[data-dsh-openbmc-skin][data-ds-dark-theme] .dsvm-filterpop,
   body[data-dsh-openbmc-skin][data-ds-dark-theme] .dsvm-modalbox,
   body[data-dsh-openbmc-skin][data-ds-dark-theme] .dsvm-chipswrap {
+    background: color-mix(in srgb, rgb(12, 26, 38) 86%, transparent);
+  }
+
+  /* ---------- ⑧c 浮层毛玻璃 v3：dsh-context 弹层卡（ADR-0007 amendment） ----------
+   * dsh-context（上下文洞察）的面卡直接以 --dsw-alias-bg-layer-1/3（皮肤下
+   * α≈0.48–0.62）作底、自带 0 blur，且不带 role/aria（v1 定位不命中）：
+   *   · overview / modal 弹层卡 .lc-ov-card / .lc-modal-card —— fixed 遮罩
+   *     .lc-ov-backdrop / .lc-modal-backdrop 也不消费 --dsw-mask-blur，整页
+   *     文字清晰透出（用户实拍 #1）；
+   *   · 侧栏右栏内嵌卡 .lc-card / .lc-settings-card —— 右栏卡片洗白透底
+   *     （用户实拍 #2）。
+   * lc-* 为该插件自有稳定类名（同 .dshm-* 前提，不入宿主守卫）；86% 实底 +
+   * blur14 并入浮层族，遮罩已在 ⑧b 补点 mask-blur。 */
+  body[data-dsh-openbmc-skin] .lc-ov-card,
+  body[data-dsh-openbmc-skin] .lc-modal-card,
+  body[data-dsh-openbmc-skin] .lc-card,
+  body[data-dsh-openbmc-skin] .lc-settings-card {
+    background: color-mix(in srgb, rgb(247, 250, 252) 86%, transparent);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  }
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .lc-ov-card,
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .lc-modal-card,
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .lc-card,
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .lc-settings-card {
     background: color-mix(in srgb, rgb(12, 26, 38) 86%, transparent);
   }`;
 
