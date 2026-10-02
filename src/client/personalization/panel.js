@@ -33,7 +33,7 @@ import { resolveHostErrorText } from "../host-errors.js";
 /**
  * The personalization panel's own visual interface: every module-owned
  * class (root `.dsh-skins-pz` and below) is styled here. Shared atoms
- * (.dsh-skins-pop-title, .dsh-skins-update-spinner) carry their base
+ * (.dsh-skins-pop-title, .dsh-skins-spinner) carry their base
  * styles in the shell's CSS and are only contextually adapted here.
  * The switcher composes this into its single style tag — the class
  * vocabulary is therefore part of this module's interface to the shell
@@ -99,7 +99,7 @@ export const PANEL_CSS = [
   '.dsh-skins-pz-del{position:absolute;top:4px;right:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font:inherit;font-size:14px;line-height:1;cursor:pointer}',
   '.dsh-skins-pz-del:hover{background:rgba(0,0,0,.78)}',
   '.dsh-skins-pz-del:disabled{opacity:.55;cursor:default}',
-  '.dsh-skins-pz-del .dsh-skins-update-spinner{width:12px;height:12px;border-width:2px}',
+  '.dsh-skins-pz-del .dsh-skins-spinner{width:12px;height:12px;border-width:2px}',
   '.dsh-skins-pz-rowbtns{display:flex;gap:6px;flex-wrap:wrap}',
   '.dsh-skins-pz-actions{position:sticky;bottom:0;z-index:1;display:flex;align-items:flex-end;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:2px;padding:10px 2px 2px;background:var(--dsw-alias-bg-overlay);border-top:1px solid var(--dsw-alias-border-l2)}',
   '.dsh-skins-pz-cluster{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}',
@@ -279,7 +279,7 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
                   "aria-label": `${tr("personalization.library.delete")}: ${asset.displayName}`,
                   onClick: () => removeAsset(asset),
                   children: deletingId === asset.id
-                    ? jsx("span", { className: "dsh-skins-update-spinner", "aria-hidden": "true" })
+                    ? jsx("span", { className: "dsh-skins-spinner", "aria-hidden": "true" })
                     : "×",
                 }, `${asset.id}-del`),
               ],

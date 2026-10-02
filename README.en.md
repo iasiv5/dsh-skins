@@ -25,7 +25,7 @@ dsh plugin --profile web add @iasiv5/dsh-skins
 3. Refresh the page.
 4. Click **Skin Switcher** at the bottom of the sidebar and pick a skin.
 
-On a fresh install with no saved choice, OpenBMC Studio (the `openbmc` skin) is the factory-default skin (since v1.0.6; meirenzhi before that). For reproducible installs, pin the exact version (identical to what a one-click update lands on):
+On a fresh install with no saved choice, OpenBMC Studio (the `openbmc` skin) is the factory-default skin (since v1.0.6; meirenzhi before that). For reproducible installs, pin the exact version:
 
 ```sh
 dsh plugin --profile web add @iasiv5/dsh-skins@1.0.0
@@ -132,7 +132,7 @@ Every skin's key visuals are open to adjustment. Click the gear button on a skin
 
 ### Where settings live, and whether they survive
 
-- Configuration and the library live under `$DSH_HOME/dsh-skins/`, physically isolated from the plugin install directory: upgrades, rollbacks and one-click updates cannot touch them.
+- Configuration and the library live under `$DSH_HOME/dsh-skins/`, physically isolated from the plugin install directory: plugin upgrades (via the dsh-m marketplace or `dsh plugin`) only replace the plugin install directory and cannot touch it.
 - Only overrides are stored: untouched fields automatically follow the new version's defaults, and leftovers of retired fields are cleaned up at load.
 - A damaged state file triggers recovery mode: indexes are rebuilt and bad files quarantined — your images are never wiped.
 - Uploads pass magic-number validation and size caps; concurrent writes merge per field and never clobber each other.
@@ -152,31 +152,19 @@ When the sidebar is collapsed, the entry folds into a round palette icon; multip
 
 The URL switches skins too: `/?skin=official`, `/?skin=meirenzhi`, `/?skin=openbmc`, `/?skin=uefi-harness`, `/?skin=tgcf`.
 
-## One-click updates and the security design
+## Updates
 
-This section answers: how updates work, and why it is safe to let the plugin install them.
+This section answers: how the plugin is updated.
 
-Opening the skin switcher makes the Host check the latest stable version of `@iasiv5/dsh-skins` on the npm registry (the `latest` dist-tag); when a newer version exists, the update row shows the current version, the latest version and a link to the npm version page:
-
-1. Click **Update**; download, install and verification run automatically.
-2. Click **Restart now** (or **Later**); the new version takes effect after the restart.
-3. Running Agents block the restart; retry once they finish.
-
-Every step is verified in code, not on trust:
-
-- only strict `X.Y.Z` stable versions are accepted (the npm `latest` dist-tag);
-- the remote package name, repository identity and version metadata must all agree (including the `dist.integrity` digest);
-- the actual install is pinned to that exact version, never drifting with a semver range;
-- after installing, the profile and the installed package are re-verified; any failure restores the previous version automatically;
-- under service managers such as systemd, the restart is handed back to the unit's `Restart` policy instead of killing the process.
+The plugin ships no updater of its own (ADR-0008): update discovery and installation belong to the dsh-m marketplace, or to the DSH CLI — upgrade with `dsh plugin --profile web update @iasiv5/dsh-skins`; roll back by reinstalling an older exact version with `dsh plugin add --profile web @iasiv5/dsh-skins@X.Y.Z`. The `latest` exact version of `@iasiv5/dsh-skins` on npm remains the sole distribution form, and the version policy stays strict `X.Y.Z`.
 
 ## FAQ
 
 **How do I get fully back to the official interface?**
 Pick "DeepSeek Harness (Official)" in the skin switcher, or open `/?skin=official`. It undoes the extension skin's branding, backdrop and favicon while keeping the switcher and the official light/dark palettes; your light/dark/system preference stays untouched.
 
-**What happens when an update fails?**
-Updates follow a "back up first, then install" transaction: any verification failure automatically restores the previous version, and the popover shows the failure reason (in Chinese and English). If it still fails, update manually with `dsh plugin --profile web update @iasiv5/dsh-skins`.
+**Why is there no "check for updates" button?**
+Update duty has moved to the dsh-m marketplace and the DSH CLI (ADR-0008); the skin switcher only handles skins and personalization.
 
 **Which DSH Web versions are supported?**
 Verified with DSH Web `0.2.0-rc.2`. Later rc builds of the same series are expected to work, but unverified versions carry no promise.
@@ -185,7 +173,7 @@ Verified with DSH Web `0.2.0-rc.2`. Later rc builds of the same series are expec
 In the browser on the DSH host machine (loopback), the preference is persisted by the DSH Host and shared naturally. Other remote browsers keep the preference in their own `localStorage` — independent per browser, never overwritten.
 
 **Do personalization settings survive upgrades?**
-Yes. Configuration and the library live in the `$DSH_HOME/dsh-skins/` data directory; self-updates only replace the plugin install directory and physically cannot touch it — rollbacks preserve it too. Only disk-level damage can lose configuration, and even then recovery mode keeps the library images.
+Yes. Configuration and the library live in the `$DSH_HOME/dsh-skins/` data directory; upgrades only replace the plugin install directory (through any channel) and physically cannot touch it — rollbacks preserve it too. Only disk-level damage can lose configuration, and even then recovery mode keeps the library images.
 
 ## Known limits
 

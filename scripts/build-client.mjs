@@ -41,8 +41,11 @@ async function validateOutputs() {
       `generated client bundle is missing the DSH module wrapper: expected registration id "${name}" (src/client/index.js must register under the package.json name)`,
     );
   }
-  if (!host.includes("/dsh-skins/update") || !host.includes("self-update routes")) {
-    throw new Error("generated host bundle is missing the self-update routes");
+  if (!host.includes("/dsh-skins/config") || !host.includes("personalization routes")) {
+    throw new Error("generated host bundle is missing the personalization routes");
+  }
+  if (host.includes("/dsh-skins/update") || host.includes("self-update routes")) {
+    throw new Error("generated host bundle still contains self-update remnants");
   }
   console.log(`built ${clientOptions.outfile} (${Buffer.byteLength(client)} bytes)`);
   console.log(`built ${hostOptions.outfile} (${Buffer.byteLength(host)} bytes)`);

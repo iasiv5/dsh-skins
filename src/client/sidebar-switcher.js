@@ -1,4 +1,3 @@
-import { createUpdatePanel, UPDATE_CSS } from "./update-panel.js";
 import { DICTS, NS, formatTemplate } from "./dicts.js";
 import { createPersonalizationPanel, PANEL_CSS } from "./personalization/panel.js";
 import { getSkinSchema } from "../shared/personalization/catalog.js";
@@ -173,12 +172,12 @@ const SHELL_CSS = [
   '.dsh-skins-pop-card-on,.dsh-skins-pop-card-on:hover{border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-bg-module-platform)}',
   '.dsh-skins-pop-card-label{font-size:14px;line-height:20px;font-weight:500}',
   '.dsh-skins-pop-card-desc{font-size:12px;line-height:18px;color:var(--dsw-alias-label-secondary)}',
-  // 【共享原子】.dsh-skins-update-spinner (+ its keyframes and the
-  // reduced-motion opt-out) is shared vocabulary: the update panel AND the
-  // personalization panel's delete badge both render it.
-  '.dsh-skins-update-spinner{width:16px;height:16px;border:2px solid var(--dsw-alias-border-l2);border-top-color:var(--dsw-alias-brand-primary);border-radius:50%;animation:dsh-skins-spin .8s linear infinite}',
+  // 【共享原子】.dsh-skins-spinner (+ its keyframes and the
+  // reduced-motion opt-out) is the personalization panel's delete-badge
+  // loading indicator, styled here with the shell's base atoms.
+  '.dsh-skins-spinner{width:16px;height:16px;border:2px solid var(--dsw-alias-border-l2);border-top-color:var(--dsw-alias-brand-primary);border-radius:50%;animation:dsh-skins-spin .8s linear infinite}',
   '@keyframes dsh-skins-spin{to{transform:rotate(360deg)}}',
-  '@media (prefers-reduced-motion:reduce){.dsh-skins-update-spinner{animation:none}}',
+  '@media (prefers-reduced-motion:reduce){.dsh-skins-spinner{animation:none}}',
   // -- personalization gear + panel -------------------------------------------
   '.dsh-skins-pop-card-row{display:flex;width:100%;min-width:0;gap:6px;align-items:stretch}',
   '.dsh-skins-pop-card-row .dsh-skins-pop-card{flex:1;min-width:0}',
@@ -249,11 +248,9 @@ const SHELL_CSS = [
 /** Single style tag composition: shell chrome first, then the surface
  *  modules' owned CSS. The order IS the cascade contract (equal-specificity
  *  pairs must not cross blocks) — pinned by tests/sidebar-switcher.test.mjs. */
-const CSS = [SHELL_CSS, PANEL_CSS, UPDATE_CSS].join("\n");
+const CSS = [SHELL_CSS, PANEL_CSS].join("\n");
 
 export function installSidebarSwitcher(ctx, { runtime, jsx, react, reactDom, configClient, skinsById }) {
-  const UpdatePanel = createUpdatePanel({ jsx, react });
-
   function fallbackTranslate(key, params = {}) {
     return formatTemplate(DICTS.zh[key] ?? key, params);
   }
@@ -533,7 +530,6 @@ export function installSidebarSwitcher(ctx, { runtime, jsx, react, reactDom, con
             jsx("div", { key: "d1", className: "dsh-skins-pop-divider", "aria-hidden": "true" }),
             jsx("div", { key: "skins", className: "dsh-skins-pop-title", children: tr("skins.title") }),
             ...skinCards,
-            jsx(UpdatePanel, { key: "update", open, tr }),
           ] }),
           showPersonalization ? jsx("div", {
             key: "panel", className: "dsh-skins-pz-panel",

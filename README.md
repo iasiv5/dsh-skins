@@ -25,7 +25,7 @@ dsh plugin --profile web add @iasiv5/dsh-skins
 3. 刷新页面。
 4. 点击侧栏底部的「皮肤切换」，挑选皮肤。
 
-首次安装且尚无已保存的选择时，默认启用「OpenBMC Studio」（出厂皮肤，v1.0.6 起；此前为美人志）。需要可复现安装时，固定到精确版本（与一键更新落地后的形态完全一致）：
+首次安装且尚无已保存的选择时，默认启用「OpenBMC Studio」（出厂皮肤，v1.0.6 起；此前为美人志）。需要可复现安装时，固定到精确版本：
 
 ```sh
 dsh plugin --profile web add @iasiv5/dsh-skins@1.0.0
@@ -132,7 +132,7 @@ dsh plugin --profile web remove @iasiv5/dsh-skins    # 卸载
 
 ### 配置存在哪、会不会丢
 
-- 配置与图库存于 `$DSH_HOME/dsh-skins/`，与插件安装目录物理隔离：升级、回滚、一键更新都碰不到它。
+- 配置与图库存于 `$DSH_HOME/dsh-skins/`，与插件安装目录物理隔离：插件升级（经 dsh-m 市场或 `dsh plugin`）只替换插件安装目录，碰不到它。
 - 配置只存「改过什么」：未改动的字段自动跟随新版本的默认值，已下线字段的残留会在加载时自动清理。
 - 配置文件损坏时进入恢复模式：只重建索引、隔离坏文件，绝不清除你的图片。
 - 上传走魔数校验与尺寸上限；并发写入按字段合并，互不覆盖。
@@ -152,31 +152,19 @@ dsh plugin --profile web remove @iasiv5/dsh-skins    # 卸载
 
 URL 也能切皮肤：`/?skin=official`、`/?skin=meirenzhi`、`/?skin=openbmc`、`/?skin=uefi-harness`、`/?skin=tgcf`。
 
-## 一键更新与安全设计
+## 更新
 
-本节回答：怎么更新、为什么敢让它自己装。
+本节回答：插件怎么更新。
 
-打开皮肤切换器时，Host 会检查 npm registry 上 `@iasiv5/dsh-skins` 的最新正式版（latest 标签）；发现新版本后，更新栏会显示当前版本、最新版本与 npm 版本页链接：
-
-1. 点击「更新」，下载、安装、校验自动完成；
-2. 点击「立即重启」（或选「稍后」），新版本重启后生效；
-3. 有 Agent 正在运行时阻止重启，任务结束后再试。
-
-每一步都有代码校验，不靠信任：
-
-- 只接受严格的 `X.Y.Z` 正式版本号（npm latest 标签）；
-- 校验远端包名、仓库标识与版本元数据一致（含 `dist.integrity` 完整性摘要）；
-- 实际安装固定到该精确版本，不跟随语义化版本范围漂移；
-- 安装后复验 profile 与已安装包，失败自动恢复原版本；
-- systemd 等服务管理器下，重启交回服务的 `Restart` 策略，不硬杀进程。
+插件不自带更新器（ADR-0008）：更新发现与安装交给 dsh-m 市场，或 DSH 官方 CLI——升级用 `dsh plugin --profile web update @iasiv5/dsh-skins`；回滚 = 重装旧精确版本 `dsh plugin add --profile web @iasiv5/dsh-skins@X.Y.Z`。npm 上 `@iasiv5/dsh-skins` 的 latest 精确版本仍是唯一分发形态，版本策略维持严格 X.Y.Z。
 
 ## FAQ
 
 **怎么彻底回到官方界面？**
 在皮肤切换器中选择「DeepSeek Harness（官方）」，或访问 `/?skin=official`。它撤销扩展皮肤的品牌、背景与 favicon，保留皮肤切换器与官方明暗配色，也不会改动你的浅色/深色/跟随系统偏好。
 
-**更新失败会怎样？**
-更新遵循「先备份、再安装」的事务流程，任何校验失败都会自动恢复原版本，弹层显示失败原因（中英双语）。仍失败时可用 `dsh plugin --profile web update @iasiv5/dsh-skins` 手动更新。
+**为什么没有「检查更新」按钮？**
+更新职责已移交 dsh-m 市场与 DSH CLI（ADR-0008）；皮肤切换器只负责换肤与个性化。
 
 **支持哪些 DSH Web 版本？**
 已使用 DSH Web `0.2.0-rc.2` 验证。同系列 rc 版本理论上兼容，未经验证的版本不作承诺。
@@ -185,7 +173,7 @@ URL 也能切皮肤：`/?skin=official`、`/?skin=meirenzhi`、`/?skin=openbmc`�
 在 DSH 所在机器的浏览器（loopback）上，偏好由 DSH Host 持久化，天然共享。其他远程浏览器由插件将偏好存入本地 `localStorage`，各浏览器独立、互不覆盖。
 
 **个性化配置会随升级丢吗？**
-不会。配置与图库存放在 `$DSH_HOME/dsh-skins/` 数据目录，自更新只替换插件安装目录，物理上碰不到它；回滚同样保留。只有磁盘级损坏可能丢失配置——那时恢复模式仍会保住图库图片。
+不会。配置与图库存放在 `$DSH_HOME/dsh-skins/` 数据目录，升级只替换插件安装目录（无论经哪个通道），物理上碰不到它；回滚同样保留。只有磁盘级损坏可能丢失配置——那时恢复模式仍会保住图库图片。
 
 ## 已知边界
 

@@ -329,10 +329,8 @@ for (const node of panelChildren) {
     skinCards.push(node);
   }
 }
-const updatePanelNode = panelChildren.find((node) => typeof node?.type === "function");
 if (skinCards.length !== 5) throw new Error("skin section needs official appearance + 4 skins, got " + skinCards.length);
 if (gears.length !== 4) throw new Error("every catalog skin exposes a personalization gear, got " + gears.length);
-if (typeof updatePanelNode?.type !== "function") throw new Error("update panel must render after the skin cards");
 if (skinCards[0].props.children[0].props.children !== "DeepSeek Harness（官方）") throw new Error("official appearance must be the first skin card");
 if (skinCards[0].props["aria-checked"] !== false) throw new Error("official appearance must not be selected on first load");
 if (skinCards[1].props["aria-checked"] !== true) throw new Error("openbmc (factory skin) must remain selected on first load");
@@ -343,61 +341,6 @@ if (themeSnapshot.preference !== "system") throw new Error("system button must c
 if (storage.get("dsh-skins:theme-preference") !== "system") throw new Error("system selection must persist remotely");
 console.log("✓ popover: appearance(3) + skins(5: official first, openbmc second, tgcf last) + gears(4); system theme persisted");
 
-// ---- update panel states: local development, available Release, up to date ----
-stateOverrides = [{
-	kind: "ready",
-	status: { currentVersion: "0.4.0", latest: { version: "0.3.1" }, source: { kind: "link" }, operation: null, restartRequired: false },
-	error: null,
-}, false, false, false, false];
-const developmentUpdate = updatePanelNode.type(updatePanelNode.props);
-if (!String(developmentUpdate.props.className).includes("dsh-skins-update-row-muted")) throw new Error("link mode status must be visually muted");
-if (developmentUpdate.props.children !== "本地开发模式 - v0.4.0（最新正式版 v0.3.1）") throw new Error("link mode one-line status is incorrect");
-
-stateOverrides = [{
-	kind: "ready",
-	status: { currentVersion: "0.4.0", latest: { version: "0.5.0" }, source: { kind: "link" }, operation: null, restartRequired: false, updateAvailable: true },
-	error: null,
-}, false, false, false, false];
-const developmentWithRelease = updatePanelNode.type(updatePanelNode.props);
-if (developmentWithRelease.props.children !== "本地开发模式 - v0.4.0（可更新至 v0.5.0）") throw new Error("link mode newer-release status is incorrect");
-
-stateOverrides = [{
-	kind: "ready",
-	status: { currentVersion: "0.3.1", latest: { version: "0.4.0", htmlUrl: "https://example.test/release" }, source: { kind: "npm" }, operation: null, restartRequired: false, updateAvailable: true, canUpdate: true },
-	error: null,
-}, false, false, false, false];
-const availableUpdate = updatePanelNode.type(updatePanelNode.props);
-if (availableUpdate.props.children[0].props.children[0].props.children !== "发现插件更新") throw new Error("available update title missing");
-if (availableUpdate.props.children[1].props.children.props.children !== "更新") throw new Error("available update action missing");
-
-stateOverrides = [{
-	kind: "ready",
-	status: { currentVersion: "0.4.0", latest: { version: "0.4.0" }, source: { kind: "npm" }, operation: null, restartRequired: false, updateAvailable: false, canUpdate: false },
-	error: null,
-}, false, false, false, false];
-if (updatePanelNode.type(updatePanelNode.props) !== null) throw new Error("up-to-date GitHub install must hide the update row");
-
-stateOverrides = [{ kind: "error", status: null, error: "offline" }, false, false, false, false];
-const failedCheck = updatePanelNode.type(updatePanelNode.props);
-if (failedCheck.props.children[1].props.children !== "重试") throw new Error("failed update check must offer retry");
-
-stateOverrides = [{
-	kind: "ready",
-	status: { currentVersion: "0.3.1", latest: { version: "0.4.0" }, source: { kind: "npm" }, operation: { phase: "installing" }, restartRequired: false, updateAvailable: true, canUpdate: true },
-	error: null,
-}, false, false, false, false];
-const installingUpdate = updatePanelNode.type(updatePanelNode.props);
-if (installingUpdate.props.children[1].props.children.props.className !== "dsh-skins-update-spinner") throw new Error("installing update must show progress spinner");
-
-stateOverrides = [{
-	kind: "ready",
-	status: { currentVersion: "0.4.0", latest: { version: "0.4.0" }, source: { kind: "npm" }, operation: { phase: "done", release: { version: "0.4.0" } }, restartRequired: true, restartAvailable: true, restartSafety: { state: "safe", running: 0 }, updateAvailable: false, canUpdate: false },
-	error: null,
-}, false, false, false, false];
-const restartUpdate = updatePanelNode.type(updatePanelNode.props);
-if (restartUpdate.props.children[1].props.children[0].props.children !== "立即重启") throw new Error("completed update must offer immediate restart");
-if (restartUpdate.props.children[1].props.children[1].props.children !== "稍后") throw new Error("completed update must offer deferred restart");
-console.log("✓ update panel covers link, available, current, error, progress, and restart states");
 
 // ---- restore the official appearance, then switch via the public selector ----
 // The mount being torn down here is the INITIAL one — the factory skin

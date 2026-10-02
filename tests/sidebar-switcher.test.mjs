@@ -7,7 +7,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { installSidebarSwitcher, sweepShellHeight } from "../src/client/sidebar-switcher.js";
 import { PANEL_CSS } from "../src/client/personalization/panel.js";
-import { UPDATE_CSS } from "../src/client/update-panel.js";
 import { createFakeReact, jsx, flatten } from "./fake-react.mjs";
 
 function makeDom(viewportHeight = 900, viewportWidth = 1400) {
@@ -347,8 +346,8 @@ test("⑩ shell is clamped to the space above its anchor; panel column scrolls; 
   assert.ok(css.indexOf(".dsh-skins-wide .dsh-skins-pz-panel{overflow-y:auto")
     < css.indexOf(".dsh-skins-sweeping .dsh-skins-pz-panel{overflow-y:hidden}"),
     "级联契约：sweep 裁剪必须晚于宽壳滚动规则");
-  assert.ok(css.endsWith(PANEL_CSS + "\n" + UPDATE_CSS),
-    "组合契约：单标签以 [SHELL, PANEL, UPDATE] 收尾");
+  assert.ok(css.endsWith(PANEL_CSS),
+    "组合契约：单标签以 [SHELL, PANEL] 收尾");
   assert.ok(css.includes("min-width:0;width:360px;flex:none"),
     "list column width is fixed in the BASE rule — the instant wide-class flip on collapse cannot resize it");
   assert.ok(css.includes(".dsh-skins-pop{transition:none}"),

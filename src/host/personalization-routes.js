@@ -10,8 +10,69 @@
  */
 
 import { codedError, publicError } from "./errors.js";
-import { isTrustedRequest } from "./routes.js";
 import { ASSET_ID_PATTERN, GLOBAL_MAX_BYTES } from "../shared/personalization/catalog.js";
+
+function parseAuthority(authority) {
+  try {
+    return new URL(`http://${authority}`);
+  } catch {
+    return undefined;
+  }
+}
+
+function canonicalAuthority(entry, parsed) {
+  const port = parsed.port !== "" ? parsed.port : new URL(`https://${entry}`).port;
+  return port === "" ? parsed.hostname : `${parsed.hostname}:${port}`;
+}
+
+function isLoopbackHostname(hostname) {
+  if (hostname === "localhost" || hostname === "[::1]") return true;
+  const parts = hostname.split(".");
+  return parts.length === 4
+    && parts[0] === "127"
+    && parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) <= 255);
+}
+
+function isTrustedAuthority(hostUrl, trustedHosts) {
+  return trustedHosts.some((entry) => {
+    const parsed = parseAuthority(entry);
+    if (parsed === undefined) return false;
+    return canonicalAuthority(entry, parsed) === parsed.hostname
+      ? parsed.hostname === hostUrl.hostname
+      : parsed.host === hostUrl.host;
+  });
+}
+
+/** Mirror DSH's browser-trust fence for privileged local Host routes. */
+function isTrustedRequest(request, trustedHosts = []) {
+  const host = header(request.headers, "host");
+  if (host === undefined) return false;
+  const hostUrl = parseAuthority(host);
+  if (hostUrl === undefined) return false;
+  const socketAddress = request.socket?.remoteAddress
+    ?? request.info?.remoteAddress;
+  if (isLoopbackHostname(hostUrl.hostname)) {
+    // A loopback Host claim must come from a loopback TCP peer: the Host
+    // header is client-controlled and trivially spoofed when the server
+    // listens on a non-loopback interface. (When no socket info exists —
+    // unit-test harnesses — the header check stands as before.)
+    if (typeof socketAddress === "string") {
+      const loopbackPeer = socketAddress === "127.0.0.1" || socketAddress === "::1"
+        || socketAddress === "::ffff:127.0.0.1";
+      if (!loopbackPeer) return false;
+    }
+  } else if (!isTrustedAuthority(hostUrl, trustedHosts)) {
+    return false;
+  }
+  if (header(request.headers, "sec-fetch-site") === "cross-site") return false;
+  const origin = header(request.headers, "origin");
+  if (origin === undefined) return true;
+  try {
+    return new URL(origin).host === hostUrl.host;
+  } catch {
+    return false;
+  }
+}
 
 const CODE_STATUS = {
   INVALID_CONFIG: 400,

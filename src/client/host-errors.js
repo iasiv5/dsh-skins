@@ -1,38 +1,13 @@
 /** Host error presentation — the stable Host error code → dictionary key map
- * plus the localized-text resolvers shared by the update panel and the
- * personalization panel. */
+ * plus the localized-text resolver used by the personalization panel. */
 
 /**
  * Stable Host error code → dictionary key. Every user-facing Host error
- * carries `code` (and optionally `params`); the update panel renders the
- * localized template when the code is known and falls back to the Host's
+ * carries `code` (and optionally `params`); the personalization panel renders
+ * the localized template when the code is known and falls back to the Host's
  * message otherwise.
  */
 export const HOST_ERROR_KEYS = {
-  RESTART_UNAVAILABLE: "host.restart.unavailable",
-  NO_PENDING_UPDATE: "host.restart.noPending",
-  RESTART_SAFETY_UNKNOWN: "update.restart.unknown",
-  AGENTS_RUNNING: "update.restart.blocked",
-  UPDATE_LINK_PROTECTED: "host.update.linkProtected",
-  UPDATE_SOURCE_UNSUPPORTED: "host.update.sourceUnsupported",
-  UPDATE_ALREADY_LATEST: "host.update.alreadyLatest",
-  UPDATE_SOURCE_CHANGED: "host.update.sourceChanged",
-  UPDATE_COMMAND_FAILED: "host.update.commandFailed",
-  UPDATE_COMMAND_TIMEOUT: "host.update.commandTimeout",
-  REGISTRY_CHECK_FAILED: "host.registry.checkFailed",
-  REGISTRY_NAME_MISMATCH: "host.registry.nameMismatch",
-  REGISTRY_VERSION_INVALID: "host.registry.versionInvalid",
-  REGISTRY_INTEGRITY_MISSING: "host.registry.integrityMissing",
-  RELEASE_MANIFEST_MISSING: "host.release.manifestMissing",
-  RELEASE_NAME_MISMATCH: "host.release.nameMismatch",
-  RELEASE_VERSION_MISMATCH: "host.release.versionMismatch",
-  RELEASE_REPOSITORY_MISMATCH: "host.release.repoMismatch",
-  RELEASE_NOT_WEB_PLUGIN: "host.release.notWebPlugin",
-  RELEASE_NO_BUNDLE_PATCH: "host.release.noBundlePatch",
-  PROFILE_NOT_PINNED: "host.profile.notPinned",
-  PROFILE_BUNDLE_MISSING: "host.profile.bundleMissing",
-  ROLLBACK_LOCKFILE_MISMATCH: "host.rollback.lockfileMismatch",
-  ROLLBACK_BUNDLE_MISSING: "host.rollback.bundleMissing",
   UPLOAD_TOO_LARGE: "host.personalization.tooLarge",
   // UPLOAD_TIMEOUT: client-side fetch abort (config-client uploadImage).
   // UPLOAD_FAILED (any other rejected upload fetch) is intentionally unmapped —
@@ -72,20 +47,4 @@ export function resolveHostErrorText(value, tr) {
     if (text !== key) return text;
   }
   return value.text ?? value.message ?? String(value);
-}
-
-/**
- * Localize a failed update operation's message, composing the automatic
- * rollback suffix (with its own nested code) when a rollback also failed.
- */
-export function resolveFailedOperationText(operation, tr) {
-  if (operation === null || operation === undefined) return "";
-  const base = resolveHostErrorText({ code: operation.code, params: operation.params, text: operation.message }, tr);
-  const rollback = operation.rollbackError;
-  if (rollback === null || rollback === undefined) return base;
-  const reason = resolveHostErrorText(rollback, tr);
-  const suffix = safeTr(tr, "host.update.rollbackSuffix", { reason });
-  return suffix === "host.update.rollbackSuffix"
-    ? `${base}；自动回滚失败：${reason}`
-    : base + suffix;
 }

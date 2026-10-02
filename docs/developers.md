@@ -13,16 +13,9 @@
 
 ## 工作原理
 
-插件怎么构成、更新事务怎么落地。
+插件怎么构成。
 
-**双端结构**。客户端负责皮肤与切换界面，Host 负责 npm registry 检查、安全安装与重启。esbuild 产出 `lib/client.js` 与 `lib/index.js`，产物随仓库提交——npm 安装不在目标机器上构建。
-
-**更新事务**（Host）：
-
-- 检查结果缓存在 `$DSH_HOME/dsh-skins/update-cache.json`，有效期 1 小时并跨 DSH 重启保留。已是最新时不显示更新栏；网络失败时可在弹层底部手动重试。
-- 更新开始前重新检查安装来源。只有 npm 安装（`@iasiv5/dsh-skins`）的版本允许一键更新：`link:` 安装显示「本地开发模式」并禁用在线更新，`file:`、tar 包与旧 `github:` 来源提示迁移且不会被覆盖。
-- 安装完成后校验 profile 依赖固定到精确版本、bundle 注册与已装包元数据；任何一步失败，自动恢复更新前的 npm 安装。
-- 重启安全：检测运行中的 Agent 并阻止；服务管理器环境（探测 `INVOCATION_ID`/`NOTIFY_SOCKET`）以非零码退出，把重启交回 `Restart` 策略；脱离服务管理器运行时才使用内置的脱离重拉助手。
+**双端结构**。客户端负责皮肤与切换界面，Host 负责个性化配置、图库与资产路由。esbuild 产出 `lib/client.js` 与 `lib/index.js`，产物随仓库提交——npm 安装不在目标机器上构建。
 
 **明暗持久化**。非 loopback 浏览器中，插件监听官方 `theme/change` 事件，把浅色/深色/跟随系统存入 `localStorage["dsh-skins:theme-preference"]`，启动时经官方 `theme.setTheme()` 恢复。loopback 浏览器不启用这一回退，直接使用 DSH 自身的 Host 持久化。
 

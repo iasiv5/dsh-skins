@@ -5,6 +5,8 @@ status: accepted
 date: 2026-09-05
 ---
 
+> 2026-10-03：本文的「自更新器」机制已由 [0008](./0008-retire-self-updater.md) 退役；npm 作为唯一分发渠道的决策继续有效。
+
 自更新器从「GitHub Releases 检查 + codeload tarball 按 commit SHA 固定安装」整体迁移为「npm registry latest 检查 + 精确版本固定安装」。动因有三：未 scope 的 `dsh-skins` 包名已被第三方（loong-feng 发布的 0.2.0 早期内容副本）占用，本包必须换名；换名后的 scoped 包要求 npm 作为分发渠道；GitHub 未认证 API 限额（60 次/小时）是更新检查的硬上限，npm registry 无此约束。取舍：放弃 GitHub Releases 作为更新真相源（tag 驱动的 CI 仍会创建 GitHub Release 并附 tgz，作为镜像与审计入口），`github:` 安装形态降级为 legacy 来源、不再支持一键更新（界面提示迁移到 npm 源）。
 
 ## Constraints
