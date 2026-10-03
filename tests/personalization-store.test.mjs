@@ -74,8 +74,8 @@ test("load-time normalization drops overrides equal to the factory default (v1.0
   writeFileSync(join(dir, "state.json"), JSON.stringify({
     configVersion: 1,
     revision: 41,
-    skins: { tgcf: {
-      wallpaper: "builtin:tgcf:moonlit", // equals the factory default → dropped
+    skins: { meirenzhi: {
+      wallpaper: "builtin:meirenzhi:yuntai", // equals the factory default → dropped
       slogan: { zh: "自定标语", en: "custom" }, // differs → kept
     }, openbmc: {
       // factory-equal locale override: fresh objects can never be `===`, the
@@ -87,7 +87,7 @@ test("load-time normalization drops overrides equal to the factory default (v1.0
   const store = makeStore(dir);
   assert.equal(store.snapshot().mode, "normal", "normal path, not recovery"); // lazy load: snapshot triggers load + normalize
   const state = JSON.parse(readFileSync(join(dir, "state.json"), "utf8"));
-  assert.deepEqual(state.skins.tgcf, { slogan: { zh: "自定标语", en: "custom" } },
+  assert.deepEqual(state.skins.meirenzhi, { slogan: { zh: "自定标语", en: "custom" } },
     "default-equal override removed, real override kept");
   assert.equal(state.skins.openbmc, undefined,
     "factory-equal locale override dropped (structural comparison)");
@@ -158,35 +158,35 @@ test("upload enforces global byte and per-format pixel caps", async () => {
 
 test("field operations set, delete and bump the revision atomically", async () => {
   const store = makeStore(tempDir());
-  await setOverride(store, "tgcf", "slogan", { zh: "一", en: "One" });
-  await setOverride(store, "tgcf", "panelOpacity", 55);
+  await setOverride(store, "meirenzhi", "slogan", { zh: "一", en: "One" });
+  await setOverride(store, "meirenzhi", "panelOpacity", 55);
   let snapshot = store.snapshot();
-  assert.deepEqual(snapshot.skins.tgcf.slogan, { zh: "一", en: "One" });
-  assert.equal(snapshot.skins.tgcf.panelOpacity, 55);
+  assert.deepEqual(snapshot.skins.meirenzhi.slogan, { zh: "一", en: "One" });
+  assert.equal(snapshot.skins.meirenzhi.panelOpacity, 55);
   assert.equal(snapshot.revision, 2);
 
   await store.applyOperations({
     baseRevision: store.snapshot().revision,
-    operations: [{ op: "delete", skinId: "tgcf", key: "panelOpacity" }],
+    operations: [{ op: "delete", skinId: "meirenzhi", key: "panelOpacity" }],
   });
   snapshot = store.snapshot();
-  assert.equal(snapshot.skins.tgcf.panelOpacity, undefined);
-  assert.equal(snapshot.skins.tgcf.slogan.zh, "一");
+  assert.equal(snapshot.skins.meirenzhi.panelOpacity, undefined);
+  assert.equal(snapshot.skins.meirenzhi.slogan.zh, "一");
 });
 
 test("invalid operations reject the whole batch without touching state", async () => {
   const store = makeStore(tempDir());
-  await setOverride(store, "tgcf", "panelOpacity", 55);
+  await setOverride(store, "meirenzhi", "panelOpacity", 55);
   await assert.rejects(store.applyOperations({
     baseRevision: store.snapshot().revision,
     operations: [
-      { op: "set", skinId: "tgcf", key: "blur", value: 5 },
-      { op: "set", skinId: "tgcf", key: "panelOpacity", value: 999 },
+      { op: "set", skinId: "meirenzhi", key: "blur", value: 5 },
+      { op: "set", skinId: "meirenzhi", key: "panelOpacity", value: 999 },
     ],
   }), (e) => e.code === "INVALID_CONFIG");
   const snapshot = store.snapshot();
-  assert.equal(snapshot.skins.tgcf.blur, undefined);
-  assert.equal(snapshot.skins.tgcf.panelOpacity, 55);
+  assert.equal(snapshot.skins.meirenzhi.blur, undefined);
+  assert.equal(snapshot.skins.meirenzhi.panelOpacity, 55);
   assert.equal(snapshot.revision, 1);
 });
 
@@ -195,14 +195,16 @@ test("unknown fields and unknown skins are rejected", async () => {
   await assert.rejects(
     store.applyOperations({
       baseRevision: store.snapshot().revision,
-      operations: [{ op: "set", skinId: "tgcf", key: "nope", value: 1 }],
+      operations: [{ op: "set", skinId: "meirenzhi", key: "nope", value: 1 }],
     }),
     (e) => e.code === "INVALID_CONFIG",
   );
+  // tgcf was retired in v1.4.0: its id is now just another unknown skin on
+  // the write path — stored leftovers may only be pruned, never extended.
   await assert.rejects(
     store.applyOperations({
       baseRevision: store.snapshot().revision,
-      operations: [{ op: "set", skinId: "ghost", key: "blur", value: 1 }],
+      operations: [{ op: "set", skinId: "tgcf", key: "slogan", value: { zh: "一", en: "One" } }],
     }),
     (e) => e.code === "INVALID_CONFIG",
   );
@@ -241,39 +243,42 @@ test("load normalization drops unknown keys, stale shapes, dangling refs and orp
   const dir = tempDir();
   const store = makeStore(dir);
   const { asset } = await store.uploadAsset(pngBytes(), { displayName: "w" });
-  await setOverride(store, "tgcf", "slogan", { zh: "存", en: "Keep" });
+  await setOverride(store, "meirenzhi", "slogan", { zh: "存", en: "Keep" });
   await setOverride(store, "openbmc", "wallpaper", asset.id);
   const statePath = join(dir, "state.json");
   const raw = JSON.parse(readFileSync(statePath, "utf8"));
   const baseRevision = raw.revision;
   // Pre-simplization leftovers planted straight onto the disk state.
-  raw.skins.tgcf.futureField = { any: "shape" }; // unknown key
-  raw.skins.tgcf.accent = { light: "#111111", dark: "#222222" }; // removed field
-  raw.skins.tgcf.scrim = { light: 18, dark: 42 }; // stale light/dark pair shape
-  raw.skins.tgcf.wallpaper = "u_0123456789abcdef0123456789abcdef"; // dangling user ref
-  raw.skins.removedSkin = { wallpaper: "builtin:tgcf:crimson" }; // orphan section
+  raw.skins.meirenzhi.futureField = { any: "shape" }; // unknown key
+  raw.skins.meirenzhi.accent = { light: "#111111", dark: "#222222" }; // removed field
+  raw.skins.meirenzhi.scrim = { light: 18, dark: 42 }; // stale light/dark pair shape
+  raw.skins.meirenzhi.wallpaper = "u_0123456789abcdef0123456789abcdef"; // dangling user ref
+  raw.skins.tgcf = { slogan: { zh: "残留", en: "Leftover" } }; // removed-skin orphan section (v1.4.0)
+  raw.skins.removedSkin = { wallpaper: "builtin:openbmc:art" }; // never-known orphan section
   writeFileSync(statePath, JSON.stringify(raw));
 
   const reopened = makeStore(dir);
   const snapshot = reopened.snapshot();
-  const section = snapshot.skins.tgcf;
+  const section = snapshot.skins.meirenzhi;
   assert.equal(section.futureField, undefined, "unknown key dropped");
   assert.equal(section.accent, undefined, "removed field dropped");
   assert.equal(section.scrim, undefined, "retired field dropped (ruling #14: translucency knob)");
   assert.equal(section.wallpaper, undefined, "dangling user ref dropped");
   assert.deepEqual(section.slogan, { zh: "存", en: "Keep" }, "valid keys survive");
+  assert.equal(snapshot.skins.tgcf, undefined, "removed-skin orphan section pruned (tgcf retired in v1.4.0)");
   assert.equal(snapshot.skins.removedSkin, undefined, "orphan section removed");
   assert.equal(snapshot.skins.openbmc.wallpaper, asset.id, "live user ref survives");
   assert.equal(snapshot.revision, baseRevision + 1, "exactly one normalization commit");
   const onDisk = JSON.parse(readFileSync(statePath, "utf8"));
-  assert.equal(onDisk.skins.tgcf.slogan.zh, "存", "normalization is persisted");
+  assert.equal(onDisk.skins.meirenzhi.slogan.zh, "存", "normalization is persisted");
+  assert.equal(onDisk.skins.tgcf, undefined);
   assert.equal(onDisk.skins.removedSkin, undefined);
 });
 
 test("load normalization commits nothing when the state is already clean", async () => {
   const dir = tempDir();
   const store = makeStore(dir);
-  await setOverride(store, "tgcf", "slogan", { zh: "净", en: "Clean" });
+  await setOverride(store, "meirenzhi", "slogan", { zh: "净", en: "Clean" });
   const statePath = join(dir, "state.json");
   const before = readFileSync(statePath, "utf8");
   const revision = store.snapshot().revision;
@@ -297,7 +302,7 @@ test("load normalization never writes in recovery or unsupported modes", async (
   const dirB = tempDir();
   writeFileSync(join(dirB, "state.json"), JSON.stringify({
     configVersion: 99, revision: 3,
-    skins: { tgcf: { accent: { light: "#1", dark: "#2" }, anythingElse: 1 } },
+    skins: { meirenzhi: { accent: { light: "#1", dark: "#2" }, anythingElse: 1 } },
     library: {},
   }));
   const beforeB = readFileSync(join(dirB, "state.json"), "utf8");
@@ -309,28 +314,28 @@ test("load normalization never writes in recovery or unsupported modes", async (
 test("image overrides validate against the live library (missing assets reject)", async () => {
   const store = makeStore(tempDir());
   await assert.rejects(
-    setOverride(store, "tgcf", "wallpaper", "u_0123456789abcdef0123456789abcdef"),
+    setOverride(store, "meirenzhi", "wallpaper", "u_0123456789abcdef0123456789abcdef"),
     (e) => e.code === "INVALID_CONFIG",
   );
   const { asset } = await store.uploadAsset(pngBytes(40, 40), { displayName: "ok" });
-  await setOverride(store, "tgcf", "wallpaper", asset.id);
-  assert.equal(store.snapshot().skins.tgcf.wallpaper, asset.id);
+  await setOverride(store, "meirenzhi", "wallpaper", asset.id);
+  assert.equal(store.snapshot().skins.meirenzhi.wallpaper, asset.id);
 });
 
 test("deleting a referenced asset clears overrides and reports affected skins", async () => {
   const dir = tempDir();
   const store = makeStore(dir);
   const { asset } = await store.uploadAsset(pngBytes(), { displayName: "w" });
-  await setOverride(store, "tgcf", "wallpaper", asset.id);
-  await setOverride(store, "tgcf", "slogan", { zh: "二", en: "Two" });
+  await setOverride(store, "meirenzhi", "wallpaper", asset.id);
+  await setOverride(store, "meirenzhi", "slogan", { zh: "二", en: "Two" });
   const references = store.snapshot().references[asset.id];
-  assert.deepEqual(references, [{ skinId: "tgcf", key: "wallpaper" }]);
+  assert.deepEqual(references, [{ skinId: "meirenzhi", key: "wallpaper" }]);
 
   const result = await store.deleteAsset(asset.id);
-  assert.deepEqual(result.affectedSkins, [{ skinId: "tgcf", key: "wallpaper" }]);
+  assert.deepEqual(result.affectedSkins, [{ skinId: "meirenzhi", key: "wallpaper" }]);
   const snapshot = store.snapshot();
-  assert.equal(snapshot.skins.tgcf.wallpaper, undefined);
-  assert.deepEqual(snapshot.skins.tgcf.slogan, { zh: "二", en: "Two" }); // untouched
+  assert.equal(snapshot.skins.meirenzhi.wallpaper, undefined);
+  assert.deepEqual(snapshot.skins.meirenzhi.slogan, { zh: "二", en: "Two" }); // untouched
   assert.deepEqual(snapshot.library, []);
   assert.equal(existsSync(join(dir, "assets", `${asset.id}.png`)), false);
   await assert.rejects(store.deleteAsset(asset.id), (e) => e.code === "ASSET_NOT_FOUND");
@@ -355,7 +360,7 @@ test("corrupt state with assets boots into recovery and keeps every blob", async
   // No destructive GC: everything is still on disk.
   assert.equal(readdirSync(join(dir, "assets")).length, 2);
   // Mutations are refused until recovery is confirmed.
-  await assert.rejects(setOverride(recovered, "tgcf", "panelOpacity", 1), (e) => e.code === "STORE_RECOVERY_REQUIRED");
+  await assert.rejects(setOverride(recovered, "meirenzhi", "panelOpacity", 1), (e) => e.code === "STORE_RECOVERY_REQUIRED");
 });
 
 test("missing state with assets boots into recovery, not first install", async () => {
@@ -389,8 +394,8 @@ test("confirmRecovery rebuilds the library, quarantines strays physically and ar
   const backups = readdirSync(dir).filter((name) => name.startsWith("state.json.corrupt."));
   assert.equal(backups.length, 1);
   // The store is writable again.
-  await setOverride(recovered, "tgcf", "panelOpacity", 3);
-  assert.equal(recovered.snapshot().skins.tgcf.panelOpacity, 3);
+  await setOverride(recovered, "meirenzhi", "panelOpacity", 3);
+  assert.equal(recovered.snapshot().skins.meirenzhi.panelOpacity, 3);
 });
 
 test("future configVersion boots read-only with zero writes and zero GC", async () => {
@@ -408,7 +413,7 @@ test("future configVersion boots read-only with zero writes and zero GC", async 
   assert.equal(snapshot.mode, "unsupported");
   assert.equal(snapshot.library.length, 1);
   // Old version still sees the newer skin section it doesn't understand.
-  await assert.rejects(setOverride(old, "tgcf", "panelOpacity", 1), (e) => e.code === "STORE_READONLY");
+  await assert.rejects(setOverride(old, "meirenzhi", "panelOpacity", 1), (e) => e.code === "STORE_READONLY");
   await assert.rejects(old.uploadAsset(pngBytes(), { displayName: "x" }), (e) => e.code === "STORE_READONLY");
   await assert.rejects(old.confirmRecovery(), (e) => e.code === "STORE_NOT_RECOVERING");
   // Zero writes / zero GC: both blobs survive untouched.
@@ -421,7 +426,7 @@ test("GC removes stray blobs on the next commit but never library members", asyn
   const store = makeStore(dir);
   const { asset } = await store.uploadAsset(pngBytes(), { displayName: "w" });
   writeFileSync(join(dir, "assets", "u_abababababababababababababababab.png"), pngBytes(3, 3));
-  await setOverride(store, "tgcf", "panelOpacity", 1); // triggers post-commit GC
+  await setOverride(store, "meirenzhi", "panelOpacity", 1); // triggers post-commit GC
   const names = readdirSync(join(dir, "assets"));
   assert.deepEqual(names, [`${asset.id}.png`]);
 });
@@ -474,7 +479,7 @@ test("stale baseRevision rejects without changing revision or overrides", async 
   const before = store.snapshot();
   await assert.rejects(store.applyOperations({
     baseRevision: before.revision + 5,
-    operations: [{ op: "set", skinId: "tgcf", key: "panelOpacity", value: 55 }],
+    operations: [{ op: "set", skinId: "meirenzhi", key: "panelOpacity", value: 55 }],
   }), (error) => error.code === "REVISION_CONFLICT");
   const after = store.snapshot();
   assert.equal(after.revision, before.revision);
@@ -486,11 +491,11 @@ test("matching baseRevision commits and increments revision once", async () => {
   const baseRevision = store.snapshot().revision;
   const result = await store.applyOperations({
     baseRevision,
-    operations: [{ op: "set", skinId: "tgcf", key: "panelOpacity", value: 55 }],
+    operations: [{ op: "set", skinId: "meirenzhi", key: "panelOpacity", value: 55 }],
   });
   assert.equal(result.revision, baseRevision + 1);
   assert.equal(store.snapshot().revision, baseRevision + 1);
-  assert.equal(store.snapshot().skins.tgcf.panelOpacity, 55);
+  assert.equal(store.snapshot().skins.meirenzhi.panelOpacity, 55);
 });
 
 test("missing and invalid baseRevision values reject as revision conflicts", async () => {
@@ -498,7 +503,7 @@ test("missing and invalid baseRevision values reject as revision conflicts", asy
   for (const baseRevision of [undefined, -1, 7.5]) {
     await assert.rejects(store.applyOperations({
       baseRevision,
-      operations: [{ op: "set", skinId: "tgcf", key: "panelOpacity", value: 55 }],
+      operations: [{ op: "set", skinId: "meirenzhi", key: "panelOpacity", value: 55 }],
     }), (error) => error.code === "REVISION_CONFLICT");
   }
   assert.equal(store.snapshot().revision, 0);
@@ -551,13 +556,13 @@ test("revision conflicts perform no state-file writes or renames", async () => {
       return fRename(...args);
     },
   });
-  await setOverride(store, "tgcf", "panelOpacity", 55);
+  await setOverride(store, "meirenzhi", "panelOpacity", 55);
   writes = 0;
   renames = 0;
   const before = store.snapshot();
   await assert.rejects(store.applyOperations({
     baseRevision: before.revision - 1,
-    operations: [{ op: "set", skinId: "tgcf", key: "blur", value: 5 }],
+    operations: [{ op: "set", skinId: "meirenzhi", key: "blur", value: 5 }],
   }), (error) => error.code === "REVISION_CONFLICT");
   assert.equal(writes, 0);
   assert.equal(renames, 0);
@@ -571,7 +576,7 @@ test("interleaved mutations from the same base conflict before retry", async () 
   const requests = [
     {
       baseRevision: base,
-      operations: [{ op: "set", skinId: "tgcf", key: "slogan", value: { zh: "一", en: "One" } }],
+      operations: [{ op: "set", skinId: "meirenzhi", key: "slogan", value: { zh: "一", en: "One" } }],
     },
     {
       baseRevision: base,
@@ -590,7 +595,7 @@ test("interleaved mutations from the same base conflict before retry", async () 
   let snapshot = store.snapshot();
   assert.equal(snapshot.revision, base + 1);
   const rejectedIndex = settled.findIndex((result) => result.status === "rejected");
-  if (rejectedIndex === 0) assert.equal(snapshot.skins.tgcf?.slogan, undefined);
+  if (rejectedIndex === 0) assert.equal(snapshot.skins.meirenzhi?.slogan, undefined);
   else assert.equal(snapshot.skins.openbmc?.wallpaper, undefined);
 
   await store.applyOperations({
@@ -598,7 +603,7 @@ test("interleaved mutations from the same base conflict before retry", async () 
     baseRevision: snapshot.revision,
   });
   snapshot = store.snapshot();
-  assert.deepEqual(snapshot.skins.tgcf.slogan, { zh: "一", en: "One" });
+  assert.deepEqual(snapshot.skins.meirenzhi.slogan, { zh: "一", en: "One" });
   assert.equal(snapshot.skins.openbmc.wallpaper, "builtin:openbmc:art");
   assert.equal(snapshot.revision, base + 2);
 });

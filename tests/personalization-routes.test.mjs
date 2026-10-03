@@ -97,7 +97,7 @@ test("GET config returns the snapshot; PATCH applies field operations", async ()
     method: "PATCH",
     url: "/dsh-skins/config",
     headers: { ...TRUSTED, "content-type": "application/json" },
-    body: { baseRevision: 0, operations: [{ op: "set", skinId: "tgcf", key: "panelOpacity", value: 55 }] },
+    body: { baseRevision: 0, operations: [{ op: "set", skinId: "meirenzhi", key: "panelOpacity", value: 55 }] },
   }));
   assert.equal(patch.status, 200);
   assert.equal(JSON.parse(patch.body).revision, 1);
@@ -109,7 +109,7 @@ test("PATCH rejects invalid operations with INVALID_CONFIG and no partial writes
     method: "PATCH",
     url: "/dsh-skins/config",
     headers: { ...TRUSTED, "content-type": "application/json" },
-    body: { baseRevision: 0, operations: [{ op: "set", skinId: "tgcf", key: "panelOpacity", value: 999 }] },
+    body: { baseRevision: 0, operations: [{ op: "set", skinId: "meirenzhi", key: "panelOpacity", value: 999 }] },
   }));
   assert.equal(state.status, 400);
   assert.equal(JSON.parse(state.body).code, "INVALID_CONFIG");
@@ -117,7 +117,7 @@ test("PATCH rejects invalid operations with INVALID_CONFIG and no partial writes
 
 test("PATCH maps stale revisions to 409 and leaves the store retryable", async () => {
   const { call, store } = makeHarness();
-  const operations = [{ op: "set", skinId: "tgcf", key: "panelOpacity", value: 55 }];
+  const operations = [{ op: "set", skinId: "meirenzhi", key: "panelOpacity", value: 55 }];
   const stale = await call(makeRequest({
     method: "PATCH",
     url: "/dsh-skins/config",
@@ -144,7 +144,7 @@ test("PATCH maps a missing baseRevision to REVISION_CONFLICT 409", async () => {
     method: "PATCH",
     url: "/dsh-skins/config",
     headers: { ...TRUSTED, "content-type": "application/json" },
-    body: { operations: [{ op: "set", skinId: "tgcf", key: "panelOpacity", value: 55 }] },
+    body: { operations: [{ op: "set", skinId: "meirenzhi", key: "panelOpacity", value: 55 }] },
   }));
   assert.equal(state.status, 409);
   assert.equal(JSON.parse(state.body).code, "REVISION_CONFLICT");
@@ -159,7 +159,7 @@ test("PATCH maps negative and fractional baseRevision values to REVISION_CONFLIC
       headers: { ...TRUSTED, "content-type": "application/json" },
       body: {
         baseRevision,
-        operations: [{ op: "set", skinId: "tgcf", key: "panelOpacity", value: 55 }],
+        operations: [{ op: "set", skinId: "meirenzhi", key: "panelOpacity", value: 55 }],
       },
     }));
     assert.equal(state.status, 409);
@@ -244,7 +244,7 @@ test("DELETE validates the suffix, deletes and reports affected skins", async ()
     headers: { ...TRUSTED, "content-type": "application/json" },
     body: {
       baseRevision: store.snapshot().revision,
-      operations: [{ op: "set", skinId: "tgcf", key: "wallpaper", value: asset.id }],
+      operations: [{ op: "set", skinId: "meirenzhi", key: "wallpaper", value: asset.id }],
     },
   }));
 
@@ -252,7 +252,7 @@ test("DELETE validates the suffix, deletes and reports affected skins", async ()
   assert.equal(bad.status, 400);
   const gone = await call(makeRequest({ method: "DELETE", url: `/dsh-skins/library/${asset.id}`, headers: TRUSTED }));
   assert.equal(gone.status, 200);
-  assert.deepEqual(JSON.parse(gone.body).affectedSkins, [{ skinId: "tgcf", key: "wallpaper" }]);
+  assert.deepEqual(JSON.parse(gone.body).affectedSkins, [{ skinId: "meirenzhi", key: "wallpaper" }]);
   const missing = await call(makeRequest({ method: "DELETE", url: `/dsh-skins/library/${asset.id}`, headers: TRUSTED }));
   assert.equal(missing.status, 404);
 });
@@ -326,7 +326,7 @@ test("readonly stores surface STORE_READONLY as 409", async () => {
     method: "PATCH",
     url: "/dsh-skins/config",
     headers: { ...TRUSTED, "content-type": "application/json" },
-    body: { baseRevision: 5, operations: [{ op: "set", skinId: "tgcf", key: "panelOpacity", value: 1 }] },
+    body: { baseRevision: 5, operations: [{ op: "set", skinId: "meirenzhi", key: "panelOpacity", value: 1 }] },
   }), response);
   assert.equal(response.state.status, 409);
   assert.equal(JSON.parse(response.state.body).code, "STORE_READONLY");

@@ -14,7 +14,7 @@ import { createPersonalizationPanel, PANEL_CSS } from "../src/client/personaliza
 import { getSkinSchema } from "../src/shared/personalization/catalog.js";
 import { createFakeReact, jsx, flatten, findButton } from "./fake-react.mjs";
 
-const SKINS = ["openbmc", "uefi-harness", "tgcf", "meirenzhi"];
+const SKINS = ["openbmc", "uefi-harness", "meirenzhi"];
 const STATUSES = ["synced", "offline-failed"];
 
 function makeConfigClient(overrides = {}) {
@@ -138,7 +138,7 @@ for (const skinId of SKINS) {
 }
 
 test("field edits preview locally and arm the auto-save; no save button exists", async () => {
-  const panel = mountPanel({ skinId: "tgcf", status: "synced" });
+  const panel = mountPanel({ skinId: "meirenzhi", status: "synced" });
   await tick();
   const translucency = flatten(panel.tree()).find((n) => n.type === "input" && n.props["aria-label"] === "personalization.panelTranslucency");
   assert.notEqual(translucency, null, "translucency slider renders (ruling #14)");
@@ -146,12 +146,12 @@ test("field edits preview locally and arm the auto-save; no save button exists",
 
   translucency.props.onChange({ target: { value: "55" } });
   await tick();
-  assert.deepEqual(panel.configClient.calls.preview, [{ skinId: "tgcf", key: "panelOpacity", value: 55 }]);
+  assert.deepEqual(panel.configClient.calls.preview, [{ skinId: "meirenzhi", key: "panelOpacity", value: 55 }]);
   assert.equal(panel.configClient.getState().dirtyCount, 1, "edits preview locally; the client debounces the flush");
 });
 
 test("slogan text edits preview the complete locale object", async () => {
-  const panel = mountPanel({ skinId: "tgcf", status: "synced" });
+  const panel = mountPanel({ skinId: "meirenzhi", status: "synced" });
   await tick();
   const tree = panel.tree();
   const zh = flatten(tree).find((n) => n.type === "input" && n.props["aria-label"] === "personalization.slogan (ZH)");
@@ -165,12 +165,12 @@ test("slogan text edits preview the complete locale object", async () => {
   enFresh.props.onChange({ target: { value: "New slogan" } });
   await tick();
   assert.equal(panel.configClient.calls.preview.length, 2);
-  assert.deepEqual(panel.configClient.calls.preview[0].value, { zh: "新标语", en: "No Taboos" });
+  assert.deepEqual(panel.configClient.calls.preview[0].value, { zh: "新标语", en: "From mortal dust, immortals bloom" });
   assert.deepEqual(panel.configClient.calls.preview[1].value, { zh: "新标语", en: "New slogan" });
 });
 
 test("恢复默认 confirms with the affected field list; decline is a no-op (user ruling #9)", async () => {
-  const panel = mountPanel({ skinId: "tgcf", status: "synced" });
+  const panel = mountPanel({ skinId: "meirenzhi", status: "synced" });
   await tick();
   const translucency = flatten(panel.tree()).find((n) => n.type === "input" && n.props["aria-label"] === "personalization.panelTranslucency");
   translucency.props.onChange({ target: { value: "66" } });
@@ -189,7 +189,7 @@ test("恢复默认 confirms with the affected field list; decline is a no-op (us
   assert.ok(panel.confirms[0].includes("personalization.panelTranslucency"), "the affected field is listed");
   assert.equal(panel.configClient.calls.flushNow, 1, "agreeing flushes the factory values at once");
   assert.deepEqual(panel.configClient.calls.previewReset.map((c) => c.key),
-    getSkinSchema("tgcf").fields.map((f) => f.key), "every field reset to factory");
+    getSkinSchema("meirenzhi").fields.map((f) => f.key), "every field reset to factory");
 
   // Declining: asked again, nothing happens at all. (The agree path above
   // legitimately emptied the override set, so re-establish one first.)
@@ -202,13 +202,13 @@ test("恢复默认 confirms with the affected field list; decline is a no-op (us
   assert.equal(declineConfirms.length, 1, "asked again");
   assert.ok(declineConfirms[0].includes("personalization.panelTranslucency"), "affected field listed again");
   assert.equal(panel.configClient.calls.flushNow, 1, "decline flushes nothing");
-  assert.equal(panel.configClient.calls.previewReset.length, getSkinSchema("tgcf").fields.length, "decline resets nothing");
+  assert.equal(panel.configClient.calls.previewReset.length, getSkinSchema("meirenzhi").fields.length, "decline resets nothing");
 });
 
 test("offline: every write path is disabled — edits included (ADR-0003)", async () => {
   const asset = { id: "u_0123456789abcdef0123456789abcdef", displayName: "壁纸.png" };
   const config = makeConfigClient({ status: "offline-failed", library: [asset] });
-  const panel = mountPanel({ skinId: "tgcf", status: "offline-failed", config });
+  const panel = mountPanel({ skinId: "meirenzhi", status: "offline-failed", config });
   await tick();
   const tree = panel.tree();
   assert.equal(findButton(tree, "personalization.save"), null, "no save button at all");
@@ -227,7 +227,7 @@ test("清空图库 confirms with the affected list and stops at the first failur
     { id: "u_0123456789abcdef0123456789abcdeff", displayName: "b.png" },
   ];
   const references = {
-    [assets[0].id]: [{ skinId: "tgcf", key: "wallpaper" }],
+    [assets[0].id]: [{ skinId: "meirenzhi", key: "wallpaper" }],
     [assets[1].id]: [{ skinId: "openbmc", key: "wallpaper" }],
   };
   const deleted = [];
@@ -236,14 +236,14 @@ test("清空图库 confirms with the affected list and stops at the first failur
     deleted.push(id);
     return id === assets[1].id ? { error: "boom" } : { affectedSkins: [] };
   };
-  const panel = mountPanel({ skinId: "tgcf", status: "synced", config });
+  const panel = mountPanel({ skinId: "meirenzhi", status: "synced", config });
   await tick();
   await findButton(panel.tree(), "personalization.library.clear").props.onClick();
 
   assert.equal(panel.confirms.length, 1, "exactly one confirm");
   const text = panel.confirms[0];
   assert.ok(text.includes("2"), "count in the confirm text");
-  assert.ok(text.includes("tgcf · wallpaper"), "affected pair listed");
+  assert.ok(text.includes("meirenzhi · wallpaper"), "affected pair listed");
   assert.ok(text.includes("openbmc · wallpaper"), "affected pair listed");
   assert.deepEqual(deleted, [assets[0].id, assets[1].id], "stops at the first failure");
   assert.ok(textsOf(panel.tree()).includes("personalization.library.clearFailed"), "failure surfaced");
@@ -253,7 +253,7 @@ test("declining the clear-library confirm deletes nothing", async () => {
   const assets = [{ id: "u_0123456789abcdef0123456789abcdef", displayName: "a.png" }];
   const config = makeConfigClient({ status: "synced", library: assets });
   config.deleteImage = async () => { throw new Error("must not be called"); };
-  const panel = mountPanel({ skinId: "tgcf", status: "synced", config });
+  const panel = mountPanel({ skinId: "meirenzhi", status: "synced", config });
   globalThis.window.confirm = () => false;
   await tick();
   await findButton(panel.tree(), "personalization.library.clear").props.onClick();
@@ -274,7 +274,7 @@ test("single delete: busy in flight, outcome always surfaced, retry after failur
   config.deleteImage = (id) => new Promise((resolve) => {
     resolveDelete = () => resolve({ affectedSkins: [], deleted: id });
   });
-  const panel = mountPanel({ skinId: "tgcf", status: "synced", config });
+  const panel = mountPanel({ skinId: "meirenzhi", status: "synced", config });
   await tick();
   const buttons = () => delButtonsOf(panel);
   assert.equal(buttons().length, 2);
@@ -297,7 +297,7 @@ test("single delete: busy in flight, outcome always surfaced, retry after failur
   assert.equal(buttons()[0].props.disabled, false, "flight over: buttons re-enabled");
 
   // Failure path: the default stub errors — message shown, retry possible.
-  const failing = mountPanel({ skinId: "tgcf", status: "synced", config: makeConfigClient({ status: "synced", library: assets.slice(0, 1) }) });
+  const failing = mountPanel({ skinId: "meirenzhi", status: "synced", config: makeConfigClient({ status: "synced", library: assets.slice(0, 1) }) });
   await tick();
   await delButtonsOf(failing)[0].props.onClick();
   assert.ok(textsOf(failing.tree()).includes("personalization.library.deleteFailed"), "failure surfaced");
@@ -310,7 +310,7 @@ test("revision conflict renders its dedicated warning instead of the generic sav
     lastFlushCode: "REVISION_CONFLICT",
     lastFlushError: "stale generic reason",
   });
-  const panel = mountPanel({ skinId: "tgcf", status: "synced", config });
+  const panel = mountPanel({ skinId: "meirenzhi", status: "synced", config });
   await tick();
   const texts = textsOf(panel.tree());
   assert.ok(texts.includes("personalization.saveConflict"));
@@ -324,7 +324,7 @@ test("generic save failure renders only when no conflict code is present", async
     lastFlushCode: null,
     lastFlushError: "boom",
   });
-  const panel = mountPanel({ skinId: "tgcf", status: "synced", config });
+  const panel = mountPanel({ skinId: "meirenzhi", status: "synced", config });
   await tick();
   const texts = textsOf(panel.tree());
   assert.ok(texts.includes("personalization.saveFailed"));
@@ -334,11 +334,11 @@ test("generic save failure renders only when no conflict code is present", async
 
 test("auto-save failure strip renders from lastFlushError and clears on edit (ADR-0003)", async () => {
   const config = makeConfigClient({ status: "synced" });
-  const panel = mountPanel({ skinId: "tgcf", status: "synced", config });
+  const panel = mountPanel({ skinId: "meirenzhi", status: "synced", config });
   await tick();
   assert.equal(textsOf(panel.tree()).includes("personalization.saveFailed"), false, "clean panel shows no failure strip");
 
-  config.setState({ lastFlushError: "tgcf.panelOpacity 校验失败（BAD_VALUE）" });
+  config.setState({ lastFlushError: "meirenzhi.panelOpacity 校验失败（BAD_VALUE）" });
   await tick();
   assert.ok(textsOf(panel.tree()).includes("personalization.saveFailed"), "failure strip renders");
   assert.ok(textsOf(panel.tree()).some((t) => typeof t === "string" && t.includes("BAD_VALUE")), "the server's reason is surfaced");
@@ -351,7 +351,7 @@ test("auto-save failure strip renders from lastFlushError and clears on edit (AD
 });
 
 test("恢复默认 is disabled while offline (auto-save cannot persist, ADR-0003)", async () => {
-  const panel = mountPanel({ skinId: "tgcf", status: "offline-failed" });
+  const panel = mountPanel({ skinId: "meirenzhi", status: "offline-failed" });
   await tick();
   const translucency = flatten(panel.tree()).find((n) => n.type === "input" && n.props["aria-label"] === "personalization.panelTranslucency");
   translucency.props.onChange({ target: { value: "66" } });
@@ -390,7 +390,7 @@ test("a rejected upload surfaces the server's reason — never the delete copy",
   const tooLarge = makeConfigClient({ status: "synced" });
   tooLarge.uploadImage = async () => ({ error: "UPLOAD_TOO_LARGE" });
   const a = mountPanel({
-    skinId: "tgcf", status: "synced", config: tooLarge,
+    skinId: "meirenzhi", status: "synced", config: tooLarge,
     translations: { "host.personalization.tooLarge": "图片超过大小限制" },
   });
   await tick();
@@ -403,7 +403,7 @@ test("a rejected upload surfaces the server's reason — never the delete copy",
 
   // Unmapped code (gate string / HTTP status): the generic upload copy.
   const generic = makeConfigClient({ status: "synced" }); // default stub errors "offline"
-  const b = mountPanel({ skinId: "tgcf", status: "synced", config: generic });
+  const b = mountPanel({ skinId: "meirenzhi", status: "synced", config: generic });
   await tick();
   const inputB = flatten(b.tree()).find((n) => n.type === "input" && n.props.type === "file");
   await inputB.props.onChange({ target: { files: [{ name: "x.png" }], value: "" } });
@@ -418,7 +418,7 @@ test("UPLOAD_TIMEOUT renders its localized reason (field report: big uploads fai
   const config = makeConfigClient({ status: "synced" });
   config.uploadImage = async () => ({ error: "UPLOAD_TIMEOUT" });
   const panel = mountPanel({
-    skinId: "tgcf", status: "synced", config,
+    skinId: "meirenzhi", status: "synced", config,
     translations: { "host.personalization.uploadTimeout": "上传超时，请检查网络后重试" },
   });
   await tick();
@@ -435,7 +435,7 @@ test("UPLOAD_TIMEOUT renders its localized reason (field report: big uploads fai
     file.name === "a.png" ? { asset: { id: "u_a" } } : { error: "UPLOAD_TIMEOUT" }
   );
   const batchPanel = mountPanel({
-    skinId: "tgcf", status: "synced", config: batch,
+    skinId: "meirenzhi", status: "synced", config: batch,
     translations: {
       "host.personalization.uploadTimeout": "上传超时，请检查网络后重试",
       "personalization.library.uploadSomeFailed": "已上传 {ok} 张，{failed} 张失败（{reason}）",
@@ -447,7 +447,7 @@ test("UPLOAD_TIMEOUT renders its localized reason (field report: big uploads fai
   const batchTexts = textsOf(batchPanel.tree());
   assert.ok(batchTexts.some((t) => t.includes("已上传 1 张，1 张失败")), "the batch summary counts the timeout");
   assert.ok(batchTexts.some((t) => t.includes("上传超时")), "the timeout reason is surfaced in the batch summary");
-  assert.deepEqual(batch.calls.preview.at(-1), { skinId: "tgcf", key: "wallpaper", value: "u_a" },
+  assert.deepEqual(batch.calls.preview.at(-1), { skinId: "meirenzhi", key: "wallpaper", value: "u_a" },
     "selection still lands on the last success");
 });
 
@@ -467,7 +467,7 @@ test("batch upload (Q43 reversal): sequential, lands on the last success, summar
     return { asset: { id: `u_${file.name}` } };
   };
   const panel = mountPanel({
-    skinId: "tgcf", status: "synced", config,
+    skinId: "meirenzhi", status: "synced", config,
     translations: {
       "host.personalization.tooLarge": "图片超过大小限制",
       "personalization.library.uploadingBatch": "正在上传 {done}/{total}…",
@@ -483,7 +483,7 @@ test("batch upload (Q43 reversal): sequential, lands on the last success, summar
   const preview = config.calls.preview.at(-1);
   assert.deepEqual(
     [preview.skinId, preview.key, preview.value],
-    ["tgcf", "wallpaper", "u_c.png"],
+    ["meirenzhi", "wallpaper", "u_c.png"],
     "selection lands on the last successful upload, never the failed one",
   );
   const texts = textsOf(panel.tree());
@@ -495,7 +495,7 @@ test("batch upload (Q43 reversal): sequential, lands on the last success, summar
   const failing = makeConfigClient({ status: "synced" });
   failing.uploadImage = async () => ({ error: "ANIMATION_UNSUPPORTED" });
   const allBad = mountPanel({
-    skinId: "tgcf", status: "synced", config: failing,
+    skinId: "meirenzhi", status: "synced", config: failing,
     translations: { "host.personalization.animatedWebp": "动画 WebP 暂不支持" },
   });
   await tick();
@@ -512,7 +512,7 @@ test("library pagination folds after three rows: 18 inline, the rest behind load
     displayName: `img-${i + 1}.png`,
   }));
   const config = makeConfigClient({ status: "synced", library: assets });
-  const panel = mountPanel({ skinId: "tgcf", status: "synced", config });
+  const panel = mountPanel({ skinId: "meirenzhi", status: "synced", config });
   await tick();
   const cellsOf = (tree) => flatten(tree).filter(
     (n) => n.type === "div" && typeof n.props.className === "string" && n.props.className.includes("dsh-skins-pz-cell"),

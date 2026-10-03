@@ -5,24 +5,22 @@
  * light and dark tints. The hooks themselves are pinned against the live
  * runtime by scripts/verify-upstream-hooks.mjs; this suite pins the CSS side.
  * All matching runs against whitespace-stripped CSS — openbmc/uefi author
- * multi-line template strings, tgcf/meirenzhi single-line array entries.
+ * multi-line template strings, meirenzhi single-line array entries.
  */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createTgcfSkin } from "../src/client/skins/tgcf/index.js";
 import { createOpenBmcHarness } from "../src/client/skins/openbmc-harness/index.js";
 import { createMeirenzhiSkin } from "../src/client/skins/meirenzhi/index.js";
 import { createUefiHarness } from "../src/client/skins/uefi-harness/index.js";
 
 const jsx = (component, props) => ({ component, props });
 const skins = [
-  { id: "tgcf", css: createTgcfSkin({ jsx }).css.replaceAll(/\s+/g, "") },
   { id: "openbmc", css: createOpenBmcHarness({ jsx }).css.replaceAll(/\s+/g, "") },
   { id: "meirenzhi", css: createMeirenzhiSkin({ jsx }).css.replaceAll(/\s+/g, "") },
   { id: "uefi", css: createUefiHarness({ jsx }).css.replaceAll(/\s+/g, "") },
 ];
 
-test("v1 dialog recipe survives in all four skins", () => {
+test("v1 dialog recipe survives in all three skins", () => {
   for (const { id, css } of skins) {
     assert.ok(css.includes('[role="dialog"][aria-modal="true"]'), `${id}: v1 role/aria hook missing`);
     assert.ok(css.includes(".dshm-panel") && css.includes(".dshm-compat-dialog") && css.includes(".dshm-dshchip-tip"), `${id}: v1 dshm union missing`);
@@ -34,7 +32,7 @@ test("v1 dialog recipe survives in all four skins", () => {
   }
 });
 
-test("v2 overlay-frost union present in all four skins (ADR-0007)", () => {
+test("v2 overlay-frost union present in all three skins (ADR-0007)", () => {
   for (const { id, css } of skins) {
     // a. dockkit float-window shell + b. structural dialog fallback, with the
     // frost declaration in the SAME rule block
@@ -56,7 +54,6 @@ test("v2 overlay-frost union present in all four skins (ADR-0007)", () => {
 
 test("v2 union carries a dark-theme variant per skin", () => {
   const darkAnchors = {
-    tgcf: "rgb(24,16,16)86%",
     openbmc: "rgb(12,26,38)86%",
     meirenzhi: "rgb(18,18,26)86%",
     uefi: "rgb(23,18,45)86%",
@@ -69,14 +66,13 @@ test("v2 union carries a dark-theme variant per skin", () => {
   }
 });
 
-test("v3 dsh-context overlay cards frosted in all four skins (ADR-0007 amendment)", () => {
+test("v3 dsh-context overlay cards frosted in all three skins (ADR-0007 amendment)", () => {
   // dsh-context (上下文洞察) paints its surfaces with --dsw-alias-bg-layer-1/3
   // and no blur of its own; its fixed backdrops carry no role/aria and don't
   // consume --dsw-mask-blur. The lc-* classes are the plugin's own stable names
   // (same standing as .dshm-* — no host guard). Covered: overview/modal cards
   // (user photo #1) AND the sidebar-embedded cards (user photo #2).
   const darkTints = {
-    tgcf: "rgb(24,16,16)86%",
     openbmc: "rgb(12,26,38)86%",
     meirenzhi: "rgb(18,18,26)86%",
     uefi: "rgb(23,18,45)86%",
@@ -113,13 +109,12 @@ test("float selector cannot sweep floatTitle/floatBody/floatResize", () => {
   assert.ok("_float_6nhg2_156".includes("_float_"));
 });
 
-test("menu surface fill is skin-owned and 较实 in all four skins (ADR-0007 amendment)", () => {
+test("menu surface fill is skin-owned and 较实 in all three skins (ADR-0007 amendment)", () => {
   // Official --dsw-menu-surface-fill is 45–58% alpha over a full-surface
   // blur(40px): crisp over the official opaque shell, but in the skins it
   // samples the wallpaper and the dropdown turns to mush. Every skin owns the
   // fill with its own tint family at 0.94 (same family as --dsw-specific-menu).
   const menuTints = {
-    tgcf: ["rgba(255,252,246,0.94)", "rgba(24,16,16,0.94)"],
     openbmc: ["rgba(242,247,251,0.94)", "rgba(14,33,48,0.94)"],
     meirenzhi: ["rgba(250,249,246,0.94)", "rgba(18,18,26,0.94)"],
     uefi: ["rgba(248,247,255,0.94)", "rgba(28,22,55,0.94)"],

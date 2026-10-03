@@ -3,25 +3,25 @@ import test from "node:test";
 import { normalizeEffects, projectSkin } from "../src/client/personalization/projector.js";
 import { defaultsFor } from "../src/shared/personalization/catalog.js";
 
-/** Static tgcf palette since the simplification (colors are baked, not fields). */
+/** Static fixture palette since the simplification (colors are baked, not fields). */
 const PALETTE = {
   accent: { light: "#C3272B", dark: "#E0564A" },
   bubble: { light: "#C3272B", dark: "#8E2A2F" },
 };
 
-/** A tgcf-like fixture: custom projector mapping values → effects. */
+/** A meirenzhi-like fixture: custom projector mapping values → effects. */
 function fixtureSkin() {
   return {
-    id: "tgcf",
-    bodyAttr: "dshTgcfSkin",
+    id: "meirenzhi",
+    bodyAttr: "dshMeirenzhiSkin",
     project(values, assets) {
-      // Mirrors the real tgcf projector: one translucency knob derives the
+      // Mirrors the real meirenzhi projector: one translucency knob derives the
       // scrim alpha and blur quadratically (ruling #15 amendment).
       const scrimAlpha = (Math.round(30 * (values.panelOpacity / 100) ** 2) / 100).toFixed(3);
       return {
-        bodyAttribute: "dshTgcfSkin",
+        bodyAttribute: "dshMeirenzhiSkin",
         slogans: values.slogan,
-        titleBrand: "天官赐福",
+        titleBrand: "美人志",
         favicon: { href: assets.favicon?.url ?? "data:image/svg+xml,x", mime: assets.favicon?.mime ?? "image/svg+xml" },
         backdrop: {
           imageLight: `url("${assets.wallpaper?.url ?? "about:blank"}")`,
@@ -37,8 +37,8 @@ function fixtureSkin() {
         cssVariables: {
           "--dsh-panel-alpha": { light: `${values.panelOpacity}%`, dark: `${values.panelOpacity}%` },
         },
-        staticCss: "body[data-dsh-tgcf-skin] .x{color:red}",
-        decorations: [{ key: "lanterns", css: "body[data-dsh-tgcf-skin]::after{opacity:.5}" }],
+        staticCss: "body[data-dsh-meirenzhi-skin] .x{color:red}",
+        decorations: [{ key: "lanterns", css: "body[data-dsh-meirenzhi-skin]::after{opacity:.5}" }],
       };
     },
   };
@@ -61,7 +61,7 @@ test("projection with overrides succeeds without degradation", () => {
   assert.equal(result.effects.backdrop.overlayLight, "rgba(0,0,0,0.080)");
   assert.equal(result.effects.backdrop.overlayDark, "rgba(0,0,0,0.080)", "one scrim alpha drives both overlays");
   assert.equal(result.effects.tokenOverrides["--dsw-alias-accent"].light, "#C3272B");
-  assert.equal(result.effects.staticCss, "body[data-dsh-tgcf-skin] .x{color:red}");
+  assert.equal(result.effects.staticCss, "body[data-dsh-meirenzhi-skin] .x{color:red}");
   assert.equal(result.effects.decorations[0].key, "lanterns");
 });
 
@@ -100,15 +100,15 @@ test("a crashing projector triggers the defaults-only retry (layer 2)", () => {
   skin.project = (values) => {
     if (values.panelOpacity === 20) throw new Error("boom");
     return {
-      bodyAttribute: "dshTgcfSkin",
-      slogans: defaultsFor("tgcf").slogan,
-      titleBrand: "天官赐福",
+      bodyAttribute: "dshMeirenzhiSkin",
+      slogans: defaultsFor("meirenzhi").slogan,
+      titleBrand: "美人志",
       backdrop: null,
     };
   };
   const result = projectSkin(skin, { panelOpacity: 20 }, { assetResolver: resolver });
   assert.equal(result.degraded, "defaults");
-  assert.deepEqual(result.effects.slogans, defaultsFor("tgcf").slogan);
+  assert.deepEqual(result.effects.slogans, defaultsFor("meirenzhi").slogan);
   assert.equal(result.effects.backdrop, null);
 });
 
@@ -125,7 +125,7 @@ test("a projector that always fails degrades to fail-closed (layer 3)", () => {
 test("malformed effects shapes are rejected by normalizeEffects", () => {
   assert.equal(normalizeEffects(null), null);
   assert.equal(normalizeEffects("nope"), null);
-  assert.equal(normalizeEffects({ bodyAttribute: "data-skin-tgcf" }), null, "dashed dataset key is invalid");
+  assert.equal(normalizeEffects({ bodyAttribute: "data-skin-meirenzhi" }), null, "dashed dataset key is invalid");
   assert.equal(normalizeEffects({ bodyAttribute: "ok", backdrop: { blur: 99 } }), null, "blur out of range");
   assert.equal(normalizeEffects({
     bodyAttribute: "ok",
@@ -173,7 +173,7 @@ test("a user wallpaper that cannot resolve falls back to the default builtin", (
     assetResolver: semiResolver,
   });
   assert.equal(result.degraded, "defaults");
-  assert.equal(result.effects.backdrop.imageLight.includes("builtin://tgcf/moonlit"), true, "fallback lands on the factory default builtin");
+  assert.equal(result.effects.backdrop.imageLight.includes("builtin://meirenzhi/yuntai"), true, "fallback lands on the factory default builtin");
 });
 
 test("the REAL openbmc and uefi factories project their baked defaults verbatim", async () => {
@@ -310,49 +310,46 @@ test("uefi-harness projects baked defaults through its own curve (ADR-0004)", as
   assert.equal(customWallpaper.effects.backdrop.imageLight.includes("linear-gradient"), false);
 });
 
-test("the REAL tgcf factory projects single scrim, static palette and static favicon", async () => {
-  const { createTgcfSkin } = await import("../src/client/skins/tgcf/index.js");
+test("the REAL meirenzhi factory projects single scrim, static palette and static favicon", async () => {
+  const { createMeirenzhiSkin } = await import("../src/client/skins/meirenzhi/index.js");
   // No-arg calls throw at the jsxRuntime destructure; stub it (review ③-4②).
-  const skin = createTgcfSkin({ jsx: () => null });
-  const resolverFor = (ref) => ({ url: `builtin://${ref.skinId}/${ref.assetKey}`, mime: "image/svg+xml" });
+  const skin = createMeirenzhiSkin({ jsx: () => null });
+  const resolverFor = (ref) => ({ url: `builtin://${ref.skinId}/${ref.assetKey}`, mime: "image/webp" });
   const result = projectSkin(skin, {}, { assetResolver: resolverFor });
   assert.equal(result.degraded, "none");
   // Translucency curve at the factory default P=35 → scrim 4, blur 1
-  // (ruling #17 pinned 30; 1.0.0 re-tunes the default to 35);
-  // one alpha drives BOTH overlays.
-  assert.equal(result.effects.backdrop.overlayLight, "linear-gradient(rgba(255,246,234,0.040),rgba(255,246,234,0.040))");
-  assert.equal(result.effects.backdrop.overlayDark, "linear-gradient(rgba(14,7,8,0.040),rgba(14,7,8,0.040))");
+  // (tgcf 二次曲线沿用：30·t² / 12·t²)；one alpha drives BOTH overlays.
+  assert.equal(result.effects.backdrop.overlayLight, "linear-gradient(rgba(252, 250, 246, 0.040) 0%, rgba(252, 250, 246, 0.040) 100%)");
+  assert.equal(result.effects.backdrop.overlayDark, "linear-gradient(rgba(16, 16, 26, 0.040) 0%, rgba(16, 16, 26, 0.040) 100%)");
   assert.equal(result.effects.backdrop.blur, 1);
-  assert.deepEqual(result.effects.cssVariables["--dsh-tgcf-glass-blur"], { light: "1px", dark: "1px" });
+  assert.deepEqual(result.effects.cssVariables["--dsh-mrz-glass-blur"], { light: "1px", dark: "1px" });
   // Sidebar fill sits ABOVE the content base by the reference-skin deltas
   // (ruling #15: light +0.05, dark +0.17 — openbmc/uefi pattern).
-  assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-bg-base"], { light: "rgba(255,252,246,0.35)", dark: "rgba(24,16,16,0.35)" });
-  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-sidebar-fill"], { light: "rgba(255,252,246,0.4)", dark: "rgba(24,16,16,0.52)" });
+  assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-bg-base"], { light: "rgba(250, 249, 246, 0.35)", dark: "rgba(18, 18, 26, 0.35)" });
+  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-sidebar-fill"], { light: "rgba(250, 249, 246, 0.40)", dark: "rgba(18, 18, 26, 0.52)" });
   // Composer stays glass (1.0.0 user report): the input card is base +5/+10,
   // its embedded selector +0/+5 — never the host's solid input default.
-  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-input-major"], { light: "rgba(255,252,246,0.4)", dark: "rgba(24,16,16,0.45)" });
-  assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-bg-module-platform"], { light: "rgba(255,252,246,0.35)", dark: "rgba(24,16,16,0.4)" });
-  assert.equal(result.effects.backdrop.imageLight, 'url("builtin://tgcf/moonlit")', "factory default rides the third curated piece (moonlit)");
-  // Favicon is a static skin asset since the field was removed — the seal
-  // artwork (bundled WebP) since 1.0.0, no longer the SVG lantern.
+  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-input-major"], { light: "rgba(250, 249, 246, 0.40)", dark: "rgba(18, 18, 26, 0.45)" });
+  assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-bg-module-platform"], { light: "rgba(250, 249, 246, 0.35)", dark: "rgba(18, 18, 26, 0.40)" });
+  assert.equal(result.effects.backdrop.imageLight, 'url("builtin://meirenzhi/yuntai")', "factory default rides yuntai (001合照)");
+  // Favicon is a static skin asset — the 掌天瓶 mark (bundled WebP data URL).
   assert.equal(result.effects.favicon.href, skin.favicon);
   assert.equal(result.effects.favicon.mime, "image/webp");
   // Colors are baked into the skin (the fields are gone but the identity is not).
-  assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-brand-primary"], { light: "#C3272B", dark: "#E0564A" });
-  assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-brand-text"], { light: "#C9A227", dark: "#D4AF37" });
-  // User bubble (2026-09-01 ruling): vermilion stays the theme family, but
-  // light mode drops to a soft wash (dark text on the pale glass) while dark
-  // keeps the deep vermilion fill; highlight rides the same families.
-  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-bubble"], { light: "rgba(195, 39, 43, 0.10)", dark: "#8E2A2F" });
-  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-bubble-highlight"], { light: "rgba(195, 39, 43, 0.18)", dark: "rgba(170, 55, 60, 0.92)" });
-  // 泡泡边框（openbmc 同款）：staticCss 携带明暗两套品牌色描边。挂接为
-  // :is() 并集（ADR-0006），金值随 1.0.3 换锚更新。
-  assert.ok(result.effects.staticCss.includes(':is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]){border:1px solid rgba(195, 39, 43, 0.38)'));
-  assert.ok(result.effects.staticCss.includes('[data-ds-dark-theme] :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]){border-color:rgba(224, 86, 74, 0.38)'));
-  // Control states tint with the vermilion family (ruling #16).
-  assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-interactive-bg-hover"], { light: "rgba(195,39,43,0.08)", dark: "rgba(224,86,74,0.14)" });
-  assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-bg-overlay"], { light: "rgba(255,252,246,0.82)", dark: "rgba(24,16,16,0.88)" });
-  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-sidebar-nav-item-active"], { light: "rgba(255,252,246,0.9)", dark: "rgba(24,16,16,0.9)" });
-  assert.ok(result.effects.tokenOverrides["--dsw-alias-bg-base"].light.startsWith("rgba(255,252,246,"));
-  assert.deepEqual(result.effects.slogans, { zh: "百无禁忌", en: "No Taboos" });
+  assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-brand-primary"], { light: "#B8433F", dark: "#E58A80" });
+  assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-brand-text"], { light: "#A87B2F", dark: "#D9B45C" });
+  // User bubble: light mode drops to a soft wash (dark text on the pale glass)
+  // while dark keeps the deep panel-family fill; highlight rides the same families.
+  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-bubble"], { light: "rgba(184, 67, 63, 0.10)", dark: "rgba(24, 24, 34, 0.90)" });
+  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-bubble-highlight"], { light: "rgba(184, 67, 63, 0.18)", dark: "rgba(40, 40, 56, 0.92)" });
+  // Control states tint with the crimson family (ruling #16).
+  assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-interactive-bg-hover"], { light: "rgba(184, 67, 63, 0.08)", dark: "rgba(229, 138, 128, 0.14)" });
+  assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-bg-overlay"], { light: "rgba(252, 250, 246, 0.85)", dark: "rgba(24, 24, 34, 0.88)" });
+  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-sidebar-nav-item-active"], { light: "rgba(250, 249, 246, 0.9)", dark: "rgba(28, 28, 40, 0.9)" });
+  // Glass rule rides staticCss at P>0; decorations stay null.
+  assert.equal(result.effects.staticCss, skin.css + "\n" + 'body[data-dsh-meirenzhi-skin] [id="root"]{backdrop-filter:blur(var(--dsh-mrz-glass-blur,0px))}');
+  assert.equal(result.effects.decorations, null);
+  assert.deepEqual(result.effects.slogans, { zh: "风起凡尘 · 红颜问道", en: "From mortal dust, immortals bloom" });
+  assert.equal(result.effects.titleBrand, "美人志");
+  assert.equal(result.effects.bodyAttribute, "dshMeirenzhiSkin");
 });

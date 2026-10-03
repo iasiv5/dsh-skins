@@ -18,8 +18,8 @@
  * Usage:
  *   node scripts/capture-previews.mjs --probe                 # inspect only
  *   node scripts/capture-previews.mjs                         # full capture
- *   node scripts/capture-previews.mjs --skin tgcf --gate      # release gate assertions, local evidence
- *   node scripts/capture-previews.mjs --skin tgcf --out docs/assets # intentional docs update
+ *   node scripts/capture-previews.mjs --skin meirenzhi --gate      # release gate assertions, local evidence
+ *   node scripts/capture-previews.mjs --skin meirenzhi --out docs/assets # intentional docs update
  * Options:
  *   --url <base>   default http://127.0.0.1:3080
  *   --out <dir>    explicit output override; full captures default to
@@ -230,7 +230,7 @@ if (probe) {
 
 // ---- gate: semi-automated release assertions (design §13) ----
 // Run against a GUI with the candidate plugin installed:
-//   node scripts/capture-previews.mjs --skin tgcf --gate
+//   node scripts/capture-previews.mjs --skin meirenzhi --gate
 /** Privacy gate shared by --gate and the full capture (R13): every captured
  *  evidence frame must pass through this preparation. */
 async function preparePrivateCapture(page) {
@@ -293,7 +293,6 @@ if (gate) {
     meirenzhi: "风起凡尘 · 红颜问道",
     openbmc: "察于未萌 · 治于未乱",
     "uefi-harness": "启于固件 · 行于万象",
-    tgcf: "百无禁忌",
   };
   const openPanel = async () => {
     await openSwitcher(gpage);

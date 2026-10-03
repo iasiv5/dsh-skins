@@ -8,7 +8,7 @@ const HERO_NS = "conversation";
 const HERO_KEY = "hero.headline";
 const ACTIVE_EVENT = "dsh-skins:active-changed";
 
-/** dataset camelCase → attribute name: dshTgcfSkin → data-dsh-tgcf-skin. */
+/** dataset camelCase → attribute name: dshMeirenzhiSkin → data-dsh-meirenzhi-skin. */
 function datasetAttribute(key) {
   return `data-${key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
 }

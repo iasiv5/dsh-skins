@@ -55,28 +55,27 @@ If the install fails, send me the command output verbatim and retry at most once
 
 </details>
 
-## Five appearances
+## Four appearances
 
 This section answers: which skins exist and what each feels like.
 
 | Choice ID | Kind | Description |
 |---|---|---|
 | `official` | built-in option | Plain paper & dark ink · breathing white space · naturally itself |
-| `meirenzhi` | full skin | Jade faces & flowered looks · moonlit silks by night · asking the Dao in mortal dust |
 | `openbmc` | full skin · factory default | Ice-silk waves · storm-wing backdrop · ice-blue palette |
 | `uefi-harness` | full skin | Violet spark · sunset wash · indigo-blue palette |
-| `tgcf` | full skin | A thousand lights · vermilion & gold · night shared bright |
+| `meirenzhi` | full skin | Jade faces & flowered looks · moonlit silks by night · asking the Dao in mortal dust |
 
 - `official` restores the official DeepSeek Harness branding, backdrop and favicon, while keeping the skin switcher and the official light/dark palettes.
-- `meirenzhi` (凡人修仙传 · A Mortal's Journey: Beauty Chronicle) is an **unofficial fan work** with no affiliation with or authorization from the copyright holders; the 6 bundled wallpapers are AI-generated fan art, the Reach-for-the-Sky Vial site icon embeds the owner-provided emblem artwork, the BEAUTY badge is rendered with HTML/CSS, and the fireflies use CSS pseudo-elements and radial gradients — no official artwork is bundled. Vermilion-and-gold in both light and dark, slogan "From mortal dust, immortals bloom" (风起凡尘 · 红颜问道).
 - `openbmc` (OpenBMC Studio): the brand slots reuse the OpenBMC project's official logo letterforms and blue-green brand gradient, used solely for identification; all rights remain with the OpenBMC project. The backdrop is the "Left Wind, Right Thunder" storm artwork, ice-blue in both light and dark, slogan "Govern before the storm" (察于未萌 · 治于未乱).
 - `uefi-harness` (UEFI Studio): the brand slots carry the UEFI Forum's official logo (rights note under "Known limits"). The backdrop is the "Integrated Circuits" circuit-board artwork, violet-and-indigo in both light and dark, slogan "Boot before everything" (启于固件 · 行于万象).
-- `tgcf` (Heaven Official's Blessing · No Taboos) is an **unofficial fan work** with no affiliation with or authorization from the copyright holders; the factory wallpapers are AI-generated fan art, while the site icon and drifting-butterfly decoration are original code-drawn SVG — no official artwork is bundled. Vermilion-and-gold dark mode, pale-gold light mode, slogan "No Taboos".
+- `meirenzhi` (凡人修仙传 · A Mortal's Journey: Beauty Chronicle) is an **unofficial fan work** with no affiliation with or authorization from the copyright holders; the 6 bundled wallpapers are AI-generated fan art, the Reach-for-the-Sky Vial site icon embeds the owner-provided emblem artwork, the BEAUTY badge is rendered with HTML/CSS, and the fireflies use CSS pseudo-elements and radial gradients — no official artwork is bundled. Vermilion-and-gold in both light and dark, slogan "From mortal dust, immortals bloom" (风起凡尘 · 红颜问道).
 - Every skin ships one palette per light/dark mode and follows the appearance setting automatically.
+- The `tgcf` (Heaven Official's Blessing) skin was removed in v1.4.0: browsers that had selected it fall back to the factory skin automatically, and its leftover personalization settings are cleaned up at load.
 
 ## Screenshots
 
-All captures below are real browser screenshots covering all four extension skins, new and old alike; every wallpaper can be swapped any time from the personalization panel (next section).
+All captures below are real browser screenshots covering all three extension skins, new and old alike; every wallpaper can be swapped any time from the personalization panel (next section).
 
 ### 凡人修仙传 · 美人志
 
@@ -87,12 +86,6 @@ All captures below are real browser screenshots covering all four extension skin
 | ![Mu Peiling (light)](docs/assets/preview-meirenzhi-5.webp) | ![Nangong Wan (light)](docs/assets/preview-meirenzhi-6.webp) |
 
 Solo portraits in order: Ziling, Nangong Que (dark), Yinyue, Mu Peiling and Nangong Wan; the first shot is the factory wallpaper "Yuntai Gathering" (group).
-
-### 天官赐福 · No Taboos
-
-| | |
-|---|---|
-| ![Hua Cheng · Silver Butterflies and Lanterns (dark)](docs/assets/preview-tgcf-1.webp) | ![Xie Lian · Sea of Clouds and Palaces (light)](docs/assets/preview-tgcf-2.webp) |
 
 ### OpenBMC Studio (factory default)
 
@@ -106,13 +99,13 @@ Solo portraits in order: Ziling, Nangong Que (dark), Yinyue, Mu Peiling and Nang
 
 This section answers: what you can tune, how, and where the settings live.
 
-Every skin's key visuals are open to adjustment. Click the gear button on a skin card and that skin's personalization panel docks beside the switcher (stacked vertically on narrow windows). All four skins (`tgcf` / `openbmc` / `uefi-harness` / `meirenzhi`) share the same field set:
+Every skin's key visuals are open to adjustment. Click the gear button on a skin card and that skin's personalization panel docks beside the switcher (stacked vertically on narrow windows). All three skins (`openbmc` / `uefi-harness` / `meirenzhi`) share the same field set:
 
 | Field | What you can do | Factory value |
 |---|---|---|
 | **Wallpaper** | Pick from the skin's built-in artwork, or upload your own images into a personal library | Each skin's default artwork |
 | **Slogan** | The new-session guidance line, one Chinese and one English copy | The skin's factory slogan |
-| **Translucency** | 0–100%, one value driving three visual layers: panel tint, wallpaper scrim and blur. 0% is pure, fully visible wallpaper; 100% hides it completely | tgcf / meirenzhi 35, openbmc / uefi-harness 55 |
+| **Translucency** | 0–100%, one value driving three visual layers: panel tint, wallpaper scrim and blur. 0% is pure, fully visible wallpaper; 100% hides it completely | meirenzhi 35, openbmc / uefi-harness 55 |
 
 ![Personalization panel — meirenzhi shown: built-in wallpaper grid, library upload, zh/en slogans and the translucency knob](docs/assets/preview-personalization.webp)
 
@@ -133,7 +126,7 @@ Every skin's key visuals are open to adjustment. Click the gear button on a skin
 ### Where settings live, and whether they survive
 
 - Configuration and the library live under `$DSH_HOME/dsh-skins/`, physically isolated from the plugin install directory: plugin upgrades (via the dsh-m marketplace or `dsh plugin`) only replace the plugin install directory and cannot touch it.
-- Only overrides are stored: untouched fields automatically follow the new version's defaults, and leftovers of retired fields are cleaned up at load.
+- Only overrides are stored: untouched fields automatically follow the new version's defaults, and leftovers of retired skins or fields are cleaned up at load (the v1.4.0 tgcf removal rides this path).
 - A damaged state file triggers recovery mode: indexes are rebuilt and bad files quarantined — your images are never wiped.
 - Uploads pass magic-number validation and size caps; concurrent writes merge per field and never clobber each other.
 
@@ -150,7 +143,7 @@ The **Skin Switcher** popover at the bottom of the sidebar has two sections:
 
 When the sidebar is collapsed, the entry folds into a round palette icon; multiple `sidebar.footer.action` entries stack vertically without overlapping. Choosing "Official" only undoes the extension skins — your light/dark/system preference is untouched.
 
-The URL switches skins too: `/?skin=official`, `/?skin=meirenzhi`, `/?skin=openbmc`, `/?skin=uefi-harness`, `/?skin=tgcf`.
+The URL switches skins too: `/?skin=official`, `/?skin=openbmc`, `/?skin=uefi-harness`, `/?skin=meirenzhi`.
 
 ## Updates
 
@@ -180,7 +173,6 @@ Yes. Configuration and the library live in the `$DSH_HOME/dsh-skins/` data direc
 - Other skin plugins may also touch the body backdrop, brand slots or favicon; avoid enabling multiple visual skin plugins at the same time.
 - The `openbmc` brand slots reuse the OpenBMC project's official logo letterforms and brand gradient, used solely for identification; all rights remain with the OpenBMC project.
 - The `uefi-harness` mark is the UEFI Forum's official trademark (the red cube, from uefi.org's published uefi_logo_red.gif, embedded as vector paths traced via Wikimedia Commons "Logo of the UEFI Forum.svg"); it is used solely to identify the skin, and all rights remain with the UEFI Forum.
-- `tgcf` is an unofficial fan work: its name and imagery reference "Heaven Official's Blessing" with no affiliation with or authorization from the copyright holders (MXTX, bilibili, et al.); all bundled visuals are original drawings and no official artwork is included. Should a rights holder object, the skin will be republished under a neutral name (e.g. "A Thousand Lights · Vermilion & Gold").
 
 ## License
 

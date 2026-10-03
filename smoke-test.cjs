@@ -329,17 +329,18 @@ for (const node of panelChildren) {
     skinCards.push(node);
   }
 }
-if (skinCards.length !== 5) throw new Error("skin section needs official appearance + 4 skins, got " + skinCards.length);
-if (gears.length !== 4) throw new Error("every catalog skin exposes a personalization gear, got " + gears.length);
+if (skinCards.length !== 4) throw new Error("skin section needs official appearance + 3 skins, got " + skinCards.length);
+if (gears.length !== 3) throw new Error("every catalog skin exposes a personalization gear, got " + gears.length);
 if (skinCards[0].props.children[0].props.children !== "DeepSeek Harness（官方）") throw new Error("official appearance must be the first skin card");
 if (skinCards[0].props["aria-checked"] !== false) throw new Error("official appearance must not be selected on first load");
 if (skinCards[1].props["aria-checked"] !== true) throw new Error("openbmc (factory skin) must remain selected on first load");
 if (skinCards[1].props.children[0].props.children !== "OpenBMC Studio") throw new Error("openbmc must be listed second (factory skin leads the skins)");
-if (skinCards[4].props.children[0].props.children !== "天官赐福") throw new Error("tgcf must be registered and listed last");
+if (skinCards[2].props.children[0].props.children !== "UEFI Studio") throw new Error("uefi-harness must be listed third (v1.4.0 order)");
+if (skinCards[3].props.children[0].props.children !== "凡人修仙传 · 美人志") throw new Error("meirenzhi must be registered and listed last");
 themeCards[2].props.onClick();
 if (themeSnapshot.preference !== "system") throw new Error("system button must call official theme.setTheme");
 if (storage.get("dsh-skins:theme-preference") !== "system") throw new Error("system selection must persist remotely");
-console.log("✓ popover: appearance(3) + skins(5: official first, openbmc second, tgcf last) + gears(4); system theme persisted");
+console.log("✓ popover: appearance(3) + skins(4: official first, openbmc second, uefi third, meirenzhi last) + gears(3); system theme persisted");
 
 
 // ---- restore the official appearance, then switch via the public selector ----
@@ -397,51 +398,51 @@ if (!obmcCss.textContent.includes("color-mix(in srgb, rgb(247, 250, 252) 86%, tr
 if (!obmcCss.textContent.includes(".dshm-panel") || !obmcCss.textContent.includes(".dsh-skins-pop")) throw new Error("openbmc popup family must cover dsh-m and dsh-skins panels");
 console.log("✓ openbmc active: baked-default token layer + backdrop + no wallpaper glass at default P + popup frost family");
 
-// ---- tgcf: personalization-aware skin, token layer + backdrop + hot-update ----
-// Direct UEFI → openbmc → TGCF switch (no official detour): teardown-first
-// mounting restores the official brand segment before tgcf rebrands it.
-mod.selectSkin("tgcf");
-if (window.__DSH_SKINS__.active() !== "tgcf") throw new Error("tgcf must become active");
-if (body.dataset.dshTgcfSkin !== "") throw new Error("tgcf body scope attr missing");
-const tgcfBackdrop = styleTag("tgcf.backdrop");
-if (!tgcfBackdrop || tgcfBackdrop.removed) throw new Error("tgcf backdrop stylesheet missing");
-if (!tgcfBackdrop.textContent.includes("data:image/webp")) throw new Error("tgcf backdrop must embed the bundled factory wallpaper (WebP)");
-if (!tgcfBackdrop.textContent.includes("filter:blur(1px)")) throw new Error("tgcf backdrop must apply the curve-derived 1px wallpaper blur at the default P=35");
-if (!tgcfBackdrop.textContent.includes("linear-gradient(rgba(255,246,234,0.040)")) throw new Error("tgcf scrim overlay must derive from the translucency curve at the default P=35");
-const tgcfThemeLayer = ctx.theme._layers.get("dsh-skins/tgcf");
-if (!tgcfThemeLayer) throw new Error("tgcf must register a token override layer");
-if (tgcfThemeLayer["--dsw-alias-brand-primary"].light !== "#C3272B") throw new Error("accent default must map to the brand-primary token");
-if (tgcfThemeLayer["--dsw-specific-bubble"].dark !== "#8E2A2F") throw new Error("bubble default must map to the specific-bubble token");
-if (typeof tgcfThemeLayer["--dsw-alias-bg-base"].light !== "string" || !tgcfThemeLayer["--dsw-alias-bg-base"].light.startsWith("rgba(255,252,246,")) {
+// ---- meirenzhi: token layer + backdrop + hot-update ----
+// Direct UEFI → openbmc → meirenzhi switch (no official detour): teardown-first
+// mounting restores the official brand segment before meirenzhi rebrands it.
+mod.selectSkin("meirenzhi");
+if (window.__DSH_SKINS__.active() !== "meirenzhi") throw new Error("meirenzhi must become active");
+if (body.dataset.dshMeirenzhiSkin !== "") throw new Error("meirenzhi body scope attr missing");
+const mrzBackdrop = styleTag("meirenzhi.backdrop");
+if (!mrzBackdrop || mrzBackdrop.removed) throw new Error("meirenzhi backdrop stylesheet missing");
+if (!mrzBackdrop.textContent.includes("data:image/webp")) throw new Error("meirenzhi backdrop must embed the bundled factory wallpaper (WebP)");
+if (!mrzBackdrop.textContent.includes("filter:blur(1px)")) throw new Error("meirenzhi backdrop must apply the curve-derived 1px wallpaper blur at the default P=35");
+if (!mrzBackdrop.textContent.includes("linear-gradient(rgba(252, 250, 246, 0.040)")) throw new Error("meirenzhi scrim overlay must derive from the translucency curve at the default P=35");
+const mrzThemeLayer = ctx.theme._layers.get("dsh-skins/meirenzhi");
+if (!mrzThemeLayer) throw new Error("meirenzhi must register a token override layer");
+if (mrzThemeLayer["--dsw-alias-brand-primary"].light !== "#B8433F") throw new Error("accent default must map to the brand-primary token");
+if (mrzThemeLayer["--dsw-specific-bubble"].dark !== "rgba(24, 24, 34, 0.90)") throw new Error("bubble default must map to the specific-bubble token");
+if (typeof mrzThemeLayer["--dsw-alias-bg-base"].light !== "string" || !mrzThemeLayer["--dsw-alias-bg-base"].light.startsWith("rgba(250, 249, 246,")) {
 	throw new Error("panel opacity must derive translucent panel bases");
 }
-if (document.title !== "标题实验 — 天官赐福") throw new Error("tgcf must rebrand the session title, got " + document.title);
-const tgcfDecor = styleTag("tgcf");
-if (!tgcfDecor || !tgcfDecor.textContent.includes("prefers-reduced-motion")) throw new Error("tgcf static css must ship ambient motion with a reduced-motion guard");
-console.log("✓ tgcf active: backdrop + tokens + title + ambient motion (reduced-motion guarded)");
+if (document.title !== "标题实验 — 美人志") throw new Error("meirenzhi must rebrand the session title, got " + document.title);
+const mrzDecor = styleTag("meirenzhi");
+if (!mrzDecor || !mrzDecor.textContent.includes("prefers-reduced-motion")) throw new Error("meirenzhi static css must ship ambient motion with a reduced-motion guard");
+console.log("✓ meirenzhi active: backdrop + tokens + title + ambient motion (reduced-motion guarded)");
 
 // hot-update: change overrides through the runtime's personalization hook,
 // then confirm the projected effects swap without touching the selection.
 mod.selectSkin("official");
-if (ctx.theme._layers.get("dsh-skins/tgcf")) throw new Error("switching to official must dispose the tgcf token layer");
-mod.selectSkin("tgcf");
-if (!ctx.theme._layers.get("dsh-skins/tgcf")) throw new Error("re-selecting tgcf must re-register the token layer");
+if (ctx.theme._layers.get("dsh-skins/meirenzhi")) throw new Error("switching to official must dispose the meirenzhi token layer");
+mod.selectSkin("meirenzhi");
+if (!ctx.theme._layers.get("dsh-skins/meirenzhi")) throw new Error("re-selecting meirenzhi must re-register the token layer");
 console.log("✓ token override layers dispose and re-register across skin switches");
 
 // Hot-update (the config sync wiring fires this on every page load): the
 // rebuilt effects must fully replace the old set without tearing down the
 // live skin (the 9c19d5c regression this now guards against).
-const tgcfCssBefore = styleTag("tgcf");
-const tgcfTitleBefore = document.title;
+const mrzCssBefore = styleTag("meirenzhi");
+const mrzTitleBefore = document.title;
 const hotUpdate = window.__DSH_SKINS__.hotUpdate();
 if (hotUpdate.applied !== true) throw new Error("hot update must apply, got " + JSON.stringify(hotUpdate));
-if (!styleTag("tgcf") || styleTag("tgcf").removed) throw new Error("hot update must keep the tgcf style tag alive");
-if (!styleTag("tgcf.backdrop") || styleTag("tgcf.backdrop").removed) throw new Error("hot update must keep the backdrop tag alive");
-if (body.dataset.dshTgcfSkin !== "") throw new Error("hot update must keep the body scope attribute");
-if (!ctx.theme._layers.get("dsh-skins/tgcf")) throw new Error("hot update must re-register the token layer");
-if (document.title !== tgcfTitleBefore) throw new Error("hot update must keep the rebranded title, got " + document.title);
-if (window.__DSH_SKINS__.active() !== "tgcf") throw new Error("hot update must not change the active skin");
-void tgcfCssBefore;
+if (!styleTag("meirenzhi") || styleTag("meirenzhi").removed) throw new Error("hot update must keep the meirenzhi style tag alive");
+if (!styleTag("meirenzhi.backdrop") || styleTag("meirenzhi.backdrop").removed) throw new Error("hot update must keep the backdrop tag alive");
+if (body.dataset.dshMeirenzhiSkin !== "") throw new Error("hot update must keep the body scope attribute");
+if (!ctx.theme._layers.get("dsh-skins/meirenzhi")) throw new Error("hot update must re-register the token layer");
+if (document.title !== mrzTitleBefore) throw new Error("hot update must keep the rebranded title, got " + document.title);
+if (window.__DSH_SKINS__.active() !== "meirenzhi") throw new Error("hot update must not change the active skin");
+void mrzCssBefore;
 console.log("✓ hot-update rebuilt effects with the live skin intact");
 
 // unknown id must throw

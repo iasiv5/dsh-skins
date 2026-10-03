@@ -65,50 +65,6 @@ const WALLPAPER_FIELD = {
 };
 
 export const SKINS = {
-  tgcf: {
-    builtinAssets: {
-      // Registry mirrors the grid: the factory default (moonlit) leads.
-      moonlit: { mime: "image/webp", labelKey: "personalization.tgcf.moonlit" },
-      crimson: { mime: "image/webp", labelKey: "personalization.tgcf.crimson" },
-      pale: { mime: "image/webp", labelKey: "personalization.tgcf.pale" },
-      "seal-favicon": { mime: "image/webp" },
-    },
-    fields: [
-      // Factory default rides moonlit (花怜 · 月下同伞) since the 1.0.0
-      // wallpaper addition; it leads the grid (user ruling) and its label
-      // carries the （默认壁纸） suffix. crimson/pale remain selectable, and
-      // stored overrides are untouched by the default flip.
-      { ...WALLPAPER_FIELD, default: "builtin:tgcf:moonlit", builtinChoices: ["moonlit", "crimson", "pale"] },
-      {
-        key: "slogan",
-        type: "text",
-        scope: "locale",
-        labelKey: "personalization.slogan",
-        maxLength: 40,
-        default: { zh: "百无禁忌", en: "No Taboos" },
-      },
-      {
-        // Ruling #14: ONE translucency knob. It drives the panel tint, the
-        // wallpaper scrim and the blur as one combined visual (the curve
-        // lives in the tgcf projector, calibrated through the historical
-        // defaults P=82 → scrim 30 / blur 12); the blur/scrim fields are
-        // retired — pre-1.0.0 there are no external users to migrate.
-        // Ruling #15: factory default 10; ruling #17 re-tunes it to 30 —
-        // a faint veil so menus read while the wallpaper still leads;
-        // 1.0.0 re-tunes it to 35 (user) for a touch more panel presence.
-        key: "panelOpacity",
-        type: "range",
-        scope: "single",
-        labelKey: "personalization.panelTranslucency",
-        min: 0,
-        max: 100,
-        step: 1,
-        unit: "%",
-        default: 35,
-      },
-    ],
-  },
-
   // ADR-0004 (reversing design §9a): every catalog skin declares the same
   // standard field set. The legacy skins' catalog slogan defaults are
   // same-source with their factories' static `slogans`, and panelOpacity
@@ -168,9 +124,9 @@ export const SKINS = {
     ],
   },
 
-  // 美人志（v1.0.6 前的出厂皮肤，现注册顺序第二位）：6 张内置精选，出厂默认 yuntai
-  // （001合照）领头并对齐 tgcf 的「出厂默认领先」惯例；panelOpacity 锚定
-  // tgcf 二次曲线（projector 数学见 skins/meirenzhi/index.js）。
+  // 美人志（v1.0.6 前的出厂皮肤，现注册顺序第三位）：6 张内置精选，出厂默认 yuntai
+  // （001合照）领头并对齐已移除 tgcf 皮肤的「出厂默认领先」惯例；panelOpacity 锚定
+  // 其二次曲线（projector 数学见 skins/meirenzhi/index.js）。
   meirenzhi: {
     builtinAssets: {
       yuntai: { mime: "image/webp", labelKey: "personalization.meirenzhi.yuntai" },

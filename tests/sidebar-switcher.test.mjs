@@ -51,7 +51,7 @@ function makeConfigClient() {
     getState: () => state,
     onStateChange: (l) => (listeners.add(l), () => listeners.delete(l)),
     effectiveOverrides: () => ({}),
-    preview: () => { previews.set("tgcf panelOpacity", 66); state = { ...state, dirtyCount: previews.size }; emit(); },
+    preview: () => { previews.set("meirenzhi panelOpacity", 66); state = { ...state, dirtyCount: previews.size }; emit(); },
     previewReset: () => {},
     restore: () => { calls.restore += 1; previews.clear(); state = { ...state, dirtyCount: 0 }; emit(); },
     flushNow: async () => { calls.flushNow += 1; return { flushed: 1 }; },
@@ -76,7 +76,7 @@ function makeHarness(viewportHeight = 900, viewportWidth = 1400) {
     list: () => [
       { id: "openbmc", label: "OpenBMC", description: "bmc" },
       { id: "uefi-harness", label: "UEFI", description: "uefi" },
-      { id: "tgcf", label: "TGCF", description: "tgcf" },
+      { id: "meirenzhi", label: "MRZ", description: "mrz" },
     ],
   };
   const themeSnapshot = { preference: "system", active: { id: "light" }, themes: [], revision: 0 };
@@ -176,7 +176,7 @@ test("① gear opens the docked panel column and focuses the heading", async () 
   await h.openShell();
   assert.equal(h.panelColumn(), null, "no panel before the gear click");
 
-  h.gearButton("tgcf").props.onClick();
+  h.gearButton("meirenzhi").props.onClick();
   await tick();
   h.attachFocusRecorders();
   // The panel mount effect runs at the next microtask checkpoint; give the
@@ -188,7 +188,7 @@ test("① gear opens the docked panel column and focuses the heading", async () 
   assert.equal(column.props["aria-label"], "个性化设置");
    assert.ok(h.dom.focused.includes("panel-heading-prevent-scroll"),
      "panel heading receives focus without scrolling the transitioning shell");
-  const gearNode = h.gearButton("tgcf");
+  const gearNode = h.gearButton("meirenzhi");
   assert.equal(flatten(gearNode).some((n) => n.props?.className === "dsh-skins-pz-gear-dot"), false,
     "no override dot on the gear (user ruling #9)");
   const shell = h.shell();
@@ -211,7 +211,7 @@ test("② clean shell: outside click closes, focus returns to the trigger, and N
 test("③ outside click closes directly — no confirmation even with a pending edit (ADR-0003)", async () => {
   const h = makeHarness();
   await h.openShell();
-  h.gearButton("tgcf").props.onClick();
+  h.gearButton("meirenzhi").props.onClick();
   await tick();
   h.translucencyInput().props.onChange({ target: { value: "66" } });
   await tick();
@@ -228,7 +228,7 @@ test("③ outside click closes directly — no confirmation even with a pending 
 test("④ Escape closes directly — no confirmation (ADR-0003)", async () => {
   const h = makeHarness();
   await h.openShell();
-  h.gearButton("tgcf").props.onClick();
+  h.gearButton("meirenzhi").props.onClick();
   await tick();
   h.translucencyInput().props.onChange({ target: { value: "66" } });
   await tick();
@@ -241,9 +241,9 @@ test("④ Escape closes directly — no confirmation (ADR-0003)", async () => {
 test("⑤ gear re-click collapses the panel directly (no confirm, ADR-0003)", async () => {
   const h = makeHarness();
   await h.openShell();
-  h.gearButton("tgcf").props.onClick();
+  h.gearButton("meirenzhi").props.onClick();
   await tick();
-  h.gearButton("tgcf").props.onClick();
+  h.gearButton("meirenzhi").props.onClick();
   await tick();
   assert.equal(h.panelColumn(), null, "panel collapsed");
   assert.notEqual(h.shell(), null, "shell itself stays open");
@@ -253,7 +253,7 @@ test("⑤ gear re-click collapses the panel directly (no confirm, ADR-0003)", as
 test("⑥ gear target switch works directly (no dirty confirm, ADR-0003)", async () => {
   const h = makeHarness();
   await h.openShell();
-  h.gearButton("tgcf").props.onClick();
+  h.gearButton("meirenzhi").props.onClick();
   await tick();
   h.gearButton("openbmc").props.onClick();
   await tick();
@@ -265,7 +265,7 @@ test("⑥ gear target switch works directly (no dirty confirm, ADR-0003)", async
 test("⑦ panel open: card click follows the panel target (v2.4.1, reverses Q48)", async () => {
   const h = makeHarness();
   await h.openShell();
-  h.gearButton("tgcf").props.onClick();
+  h.gearButton("meirenzhi").props.onClick();
   await tick();
   h.cardButton("uefi-harness").props.onClick();
   await tick();
@@ -274,7 +274,7 @@ test("⑦ panel open: card click follows the panel target (v2.4.1, reverses Q48)
   assert.notEqual(h.panelColumn(), null, "panel stays docked");
   assert.ok(h.heading().props.children.includes("UEFI"), "panel target follows the selection");
   // Active and panel target can never split while the panel is open.
-  assert.ok(!h.heading().props.children.includes("TGCF"), "stale panel content is gone");
+  assert.ok(!h.heading().props.children.includes("MRZ"), "stale panel content is gone");
 
   // Non-personalizable target (official): the panel collapses via the same
   // clean path instead of docking an empty column.
@@ -288,7 +288,7 @@ test("⑦ panel open: card click follows the panel target (v2.4.1, reverses Q48)
 test("⑧ card switch with a pending edit: direct switch, no confirm (ADR-0003)", async () => {
   const h = makeHarness();
   await h.openShell();
-  h.gearButton("tgcf").props.onClick();
+  h.gearButton("meirenzhi").props.onClick();
   await tick();
   h.translucencyInput().props.onChange({ target: { value: "66" } });
   await tick();
@@ -302,9 +302,9 @@ test("⑧ card switch with a pending edit: direct switch, no confirm (ADR-0003)"
 test("⑨ panel closed: card click is a plain switch, no confirm", async () => {
   const h = makeHarness();
   await h.openShell();
-  h.cardButton("tgcf").props.onClick();
+  h.cardButton("meirenzhi").props.onClick();
   await tick();
-  assert.equal(h.getActive(), "tgcf");
+  assert.equal(h.getActive(), "meirenzhi");
   assert.equal(h.panelColumn(), null, "no panel appears from a card click");
   assert.equal(h.dom.confirms.length, 0, "panel closed ⇒ nothing dirty to guard");
 });
@@ -312,7 +312,7 @@ test("⑨ panel closed: card click is a plain switch, no confirm", async () => {
 test("⑩ shell is clamped to the space above its anchor; panel column scrolls; action bar sticks (issue #2)", async () => {
   const h = makeHarness(900);
   await h.openShell();
-  h.gearButton("tgcf").props.onClick();
+  h.gearButton("meirenzhi").props.onClick();
   await tick();
   const sh = h.shell();
   // The trigger stub has no rect → fallback anchor top = innerHeight-60 ⇒ box.bottom = 68.
@@ -353,7 +353,7 @@ test("⑩ shell is clamped to the space above its anchor; panel column scrolls; 
   assert.ok(css.includes(".dsh-skins-pop{transition:none}"),
     "reduced-motion skips the width animation");
   assert.ok(
-    css.includes('body[data-ds-dark-theme]:not([data-dsh-meirenzhi-skin]):not([data-dsh-openbmc-skin]):not([data-dsh-uefi-harness]):not([data-dsh-tgcf-skin]) .dsh-skins-pop{background:rgba(41,42,44,0.97)}'),
+    css.includes('body[data-ds-dark-theme]:not([data-dsh-meirenzhi-skin]):not([data-dsh-openbmc-skin]):not([data-dsh-uefi-harness]) .dsh-skins-pop{background:rgba(41,42,44,0.97)}'),
     "official dark pop gets a deep charcoal, skinned modes keep their token overlay (ruling #16)");
   assert.ok(
     css.includes(".dsh-skins-pop-card-on,.dsh-skins-pop-card-on:hover{border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-bg-module-platform)}"),
@@ -372,7 +372,7 @@ test("⑩b stacked sheet: panel-open popover becomes a near-full-viewport sheet 
   // List-only popover keeps the anchor clamp (field issue #2 semantics).
   assert.equal(h.shell().props.style.bottom, 68, "list-only: anchored above the trigger as before");
   assert.equal(h.shell().props.style.maxHeight, 620, "list-only: 700 - 68 - 12, the anchor clamp is unchanged");
-  h.gearButton("tgcf").props.onClick();
+  h.gearButton("meirenzhi").props.onClick();
   await tick();
   // Sheet: 12px margins all around; the panel column flex-fills the rest
   // with its own scroll region (see the stacked media rules in SHELL_CSS).
@@ -481,11 +481,11 @@ test("⑫ height sweep no-ops where a sweep would be wrong — and never leaks t
 test("⑬ panel header collapses the panel back to the skin list (v1.0.0 ruling)", async () => {
   const h = makeHarness();
   await h.openShell();
-  h.gearButton("tgcf").props.onClick();
+  h.gearButton("meirenzhi").props.onClick();
   await tick();
   h.attachFocusRecorders();
   assert.notEqual(h.panelColumn(), null, "panel open");
-  assert.equal(h.gearButton("tgcf").props["aria-expanded"], true, "the gear reports its expanded state");
+  assert.equal(h.gearButton("meirenzhi").props["aria-expanded"], true, "the gear reports its expanded state");
   const heading = h.heading();
   assert.equal(heading.props["aria-level"], 2, "the heading stays the header's focus target");
   const collapse = h.collapseButton();
@@ -497,8 +497,8 @@ test("⑬ panel header collapses the panel back to the skin list (v1.0.0 ruling)
   await tick();
   assert.equal(h.panelColumn(), null, "panel collapsed");
   assert.notEqual(h.shell(), null, "the shell itself stays open — collapse ≠ dismiss");
-  assert.ok(h.dom.focused.includes("tgcf-gear"), "focus returned to the gear that opened the panel");
-  assert.equal(h.gearButton("tgcf").props["aria-expanded"], false, "gear state follows the panel");
+  assert.ok(h.dom.focused.includes("meirenzhi-gear"), "focus returned to the gear that opened the panel");
+  assert.equal(h.gearButton("meirenzhi").props["aria-expanded"], false, "gear state follows the panel");
 
   const css = h.cssText();
   assert.ok(css.includes('.dsh-skins-pz-gear[aria-expanded="true"]{opacity:1;border-color:var(--dsw-alias-brand-primary)'),

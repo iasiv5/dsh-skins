@@ -7,7 +7,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createSkinRuntime } from "../src/client/runtime.js";
-import { createTgcfSkin } from "../src/client/skins/tgcf/index.js";
 import { createOpenBmcHarness } from "../src/client/skins/openbmc-harness/index.js";
 import { createMeirenzhiSkin } from "../src/client/skins/meirenzhi/index.js";
 
@@ -141,67 +140,67 @@ function withLegacyAssets(skin) {
   return skin;
 }
 
-function bootTgcf(dom) {
+function bootMeirenzhi(dom) {
   const runtime = createSkinRuntime();
-  const tgcf = createTgcfSkin(stubJsx);
+  const meirenzhi = createMeirenzhiSkin(stubJsx);
   const openbmc = withLegacyAssets(createOpenBmcHarness(stubJsx));
   runtime.register(openbmc);
-  runtime.register(tgcf);
+  runtime.register(meirenzhi);
   const ctx = makeCtx();
-  const dispose = runtime.apply(ctx); // apply() mounts order[0]; tgcf is selected explicitly below
-  runtime.setPersonalization(personalizationFor(new Map([["tgcf", tgcf], ["openbmc", openbmc]])));
-  runtime.select("tgcf");
+  const dispose = runtime.apply(ctx); // apply() mounts order[0]; meirenzhi is selected explicitly below
+  runtime.setPersonalization(personalizationFor(new Map([["meirenzhi", meirenzhi], ["openbmc", openbmc]])));
+  runtime.select("meirenzhi");
   dom.document.title = "标题实验 — DeepSeek Harness";
   for (const observer of [...dom.observers]) observer.callback();
-  return { runtime, ctx, dispose, tgcf };
+  return { runtime, ctx, dispose, meirenzhi };
 }
 
 test("N1: a successful hot-update keeps the live skin fully intact", () => {
   const dom = installDom();
-  const { runtime, ctx } = bootTgcf(dom);
+  const { runtime, ctx } = bootMeirenzhi(dom);
 
   const before = {
-    css: dom.styleTag("dsh-skins/tgcf.css"),
-    backdrop: dom.styleTag("dsh-skins/tgcf.backdrop.css"),
-    attr: dom.document.body.dataset.dshTgcfSkin !== undefined,
+    css: dom.styleTag("dsh-skins/meirenzhi.css"),
+    backdrop: dom.styleTag("dsh-skins/meirenzhi.backdrop.css"),
+    attr: dom.document.body.dataset.dshMeirenzhiSkin !== undefined,
     slogan: ctx.locale.dicts.get("conversation").get("zh")["hero.headline"],
-    layer: ctx.layers.get("dsh-skins/tgcf"),
+    layer: ctx.layers.get("dsh-skins/meirenzhi"),
     title: dom.document.title,
   };
   assert.ok(before.css && before.backdrop && before.attr && before.layer);
-  assert.equal(before.slogan, "百无禁忌");
-  assert.equal(before.title, "标题实验 — 天官赐福");
+  assert.equal(before.slogan, "风起凡尘 · 红颜问道");
+  assert.equal(before.title, "标题实验 — 美人志");
 
   // The production wiring fires this on every config sync (page load).
   const result = runtime.updateActive();
   assert.equal(result.applied, true);
   assert.equal(result.degraded, "none");
-  assert.ok(dom.styleTag("dsh-skins/tgcf.css"), "skin css tag must survive");
-  assert.ok(dom.styleTag("dsh-skins/tgcf.backdrop.css"), "backdrop tag must survive");
-  assert.equal(dom.document.body.dataset.dshTgcfSkin !== undefined, true, "body scope attr must survive");
-  assert.equal(ctx.locale.dicts.get("conversation").get("zh")["hero.headline"], "百无禁忌");
-  assert.ok(ctx.layers.get("dsh-skins/tgcf"), "token layer must survive");
-  assert.equal(dom.document.title, "标题实验 — 天官赐福");
-  assert.equal(runtime.active(), "tgcf");
+  assert.ok(dom.styleTag("dsh-skins/meirenzhi.css"), "skin css tag must survive");
+  assert.ok(dom.styleTag("dsh-skins/meirenzhi.backdrop.css"), "backdrop tag must survive");
+  assert.equal(dom.document.body.dataset.dshMeirenzhiSkin !== undefined, true, "body scope attr must survive");
+  assert.equal(ctx.locale.dicts.get("conversation").get("zh")["hero.headline"], "风起凡尘 · 红颜问道");
+  assert.ok(ctx.layers.get("dsh-skins/meirenzhi"), "token layer must survive");
+  assert.equal(dom.document.title, "标题实验 — 美人志");
+  assert.equal(runtime.active(), "meirenzhi");
 });
 
 test("N1: a direct A→B switch rebrands the title without an official detour", () => {
   const dom = installDom();
-  const { runtime } = bootTgcf(dom);
+  const { runtime } = bootMeirenzhi(dom);
   runtime.select("openbmc");
   assert.equal(runtime.active(), "openbmc");
   assert.equal(dom.document.title, "标题实验 — OpenBMC Studio");
-  assert.equal(dom.document.body.dataset.dshTgcfSkin, undefined);
+  assert.equal(dom.document.body.dataset.dshMeirenzhiSkin, undefined);
   assert.equal(dom.document.body.dataset.dshOpenbmcSkin, "");
   // And back — still no official detour.
-  runtime.select("tgcf");
-  assert.equal(dom.document.title, "标题实验 — 天官赐福");
+  runtime.select("meirenzhi");
+  assert.equal(dom.document.title, "标题实验 — 美人志");
 });
 
 test("N1: a failed same-skin rebuild restores the previous effects", () => {
   const dom = installDom();
-  const { runtime, ctx } = bootTgcf(dom);
-  assert.ok(dom.styleTag("dsh-skins/tgcf.backdrop.css"));
+  const { runtime, ctx } = bootMeirenzhi(dom);
+  assert.ok(dom.styleTag("dsh-skins/meirenzhi.backdrop.css"));
 
   dom.injectObserveFailure(1); // exactly the next build fails; the restore build must succeed
   const result = runtime.updateActive();
@@ -209,33 +208,33 @@ test("N1: a failed same-skin rebuild restores the previous effects", () => {
   assert.equal(result.reason, "mount-failed");
 
 
-  // The previous tgcf effects were RE-PROJECTED and remounted.
-  assert.equal(runtime.active(), "tgcf");
-  assert.ok(dom.styleTag("dsh-skins/tgcf.css"));
-  assert.ok(dom.styleTag("dsh-skins/tgcf.backdrop.css"));
-  assert.equal(dom.document.body.dataset.dshTgcfSkin, "");
-  assert.equal(ctx.locale.dicts.get("conversation").get("zh")["hero.headline"], "百无禁忌");
-  assert.ok(ctx.layers.get("dsh-skins/tgcf"));
+  // The previous meirenzhi effects were RE-PROJECTED and remounted.
+  assert.equal(runtime.active(), "meirenzhi");
+  assert.ok(dom.styleTag("dsh-skins/meirenzhi.css"));
+  assert.ok(dom.styleTag("dsh-skins/meirenzhi.backdrop.css"));
+  assert.equal(dom.document.body.dataset.dshMeirenzhiSkin, "");
+  assert.equal(ctx.locale.dicts.get("conversation").get("zh")["hero.headline"], "风起凡尘 · 红颜问道");
+  assert.ok(ctx.layers.get("dsh-skins/meirenzhi"));
 });
 
 test("N1: selecting a skin that cannot project keeps the current skin", () => {
   const dom = installDom();
   const runtime = createSkinRuntime();
-  const good = createTgcfSkin(stubJsx);
+  const good = createMeirenzhiSkin(stubJsx);
   const broken = withLegacyAssets(createOpenBmcHarness(stubJsx));
   broken.project = () => { throw new Error("always broken"); };
   runtime.register(broken);
   runtime.register(good);
   runtime.apply(makeCtx());
-  runtime.setPersonalization(personalizationFor(new Map([["tgcf", good], ["openbmc", broken]])));
-  runtime.select("tgcf");
+  runtime.setPersonalization(personalizationFor(new Map([["meirenzhi", good], ["openbmc", broken]])));
+  runtime.select("meirenzhi");
   dom.document.title = "标题实验 — DeepSeek Harness";
   for (const observer of [...dom.observers]) observer.callback();
 
   runtime.select("openbmc");
-  assert.equal(runtime.active(), "tgcf", "failed selection must not change the active skin");
-  assert.equal(dom.document.body.dataset.dshTgcfSkin, "");
-  assert.ok(dom.styleTag("dsh-skins/tgcf.backdrop.css"));
+  assert.equal(runtime.active(), "meirenzhi", "failed selection must not change the active skin");
+  assert.equal(dom.document.body.dataset.dshMeirenzhiSkin, "");
+  assert.ok(dom.styleTag("dsh-skins/meirenzhi.backdrop.css"));
 });
 
 // Product promise under test: making openbmc the FIRST registered skin (v1.0.6

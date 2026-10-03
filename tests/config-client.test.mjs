@@ -41,13 +41,13 @@ function flushingClient(fetchImpl) {
 }
 
 test("boot transitions loading → synced and exposes the snapshot", async () => {
-  const fetchImpl = makeFetch(() => snapshotBody({ skins: { tgcf: { blur: 5 } } }));
+  const fetchImpl = makeFetch(() => snapshotBody({ skins: { meirenzhi: { blur: 5 } } }));
   const client = flushingClient(fetchImpl);
   assert.equal(client.getState().status, "loading");
   await client.boot();
   assert.equal(client.getState().status, "synced");
   assert.equal(client.getState().revision, 7);
-  assert.deepEqual(client.getState().skins.tgcf, { blur: 5 });
+  assert.deepEqual(client.getState().skins.meirenzhi, { blur: 5 });
   assert.equal(client.writeBlocked(), null);
   client.dispose();
 });
@@ -99,7 +99,7 @@ test("failed boot lands in offline-failed and writes are gated", async () => {
   await client.boot();
   assert.equal(client.getState().status, "offline-failed");
   assert.equal(client.writeBlocked(), "offline");
-  client.preview("tgcf", "panelOpacity",3);
+  client.preview("meirenzhi", "panelOpacity",3);
   const result = await client.flushNow();
   assert.deepEqual(result, { flushed: 0, blocked: "offline" });
   assert.equal(fetchImpl.calls.length, 1, "no PATCH was attempted while offline");
@@ -122,9 +122,9 @@ test("clicking the factory-default value on a pristine skin is a no-op (v1.0.0 r
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  // tgcf wallpaper factory default is builtin:tgcf:moonlit
-  client.preview("tgcf", "wallpaper", "builtin:tgcf:moonlit");
-  assert.deepEqual(client.effectiveOverrides("tgcf"), {}, "no override armed by a default click");
+  // meirenzhi wallpaper factory default is builtin:meirenzhi:yuntai
+  client.preview("meirenzhi", "wallpaper", "builtin:meirenzhi:yuntai");
+  assert.deepEqual(client.effectiveOverrides("meirenzhi"), {}, "no override armed by a default click");
   assert.equal(client.getState().dirtyCount, 0, "nothing marked dirty");
   const result = await client.flushNow();
   assert.deepEqual(result, { flushed: 0 });
@@ -143,11 +143,11 @@ test("on a modified field, clicking the default value arms a delete op (v1.0.0 r
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "wallpaper", "builtin:tgcf:crimson"); // real override
-  client.preview("tgcf", "wallpaper", "builtin:tgcf:moonlit"); // back to factory → delete
+  client.preview("meirenzhi", "wallpaper", "builtin:meirenzhi:mupeiling"); // real override
+  client.preview("meirenzhi", "wallpaper", "builtin:meirenzhi:yuntai"); // back to factory → delete
   const result = await client.flushNow();
   assert.deepEqual(result, { flushed: 1 });
-  assert.deepEqual(patches[0].operations, [{ op: "delete", skinId: "tgcf", key: "wallpaper" }]);
+  assert.deepEqual(patches[0].operations, [{ op: "delete", skinId: "meirenzhi", key: "wallpaper" }]);
   client.dispose();
 });
 
@@ -162,15 +162,16 @@ test("a locale value equal to the factory default arms a delete op too (v1.0.0 r
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  // tgcf factory slogan is 百无禁忌 / No Taboos. A freshly built {zh, en}
+  // meirenzhi factory slogan is 风起凡尘 · 红颜问道 / From mortal dust,
+  // immortals bloom. A freshly built {zh, en}
   // object can never be reference-equal to the catalog default — the
   // default-equal check must be structural, or this arms a set op and the
   // store keeps a default-equal "override" forever.
-  client.preview("tgcf", "slogan", { zh: "实验标语", en: "Custom slogan" }); // real override
-  client.preview("tgcf", "slogan", { zh: "百无禁忌", en: "No Taboos" }); // back to factory → delete
+  client.preview("meirenzhi", "slogan", { zh: "实验标语", en: "Custom slogan" }); // real override
+  client.preview("meirenzhi", "slogan", { zh: "风起凡尘 · 红颜问道", en: "From mortal dust, immortals bloom" }); // back to factory → delete
   const result = await client.flushNow();
   assert.deepEqual(result, { flushed: 1 });
-  assert.deepEqual(patches[0].operations, [{ op: "delete", skinId: "tgcf", key: "slogan" }]);
+  assert.deepEqual(patches[0].operations, [{ op: "delete", skinId: "meirenzhi", key: "slogan" }]);
   client.dispose();
 });
 
@@ -181,8 +182,8 @@ test("re-clicking the effective value is idempotent and does not re-arm a flush"
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "wallpaper", "builtin:tgcf:crimson");
-  client.preview("tgcf", "wallpaper", "builtin:tgcf:crimson");
+  client.preview("meirenzhi", "wallpaper", "builtin:meirenzhi:mupeiling");
+  client.preview("meirenzhi", "wallpaper", "builtin:meirenzhi:mupeiling");
   assert.equal(client.getState().dirtyCount, 1, "one preview entry");
   client.dispose();
 });
@@ -194,19 +195,19 @@ test("previews gate writes until flushed; effective overrides layer previews ove
       patches.push(JSON.parse(init.body));
       return jsonResponse(200, { revision: 8 });
     }
-    return snapshotBody({ skins: { tgcf: { blur: 5, panelOpacity: 70 } } });
+    return snapshotBody({ skins: { meirenzhi: { blur: 5, panelOpacity: 70 } } });
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity",9);
+  client.preview("meirenzhi", "panelOpacity",9);
   assert.equal(client.getState().dirtyCount, 1);
   // Preview layers over the synced snapshot without touching it.
-  assert.deepEqual(client.effectiveOverrides("tgcf"), { blur: 5, panelOpacity: 9 });
+  assert.deepEqual(client.effectiveOverrides("meirenzhi"), { blur: 5, panelOpacity: 9 });
   // Pending gate: status is synced so writes are allowed — flush explicitly.
   const result = await client.flushNow();
   assert.deepEqual(result, { flushed: 1 });
   assert.equal(patches.length, 1);
-  assert.deepEqual(patches[0].operations, [{ op: "set", skinId: "tgcf", key: "panelOpacity", value: 9 }]);
+  assert.deepEqual(patches[0].operations, [{ op: "set", skinId: "meirenzhi", key: "panelOpacity", value: 9 }]);
   client.dispose();
 });
 
@@ -224,16 +225,16 @@ test("a preview edited again mid-flight survives the flush of the older value", 
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity",5);
+  client.preview("meirenzhi", "panelOpacity",5);
   const flushing = client.flushNow();
   // The user keeps dragging the slider while the first value is in flight.
-  client.preview("tgcf", "panelOpacity",12);
+  client.preview("meirenzhi", "panelOpacity",12);
   releasePatch();
   await flushing;
   assert.equal(client.getState().dirtyCount, 1, "newer preview survives");
-  assert.deepEqual(client.effectiveOverrides("tgcf"), { panelOpacity: 12 });
+  assert.deepEqual(client.effectiveOverrides("meirenzhi"), { panelOpacity: 12 });
   await client.flushNow();
-  assert.deepEqual(patches[1].operations, [{ op: "set", skinId: "tgcf", key: "panelOpacity", value: 12 }]);
+  assert.deepEqual(patches[1].operations, [{ op: "set", skinId: "meirenzhi", key: "panelOpacity", value: 12 }]);
   client.dispose();
 });
 
@@ -246,19 +247,19 @@ test("previewReset schedules a delete op; failed writes keep previews dirty for 
       if (fail) return jsonResponse(500, { error: "boom" });
       return jsonResponse(200, { revision: 8 });
     }
-    return snapshotBody({ skins: { tgcf: { panelOpacity: 70 } } });
+    return snapshotBody({ skins: { meirenzhi: { panelOpacity: 70 } } });
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.previewReset("tgcf", "panelOpacity");
+  client.previewReset("meirenzhi", "panelOpacity");
   fail = true;
   assert.deepEqual(await client.flushNow(), { flushed: 0, blocked: "error", errorMessage: "boom" });
   assert.equal(client.getState().dirtyCount, 1, "preview kept dirty after failure");
-  assert.deepEqual(client.effectiveOverrides("tgcf"), {}, "reset preview removes the override");
+  assert.deepEqual(client.effectiveOverrides("meirenzhi"), {}, "reset preview removes the override");
 
   fail = false;
   assert.deepEqual(await client.flushNow(), { flushed: 1 });
-  assert.deepEqual(patches[0].operations, [{ op: "delete", skinId: "tgcf", key: "panelOpacity" }]);
+  assert.deepEqual(patches[0].operations, [{ op: "delete", skinId: "meirenzhi", key: "panelOpacity" }]);
   client.dispose();
 });
 
@@ -282,7 +283,7 @@ test("409 STORE_READONLY downgrades the client to read-only WITHOUT a refetch", 
   const client = flushingClient(fetchImpl);
   await client.boot();
   const callsAfterBoot = fetchImpl.calls.length;
-  client.preview("tgcf", "panelOpacity",3);
+  client.preview("meirenzhi", "panelOpacity",3);
   assert.deepEqual(await client.flushNow(), { flushed: 0, blocked: "conflict", errorMessage: "readonly" });
   assert.equal(client.getState().status, "unsupported-readonly");
   assert.equal(client.getState().dirtyCount, 1, "dirty state retained for the UI");
@@ -305,7 +306,7 @@ test("409 revision conflict auto-refetches and retries once (ADR-0003)", async (
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity",3);
+  client.preview("meirenzhi", "panelOpacity",3);
   const result = await client.flushNow();
   assert.deepEqual(result, { flushed: 1 }, "the conflict auto-retry lands the preview");
   assert.equal(patches.length, 2, "exactly one automatic retry — no user action");
@@ -328,13 +329,13 @@ test("exhausted revision-conflict retry surfaces a machine-readable failure unti
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity", 3);
+  client.preview("meirenzhi", "panelOpacity", 3);
   assert.deepEqual(await client.flushNow(), { flushed: 0, blocked: "conflict" });
   assert.equal(patchCount, 2);
   assert.equal(client.getState().lastFlushCode, "REVISION_CONFLICT");
   assert.equal(client.getState().lastFlushError, null);
   assert.equal(client.getState().dirtyCount, 1);
-  client.preview("tgcf", "panelOpacity", 4);
+  client.preview("meirenzhi", "panelOpacity", 4);
   assert.equal(client.getState().lastFlushCode, null);
   assert.equal(client.getState().lastFlushError, null);
   client.dispose();
@@ -352,7 +353,7 @@ test("STORE_RECOVERY_REQUIRED refetches recovery state without retrying PATCH", 
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity", 3);
+  client.preview("meirenzhi", "panelOpacity", 3);
   assert.deepEqual(await client.flushNow(), { flushed: 0, blocked: "recovery" });
   assert.equal(patchCount, 1);
   assert.equal(client.getState().mode, "recovery");
@@ -372,7 +373,7 @@ test("STORE_RECOVERY_REQUIRED surfaces its error when recovery refetch fails", a
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity", 3);
+  client.preview("meirenzhi", "panelOpacity", 3);
   assert.deepEqual(await client.flushNow(), {
     flushed: 0,
     blocked: "error",
@@ -395,7 +396,7 @@ test("unknown 409 codes fail loudly without retry", async () => {
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity", 3);
+  client.preview("meirenzhi", "panelOpacity", 3);
   assert.deepEqual(await client.flushNow(), { flushed: 0, blocked: "error", errorMessage: "boom" });
   assert.equal(patchCount, 1);
   assert.equal(client.getState().lastFlushCode, null);
@@ -418,10 +419,10 @@ test("queued flush failures overwrite conflict state without breaking failure-fi
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity", 3);
+  client.preview("meirenzhi", "panelOpacity", 3);
   const firstFlush = client.flushNow();
   await Promise.resolve();
-  client.preview("tgcf", "panelOpacity", 4);
+  client.preview("meirenzhi", "panelOpacity", 4);
   const secondFlush = client.flushNow();
   releaseFirstPatch();
   assert.deepEqual(await firstFlush, { flushed: 0, blocked: "conflict" });
@@ -442,7 +443,7 @@ test("revision-conflict refetch failure does not send a blind retry", async () =
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity", 3);
+  client.preview("meirenzhi", "panelOpacity", 3);
   assert.deepEqual(await client.flushNow(), { flushed: 0, blocked: "offline" });
   assert.equal(patchCount, 1);
   assert.equal(client.getState().status, "offline-failed");
@@ -463,7 +464,7 @@ test("revision-conflict refetch with the same revision does not retry", async ()
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity", 3);
+  client.preview("meirenzhi", "panelOpacity", 3);
   assert.deepEqual(await client.flushNow(), { flushed: 0, blocked: "conflict" });
   assert.equal(patchCount, 1);
   assert.equal(client.getState().dirtyCount, 1);
@@ -476,9 +477,9 @@ test("auto-save: the debounce window merges into ONE PATCH (ADR-0003)", async ()
   const fetchImpl = makeFetch(() => snapshotBody());
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity",3);
-  client.preview("tgcf", "wallpaper", "builtin:tgcf:pale");
-  client.previewReset("tgcf", "slogan");
+  client.preview("meirenzhi", "panelOpacity",3);
+  client.preview("meirenzhi", "wallpaper", "builtin:meirenzhi:ziling");
+  client.previewReset("meirenzhi", "slogan");
   assert.equal(client.getState().dirtyCount, 3);
   await new Promise((resolve) => setTimeout(resolve, 520)); // > 400ms debounce
   const patchCalls = fetchImpl.calls.filter((c) => c.init.method === "PATCH");
@@ -491,15 +492,15 @@ test("auto-save: the debounce window merges into ONE PATCH (ADR-0003)", async ()
 
 test("lastFlushError: a failed auto-save surfaces, the next edit clears it (ADR-0003)", async () => {
   const fetchImpl = makeFetch((index, url, init) => {
-    if (init.method === "PATCH") return jsonResponse(400, { error: "tgcf.panelOpacity 校验失败（BAD_VALUE）" });
+    if (init.method === "PATCH") return jsonResponse(400, { error: "meirenzhi.panelOpacity 校验失败（BAD_VALUE）" });
     return snapshotBody();
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity",9);
+  client.preview("meirenzhi", "panelOpacity",9);
   await new Promise((resolve) => setTimeout(resolve, 520));
-  assert.equal(client.getState().lastFlushError, "tgcf.panelOpacity 校验失败（BAD_VALUE）", "failure surfaced for the panel strip");
-  client.preview("tgcf", "panelOpacity",10); // a fresh edit always clears the strip
+  assert.equal(client.getState().lastFlushError, "meirenzhi.panelOpacity 校验失败（BAD_VALUE）", "failure surfaced for the panel strip");
+  client.preview("meirenzhi", "panelOpacity",10); // a fresh edit always clears the strip
   assert.equal(client.getState().lastFlushError, null);
   client.dispose();
 });
@@ -562,7 +563,7 @@ test("a context switch (skin change) drops the in-flight snapshot", async () => 
     contextActive: () => active,
   });
   const booting = contextClient.boot();
-  active = "tgcf"; // user switched skins while the fetch was in flight
+  active = "meirenzhi"; // user switched skins while the fetch was in flight
   await booting;
   assert.equal(contextClient.getState().revision, 0, "response after a context switch is dropped");
   await contextClient.refetch(); // stable context applies
@@ -581,15 +582,15 @@ test("HTTP 500 responses land in offline-failed, never synced", async () => {
 
 test("a non-ok PATCH carries the server error message to the caller (field report)", async () => {
   const fetchImpl = makeFetch((index, url, init) => {
-    if (init.method === "PATCH") return jsonResponse(400, { error: "tgcf.blur 校验失败（UNKNOWN_FIELD）", code: "INVALID_CONFIG" });
+    if (init.method === "PATCH") return jsonResponse(400, { error: "meirenzhi.blur 校验失败（UNKNOWN_FIELD）", code: "INVALID_CONFIG" });
     return snapshotBody();
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "blur", 0); // a RETIRED field key — the server, not the client, rejects it
+  client.preview("meirenzhi", "blur", 0); // a RETIRED field key — the server, not the client, rejects it
   const result = await client.flushNow();
   assert.equal(result.blocked, "error");
-  assert.equal(result.errorMessage, "tgcf.blur 校验失败（UNKNOWN_FIELD）");
+  assert.equal(result.errorMessage, "meirenzhi.blur 校验失败（UNKNOWN_FIELD）");
   assert.equal(client.getState().dirtyCount, 1, "previews stay dirty for retry");
   client.dispose();
 });
@@ -607,9 +608,9 @@ test("a rejected PATCH never poisons the write chain — the next flush retries"
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity",4);
+  client.preview("meirenzhi", "panelOpacity",4);
   assert.deepEqual(await client.flushNow(), { flushed: 0, blocked: "error" });
-  client.preview("tgcf", "panelOpacity",6);
+  client.preview("meirenzhi", "panelOpacity",6);
   failNetwork = false;
   assert.deepEqual(await client.flushNow(), { flushed: 1 });
   assert.equal(patches.length, 2, "the retry actually reached the wire");
@@ -629,7 +630,7 @@ test("queued writes are skipped after dispose (no post-dispose PATCH)", async ()
   });
   const client = flushingClient(fetchImpl);
   await client.boot();
-  client.preview("tgcf", "panelOpacity",4);
+  client.preview("meirenzhi", "panelOpacity",4);
   const flushing = client.flushNow();
   client.dispose(); // the queued task must observe this before sending
   release();
