@@ -393,6 +393,38 @@ export function createOpenBmcHarness(jsxRuntime) {
   body[data-dsh-openbmc-skin][data-ds-dark-theme] .lc-card,
   body[data-dsh-openbmc-skin][data-ds-dark-theme] .lc-settings-card {
     background: color-mix(in srgb, rgb(12, 26, 38) 86%, transparent);
+  }
+
+  /* ---------- ⑧d tooltip 抬升（ADR-0007 amendment，v3 冻层的自伤修复） ----------
+   * v3 给每张 .lc-card 点亮 backdrop-filter 后，卡即成为 stacking context：
+   * dsh-context 的悬停提示 .lc-tip（group/tip 显影）不是 portal，而是
+   * position:absolute + z-index:6 挂在卡内、悬垂出卡底压在相邻卡上——皮肤下
+   * 它被困在本卡上下文里，树序靠后的相邻卡（同样 backdrop-filter）整层盖在
+   * 上面，提示永远不可见（官方卡无 stacking context 故无症状；headless 取证：
+   * tip opacity=1 但完全被下一卡覆盖）。悬停提示组时把宿主卡抬到兄弟卡之上：
+   * relative+z-index 仅悬停期生效，布局零位移，毛玻璃配方不动。group/tip
+   * 覆盖 stats/brief/files 三族提示（dsh-context 源码仅此三处）。 */
+  body[data-dsh-openbmc-skin] .lc-card:has(.group\\/tip:hover) {
+    position: relative;
+    z-index: 10;
+  }
+
+  /* ---------- ⑧e tooltip 可读性（ADR-0007 amendment，⑧d 的伴生面） ----------
+   * .lc-tip 底色走 --dsw-alias-bg-layer-2 且自带 0 blur——openbmc 把该 token
+   * 覆盖为半透（α≈0.56–0.64），⑧d 把提示抬到相邻卡之上后，下层卡的致密
+   * 文字直接从半透 tip 底上透出（主人实测：tip 顶层可见但字看不清）。
+   * 并入浮层族配方（皮肤 tint + blur14）。**96% 而非家族 86%**：tip 处在
+   * 抬升卡（backdrop root）内，blur 只采样卡内内容、糊不到下层卡，防透
+   * 全靠 alpha；文字优先的微弹层主人两轮实测 86% 仍嫌透，96% 实底保留
+   * 一丝玻璃感。meirenzhi/tgcf 未覆盖 bg-layer-* token、tip 已是官方实底，
+   * 仍按主人裁决三皮肤同构并入（观感统一，v1.2.3 先例）。 */
+  body[data-dsh-openbmc-skin] .lc-tip {
+    background: color-mix(in srgb, rgb(247, 250, 252) 96%, transparent);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  }
+  body[data-dsh-openbmc-skin][data-ds-dark-theme] .lc-tip {
+    background: color-mix(in srgb, rgb(12, 26, 38) 96%, transparent);
   }`;
 
   /* ================================================================

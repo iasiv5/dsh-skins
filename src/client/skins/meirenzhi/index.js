@@ -92,6 +92,22 @@ const CSS = [
   // lc-* 为该插件自有稳定类名（同 .dshm-* 前提，不入宿主守卫）。
   `${SCOPE} .lc-ov-card,${SCOPE} .lc-modal-card,${SCOPE} .lc-card,${SCOPE} .lc-settings-card{background:color-mix(in srgb,rgb(250, 249, 246) 86%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
   `${SCOPE}[data-ds-dark-theme] .lc-ov-card,${SCOPE}[data-ds-dark-theme] .lc-modal-card,${SCOPE}[data-ds-dark-theme] .lc-card,${SCOPE}[data-ds-dark-theme] .lc-settings-card{background:color-mix(in srgb,rgb(18, 18, 26) 86%,transparent)}`,
+  // tooltip 抬升（ADR-0007 amendment，v3 冻层的自伤修复）：v3 让每张
+  // .lc-card 经 backdrop-filter 成为 stacking context，dsh-context 的悬停提示
+  // .lc-tip（group/tip 显影）不是 portal，而是卡内 absolute（z-index:6）悬垂出
+  // 卡底压在相邻卡上——皮肤下被困在本卡上下文里，树序靠后的相邻卡（同样
+  // backdrop-filter）整层盖住它，提示永远不可见（官方卡无 stacking context 故
+  // 无症状）。悬停提示组时把宿主卡抬到兄弟卡之上：relative+z-index 仅悬停期
+  // 生效，布局零位移，毛玻璃配方不动。group/tip 覆盖 stats/brief/files 三族。
+  `${SCOPE} .lc-card:has(.group\\/tip:hover){position:relative;z-index:10}`,
+  // tooltip 可读性/观感统一（ADR-0007 amendment，tooltip 抬升的伴生面）：
+  // .lc-tip 底色走 --dsw-alias-bg-layer-2 且自带 0 blur。meirenzhi 未覆盖该
+  // token、tip 本就是官方实底（无透字问题），但主人裁决三皮肤同构并入浮层
+  // 族配方——与弹层族观感一致，消除独缺一家的分叉。96% 而非家族 86%：
+  // tip 处在抬升卡（backdrop root）内，blur 糊不到下层卡，防透全靠 alpha，
+  // 文字优先的微弹层主人两轮实测 86% 仍嫌透。
+  `${SCOPE} .lc-tip{background:color-mix(in srgb,rgb(250, 249, 246) 96%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
+  `${SCOPE}[data-ds-dark-theme] .lc-tip{background:color-mix(in srgb,rgb(18, 18, 26) 96%,transparent)}`,
 ].join("\n");
 
 /** Panel glass: warm mist white (light) / deep night blue-violet (dark). */

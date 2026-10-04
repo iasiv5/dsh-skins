@@ -101,6 +101,45 @@ test("v3 dsh-context overlay cards frosted in all three skins (ADR-0007 amendmen
   }
 });
 
+test("v3.1 tooltip lift present in all three skins (ADR-0007 amendment)", () => {
+  // The v3 frost makes every .lc-card a stacking context; dsh-context's
+  // group/tip hover tooltips (.lc-tip — in-card absolute, NOT a portal) hang
+  // below the card bounds and got buried under the tree-later sibling card.
+  // While a tip group is hovered, its host card must lift above siblings.
+  for (const { id, css } of skins) {
+    assert.ok(
+      /\.lc-card:has\(\.group\\\/tip:hover\)\{position:relative;z-index:10;?\}/.test(css),
+      `${id}: tooltip lift rule missing`,
+    );
+  }
+});
+
+test("v3.2 .lc-tip readability frost in all three skins (ADR-0007 amendment)", () => {
+  // .lc-tip paints with --dsw-alias-bg-layer-2 and no blur of its own. openbmc
+  // and uefi override that token to translucent values, so the lifted tooltip
+  // bled the card text through (readability); meirenzhi leaves the token on
+  // the opaque host value but the owner ruled for 同构统一 with the frost
+  // family anyway (visual consistency, ADR-0007 v1.2.3 precedent). All three
+  // carry the family recipe (96% tint + blur14), dark variant swaps the tint.
+  const tints = {
+    openbmc: ["rgb(247,250,252)96%", "rgb(12,26,38)96%"],
+    meirenzhi: ["rgb(250,249,246)96%", "rgb(18,18,26)96%"],
+    uefi: ["rgb(248,247,255)96%", "rgb(23,18,45)96%"],
+  };
+  for (const { id, css } of skins) {
+    const [light, dark] = tints[id];
+    assert.ok(
+      new RegExp(`\\.lc-tip\\{[^{}]*color-mix\\(insrgb,${light.replaceAll(/([()])/g, "\\$&")}[^{}]*backdrop-filter:blur\\(14px\\)saturate\\(1\\.3\\)`).test(css),
+      `${id}: .lc-tip frost rule missing for tint ${light}`,
+    );
+    assert.ok(
+      new RegExp(`data-ds-dark-theme\\]\\.lc-tip\\{background:color-mix\\(insrgb,${dark.replaceAll(/([()])/g, "\\$&")}[^{}]*\\}`).test(css),
+      `${id}: .lc-tip dark tint missing`,
+    );
+    assert.ok(css.includes("-webkit-backdrop-filter:blur(14px)saturate(1.3)"), `${id}: .lc-tip -webkit spelling missing`);
+  }
+});
+
 test("float selector cannot sweep floatTitle/floatBody/floatResize", () => {
   // The structural hook keys on the trailing underscore; the guard enforces
   // the live inventory, this pins the reasoning.
