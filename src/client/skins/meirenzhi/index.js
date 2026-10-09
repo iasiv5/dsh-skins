@@ -65,13 +65,17 @@ const CSS = [
   `${SCOPE}{--dsw-menu-surface-fill:rgba(250, 249, 246, 0.94);--dsw-alias-menu-group-header-fill:rgba(250, 249, 246, 0.94);--dsw-specific-menu:rgba(250, 249, 246, 0.94)}`,
   `${SCOPE}[data-ds-dark-theme]{--dsw-menu-surface-fill:rgba(18, 18, 26, 0.94);--dsw-alias-menu-group-header-fill:rgba(18, 18, 26, 0.94);--dsw-specific-menu:rgba(18, 18, 26, 0.94)}`,
   // 弹窗毛玻璃（dsh-quota-watch 同款配方）：宿主 Modal（设置页各弹窗、风险
-  // 确认、灯箱）与 dsh-m / dsh-skins 弹层面板底色偏透，下层文字干扰阅读；
+  // 确认）与 dsh-m / dsh-skins 弹层面板底色偏透，下层文字干扰阅读；
   // 统一 86% 不透明皮肤底（暖雾白/玄夜）+ blur14 提饱和，下层内容只余柔光。
   // 宿主弹窗经 CSS modules 哈希 → role/aria 定位；.dshm-*/.dsh-skins-pop 为
   // 各插件自有稳定类名。--dsw-mask-blur 点亮官方默认 none 的遮罩模糊。
+  // 1.5.1 豁免（ADR-0007 amendment）：dsh-m 截图灯箱 .dsvm-lightbox 根同带
+  // role/aria 语义，浅色 tint 会把影院式黑遮罩染成浅毛玻璃、白色控件整体隐形
+  // （用户双模式实拍）；影院遮罩归 dsh-m 自有不变量（0.9.62 起 background
+  // !important 自持），此处 :not 双保险、语义归位。
   `${SCOPE}{--dsw-mask-blur:blur(10px)}`,
-  `${SCOPE} [role="dialog"][aria-modal="true"],${SCOPE} .dshm-panel,${SCOPE} .dshm-compat-dialog,${SCOPE} .dshm-dshchip-tip,${SCOPE} .dsh-skins-pop{background:color-mix(in srgb,rgb(250, 249, 246) 86%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
-  `${SCOPE}[data-ds-dark-theme] [role="dialog"][aria-modal="true"],${SCOPE}[data-ds-dark-theme] .dshm-panel,${SCOPE}[data-ds-dark-theme] .dshm-compat-dialog,${SCOPE}[data-ds-dark-theme] .dshm-dshchip-tip,${SCOPE}[data-ds-dark-theme] .dsh-skins-pop{background:color-mix(in srgb,rgb(18, 18, 26) 86%,transparent)}`,
+  `${SCOPE} [role="dialog"][aria-modal="true"]:not(.dsvm-lightbox),${SCOPE} .dshm-panel,${SCOPE} .dshm-compat-dialog,${SCOPE} .dshm-dshchip-tip,${SCOPE} .dsh-skins-pop{background:color-mix(in srgb,rgb(250, 249, 246) 86%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
+  `${SCOPE}[data-ds-dark-theme] [role="dialog"][aria-modal="true"]:not(.dsvm-lightbox),${SCOPE}[data-ds-dark-theme] .dshm-panel,${SCOPE}[data-ds-dark-theme] .dshm-compat-dialog,${SCOPE}[data-ds-dark-theme] .dshm-dshchip-tip,${SCOPE}[data-ds-dark-theme] .dsh-skins-pop{background:color-mix(in srgb,rgb(18, 18, 26) 86%,transparent)}`,
   // 浮层毛玻璃 v2（补漏，ADR-0007）：v1 只盖宿主 Modal 与 .dshm-*/.dsh-skins-pop；
   // 逐面排查后的剩余缺口——dockkit 悬浮窗壳 _float_（bg-layer-2 皮肤下 α≈0.6
   // 且无 blur）、宿主对话框非 modal 变体（无 aria-modal，用 _dialog_ 结构兜底）、

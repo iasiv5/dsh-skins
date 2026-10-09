@@ -32,6 +32,23 @@ test("v1 dialog recipe survives in all three skins", () => {
   }
 });
 
+test("v1.5.1 dsh-m lightbox exempt from the dialog frost (ADR-0007 amendment)", () => {
+  // The dsh-m screenshot lightbox root (.dsvm-lightbox) carries
+  // role/aria-modal semantics, so the v1 role/aria hook used to tint its
+  // cinema-black backdrop with the skin's light 86% frost — the white
+  // ‹›/✕ controls went invisible (user photos, both color schemes). The
+  // cinema backdrop is dsh-m's own invariant (dsh-m 0.9.62 self-owns it with
+  // a !important background); the :not() here is the semantic cleanup and a
+  // second belt. Every skin must carry the exemption in BOTH the light and
+  // the dark variant of the hook.
+  for (const { id, css } of skins) {
+    const lightCount = css.split('[role="dialog"][aria-modal="true"]:not(.dsvm-lightbox)').length - 1;
+    assert.ok(lightCount >= 2, `${id}: lightbox exemption missing from light/dark dialog hook (found ${lightCount})`);
+    // and the hook must not survive anywhere WITHOUT the exemption
+    assert.ok(!/\[role="dialog"\]\[aria-modal="true"\][,{\s]/.test(css), `${id}: unexempted role/aria dialog hook still present`);
+  }
+});
+
 test("v2 overlay-frost union present in all three skins (ADR-0007)", () => {
   for (const { id, css } of skins) {
     // a. dockkit float-window shell + b. structural dialog fallback, with the
