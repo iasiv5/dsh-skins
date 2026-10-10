@@ -147,6 +147,23 @@ export function createSkinRuntime() {
         rules.push(`${darkSelector}::after{background-image:${backdrop.overlayDark}}`);
       }
     }
+    const desktopBlur = backdrop.desktopBlur ?? null;
+    if (desktopBlur !== null && (backdrop.imageLight !== null || backdrop.imageDark !== null)) {
+      const desktopSelector = `html[data-windows-titlebar] ${selector}`;
+      const blurDeclarations = (blur) => `filter:blur(${blur}px);transform:scale(1.02);`;
+      if (desktopBlur.light === desktopBlur.dark) {
+        if (desktopBlur.light > 0) {
+          rules.push(`${desktopSelector}::before{${blurDeclarations(desktopBlur.light)}}`);
+        }
+      } else {
+        if (desktopBlur.light > 0) {
+          rules.push(`${desktopSelector}:not([data-ds-dark-theme])::before{${blurDeclarations(desktopBlur.light)}}`);
+        }
+        if (desktopBlur.dark > 0) {
+          rules.push(`${desktopSelector}[data-ds-dark-theme]::before{${blurDeclarations(desktopBlur.dark)}}`);
+        }
+      }
+    }
     return rules.length === 0 ? null : rules.join("\n");
   }
 

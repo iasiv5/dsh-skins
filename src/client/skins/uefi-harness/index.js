@@ -1261,13 +1261,17 @@ body[data-dsh-uefi-harness][data-ds-dark-theme] .lc-tip {
     const imageDark = custom ? `url("${url}")` : scrimDark;
 
     const blurPx = Math.round(24 * Math.pow(Math.max(0, (P - 55) / 45), 2));
+    const desktopBlurPx = Math.min(24, blurPx + P / 55);
 
     return {
       bodyAttribute: "dshUefiHarness",
       slogans: values.slogan ?? SLOGANS,
       titleBrand: "UEFI Studio",
       favicon: { href: favicon, mime: "image/svg+xml" },
-      backdrop: { imageLight, imageDark, overlayLight: null, overlayDark: null, blur: blurPx },
+      backdrop: {
+        imageLight, imageDark, overlayLight: null, overlayDark: null, blur: blurPx,
+        desktopBlur: { light: desktopBlurPx, dark: desktopBlurPx },
+      },
       tokenOverrides,
       cssVariables: blurPx > 0 ? { "--dsh-uefi-glass-blur": { light: `${blurPx}px`, dark: `${blurPx}px` } } : null,
       staticCss: blurPx > 0 ? css + "\n" + GLASS_RULE : css,

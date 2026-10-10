@@ -79,6 +79,14 @@ export function normalizeEffects(draft) {
     }
     const blur = backdrop.blur ?? 0;
     if (typeof blur !== "number" || !(blur >= 0 && blur <= 24)) return null;
+    const desktopBlur = backdrop.desktopBlur ?? null;
+    if (desktopBlur !== null) {
+      if (!isPlainObject(desktopBlur)) return null;
+      for (const key of ["light", "dark"]) {
+        const value = desktopBlur[key];
+        if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 24) return null;
+      }
+    }
   }
 
   const tokenOverrides = source.tokenOverrides ?? null;
@@ -120,6 +128,7 @@ export function normalizeEffects(draft) {
       overlayLight: backdrop.overlayLight ?? null,
       overlayDark: backdrop.overlayDark ?? null,
       blur: backdrop.blur ?? 0,
+      desktopBlur: backdrop.desktopBlur ?? null,
     },
     tokenOverrides,
     cssVariables,

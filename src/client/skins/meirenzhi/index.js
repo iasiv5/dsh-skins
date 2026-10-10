@@ -180,6 +180,7 @@ function project(values, assets) {
   const scrimLight = `linear-gradient(rgba(252, 250, 246, ${s}) 0%, rgba(252, 250, 246, ${s}) 100%)`;
   const scrimDark = `linear-gradient(rgba(16, 16, 26, ${s}) 0%, rgba(16, 16, 26, ${s}) 100%)`;
   const blurPx = Math.round(12 * t * t);
+  const desktopBlurPx = Math.min(24, blurPx + values.panelOpacity / 55);
 
   // builtin/user 引用已由 projector/assetResolver 解析成 URL，这里统一消费。
   const wallpaperUrl = assets?.wallpaper?.url ?? null;
@@ -191,7 +192,10 @@ function project(values, assets) {
     slogans: values.slogan ?? SLOGANS,
     titleBrand: "美人志",
     favicon: { href: MARK_URL, mime: "image/webp" },
-    backdrop: { imageLight, imageDark, overlayLight: scrimLight, overlayDark: scrimDark, blur: blurPx },
+    backdrop: {
+      imageLight, imageDark, overlayLight: scrimLight, overlayDark: scrimDark, blur: blurPx,
+      desktopBlur: { light: desktopBlurPx, dark: desktopBlurPx },
+    },
     tokenOverrides,
     cssVariables: blurPx > 0 ? { "--dsh-mrz-glass-blur": { light: `${blurPx}px`, dark: `${blurPx}px` } } : null,
     staticCss: blurPx > 0 ? CSS + "\n" + GLASS_RULE : CSS,

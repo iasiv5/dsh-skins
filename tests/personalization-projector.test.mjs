@@ -142,6 +142,38 @@ test("malformed effects shapes are rejected by normalizeEffects", () => {
   });
 });
 
+test("normalizeEffects keeps an optional finite Desktop blur pair and rejects invalid values", () => {
+  const absent = normalizeEffects({ bodyAttribute: "ok", backdrop: { blur: 0 } });
+  assert.equal(absent.backdrop.desktopBlur, null, "missing Desktop override normalizes to no override");
+
+  const valid = normalizeEffects({
+    bodyAttribute: "ok",
+    backdrop: { blur: 1, desktopBlur: { light: 3.5, dark: 0 } },
+  });
+  assert.deepEqual(valid.backdrop.desktopBlur, { light: 3.5, dark: 0 });
+  assert.equal(Object.isFrozen(valid.backdrop.desktopBlur), true);
+
+  for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, -0.01, 24.01]) {
+    assert.equal(normalizeEffects({
+      bodyAttribute: "ok",
+      backdrop: { blur: 0, desktopBlur: { light: value, dark: 0 } },
+    }), null, `invalid light Desktop blur ${value} must be rejected`);
+    assert.equal(normalizeEffects({
+      bodyAttribute: "ok",
+      backdrop: { blur: 0, desktopBlur: { light: 0, dark: value } },
+    }), null, `invalid dark Desktop blur ${value} must be rejected`);
+  }
+
+  assert.equal(normalizeEffects({
+    bodyAttribute: "ok",
+    backdrop: { blur: 0, desktopBlur: { light: 1 } },
+  }), null, "both scheme values are required");
+  assert.equal(normalizeEffects({
+    bodyAttribute: "ok",
+    backdrop: { blur: 0, desktopBlur: "1px" },
+  }), null, "Desktop blur must be a pair object");
+});
+
 test("skins outside the catalog fail closed with no effects", () => {
   const result = projectSkin({ id: "mystery", project: () => ({ bodyAttribute: "x" }) }, {}, {});
   assert.equal(result.degraded, "failed");
@@ -308,6 +340,39 @@ test("uefi-harness projects baked defaults through its own curve (ADR-0004)", as
   assert.equal(customWallpaper.effects.backdrop.imageLight, `url("/dsh-skins/assets/${USER}.png")`);
   assert.equal(customWallpaper.effects.backdrop.imageDark, `url("/dsh-skins/assets/${USER}.png")`);
   assert.equal(customWallpaper.effects.backdrop.imageLight.includes("linear-gradient"), false);
+});
+
+test("Desktop blur candidates follow P without changing the Web backdrop blur", async () => {
+  const { createOpenBmcHarness } = await import("../src/client/skins/openbmc-harness/index.js");
+  const { createUefiHarness } = await import("../src/client/skins/uefi-harness/index.js");
+  const { createMeirenzhiSkin } = await import("../src/client/skins/meirenzhi/index.js");
+  const openbmc = createOpenBmcHarness({ jsx: () => null });
+  const uefi = createUefiHarness({ jsx: () => null });
+  const meirenzhi = createMeirenzhiSkin({ jsx: () => null });
+  const expectBlur = (skin, overrides, baseBlur, desktopBlur, label) => {
+    const result = projectSkin(skin, overrides, { assetResolver: resolver });
+    assert.equal(result.degraded, "none", label);
+    assert.equal(result.effects.backdrop.blur, baseBlur, `${label}: preserve existing Web blur`);
+    assert.deepEqual(result.effects.backdrop.desktopBlur, desktopBlur, `${label}: Desktop candidate`);
+  };
+
+  expectBlur(openbmc, {}, 0, { light: 1, dark: 0 }, "OpenBMC factory P55; dark remains the baseline");
+  expectBlur(openbmc, { panelOpacity: 0 }, 0, { light: 0, dark: 0 }, "OpenBMC P0");
+  expectBlur(openbmc, { panelOpacity: 55 }, 0, { light: 1, dark: 0 }, "OpenBMC P55");
+  expectBlur(openbmc, { panelOpacity: 77 }, 6, { light: 7.4, dark: 6 }, "OpenBMC P77 keeps dark at base blur");
+  expectBlur(openbmc, { panelOpacity: 100 }, 24, { light: 24, dark: 24 }, "OpenBMC P100 caps at 24px");
+
+  expectBlur(uefi, {}, 0, { light: 1, dark: 1 }, "UEFI factory P55");
+  expectBlur(uefi, { panelOpacity: 0 }, 0, { light: 0, dark: 0 }, "UEFI P0");
+  expectBlur(uefi, { panelOpacity: 55 }, 0, { light: 1, dark: 1 }, "UEFI P55");
+  expectBlur(uefi, { panelOpacity: 77 }, 6, { light: 7.4, dark: 7.4 }, "UEFI P77");
+  expectBlur(uefi, { panelOpacity: 100 }, 24, { light: 24, dark: 24 }, "UEFI P100 caps at 24px");
+
+  expectBlur(meirenzhi, {}, 1, { light: 1 + 35 / 55, dark: 1 + 35 / 55 }, "MeirenZhi factory P35");
+  expectBlur(meirenzhi, { panelOpacity: 0 }, 0, { light: 0, dark: 0 }, "MeirenZhi P0");
+  expectBlur(meirenzhi, { panelOpacity: 55 }, 4, { light: 5, dark: 5 }, "MeirenZhi P55");
+  expectBlur(meirenzhi, { panelOpacity: 77 }, 7, { light: 8.4, dark: 8.4 }, "MeirenZhi P77");
+  expectBlur(meirenzhi, { panelOpacity: 100 }, 12, { light: 12 + 100 / 55, dark: 12 + 100 / 55 }, "MeirenZhi P100");
 });
 
 test("the REAL meirenzhi factory projects single scrim, static palette and static favicon", async () => {

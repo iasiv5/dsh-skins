@@ -1903,13 +1903,18 @@ export function createOpenBmcHarness(jsxRuntime) {
     const imageDark = custom ? `url("${url}")` : (BACKGROUND_ART === "" ? PLACEHOLDER_DARK : scrimDark);
 
     const blurPx = Math.round(24 * Math.pow(Math.max(0, (P - 55) / 45), 2));
+    const desktopExtraBlurPx = P / 55;
+    const desktopBlur = {
+      light: Math.min(24, blurPx + desktopExtraBlurPx),
+      dark: blurPx, // OpenBMC dark remains the approved reference baseline.
+    };
 
     return {
       bodyAttribute: "dshOpenbmcSkin",
       slogans: values.slogan ?? SLOGANS,
       titleBrand: "OpenBMC Studio",
       favicon: { href: FAVICON_DATA_URL, mime: FAVICON_MIME },
-      backdrop: { imageLight, imageDark, overlayLight: null, overlayDark: null, blur: blurPx },
+      backdrop: { imageLight, imageDark, overlayLight: null, overlayDark: null, blur: blurPx, desktopBlur },
       tokenOverrides,
       cssVariables: blurPx > 0 ? { "--dsh-openbmc-glass-blur": { light: `${blurPx}px`, dark: `${blurPx}px` } } : null,
       staticCss: blurPx > 0 ? CSS + "\n" + GLASS_RULE : CSS,

@@ -155,6 +155,44 @@ function bootMeirenzhi(dom) {
   return { runtime, ctx, dispose, meirenzhi };
 }
 
+function bootOpenBmcWithDesktopBlur(desktopBlur) {
+  const dom = installDom();
+  const runtime = createSkinRuntime();
+  const openbmc = withLegacyAssets(createOpenBmcHarness(stubJsx));
+  const project = openbmc.project;
+  openbmc.project = (values, assets) => {
+    const effects = project(values, assets);
+    return { ...effects, backdrop: { ...effects.backdrop, desktopBlur } };
+  };
+  runtime.register(openbmc);
+  runtime.setPersonalization(personalizationFor(new Map([["openbmc", openbmc]])));
+  const dispose = runtime.apply(makeCtx());
+  return { dom, dispose };
+}
+
+test("Desktop backdrop override is Windows-marker scoped and leaves the Web base rule intact", () => {
+  const { dom, dispose } = bootOpenBmcWithDesktopBlur({ light: 2.5, dark: 0 });
+  const css = dom.styleTag("dsh-skins/openbmc.backdrop.css").textContent;
+  const [webRule] = css.split('\n');
+
+  assert.ok(webRule.startsWith('body[data-dsh-openbmc-skin]::before{'));
+  assert.ok(webRule.endsWith("background-size:cover;background-position:center;background-repeat:no-repeat;pointer-events:none;}"));
+  assert.doesNotMatch(webRule, /filter:blur|transform:scale/);
+  assert.ok(css.includes("html[data-windows-titlebar] body[data-dsh-openbmc-skin]:not([data-ds-dark-theme])::before{filter:blur(2.5px);transform:scale(1.02);}"));
+  assert.equal(css.includes('html[data-windows-titlebar] body[data-dsh-openbmc-skin][data-ds-dark-theme]::before{filter:'), false);
+  assert.doesNotMatch(css, /centerCol/);
+  dispose();
+});
+
+test("zero Desktop blur adds no filter, transform, or marker rule", () => {
+  const { dom, dispose } = bootOpenBmcWithDesktopBlur({ light: 0, dark: 0 });
+  const css = dom.styleTag("dsh-skins/openbmc.backdrop.css").textContent;
+  assert.equal(css.includes('filter:blur'), false);
+  assert.equal(css.includes('transform:scale'), false);
+  assert.equal(css.includes('html[data-windows-titlebar]'), false);
+  dispose();
+});
+
 test("N1: a successful hot-update keeps the live skin fully intact", () => {
   const dom = installDom();
   const { runtime, ctx } = bootMeirenzhi(dom);

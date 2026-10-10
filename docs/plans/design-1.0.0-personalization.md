@@ -13,6 +13,7 @@
 | bodyAttr | `dshTgcfSkin`（沿用现有 camelCase dataset 契约，零 runtime 改动；派生属性 `data-dsh-tgcf-skin`）（R2.3） |
 | titleBrand | **不可个性化（v2.4.1 #5）**：面板字段移除，`effects.titleBrand` 恒为皮肤静态 title「天官赐福」；存量覆写由加载规范化剔除（§5.5）；` — ` 分隔符仍归 runtime 所有 |
 | SkinEffects | 精确 shape 冻结 + 分层裁决：catalog 提供元数据与纯 merge/校验规则，projector 调用执行并负责资产解析/校验冻结，skin.project 只做业务映射（R2.1/2.2，三轮措辞统一） |
+| Desktop backdrop blur | 可选 `backdrop.desktopBlur: { light, dark }`，有限 0–24px，仅作用于 `html[data-windows-titlebar]` 下皮肤 `body::before` 背景图层；无 marker 时沿用原 `backdrop.blur`；不新增设置、存储字段或 schema（2026-10-10） |
 | 热更新 | 新增 `runtime.updateActive(values)`；mount 事务化（失败逆序清理；替换失败恢复上一套有效 effects）（R2.5） |
 | 面板状态机 | `loading / synced / offline-failed / unsupported-readonly`，仅 `synced` 可持久化（R3） |
 | 恢复模式（两分支，三轮 R） | **A 损坏/缺失/空 state** → 恢复分支：禁破坏性 GC、blob 保留、quarantine 仅登记（恢复提交前不物理移动）、成功提交后才恢复 GC；**B configVersion 过新** → 严格零写入：不重建/不移动/不清理 staging/不 GC，只读上报，等升级 |
@@ -62,13 +63,16 @@
 backdrop: {
   imageLight, imageDark,       // CSS background-image 值（url/gradient/dataURL），明暗各一
   overlayLight, overlayDark,   // 可选叠层（tgcf 的数字 scrim 由 project 派生为 rgba 渐变）
-  blur,                        // 0–24px，作用于 fixed 伪元素
+  blur,                        // base 0–24px，普通 Web 及无 Desktop override 时沿用
+  desktopBlur?: { light: number, dark: number } | null, // 可选 total blur pair，有限 0–24px
 }
 ```
 
 理由：单 `image` + 数字 `scrim` 是 tgcf 专有视角；明暗双图 + 双 overlay 统一覆盖 tgcf（壁纸+派生遮罩）
 与旧皮肤（烘焙双态字符串）两条投影路径，且 legacy 适配器因此得以保持与 0.6.0 逐字节等价。
 数字 scrim → rgba 的转换归皮肤 project() 所有（tgcf 已实现）。归一化结果深冻结（递归 Object.freeze）。
+
+`desktopBlur` 是 skin projector 输出的内部 Desktop 候选值，不是用户设置或持久化字段；`light` / `dark` 对应当前主题方案，取有限数值 0–24px。仅当 `document.documentElement` 带公开 marker `data-windows-titlebar` 时，runtime 才将该值应用到皮肤自己的 `body[data-dsh-…]::before` 壁纸图层；marker 缺失或 `desktopBlur` 缺省时沿用原 `backdrop.blur`，普通 Web 行为不变。`0` 不生成额外 filter/transform；正值使用 marker-scoped blur/scale。Normalizer 拒绝 NaN、±Infinity、负值、>24px 或缺失任一明暗值的 pair。候选由现有 `panelOpacity` 派生，不改变 catalog、配置 schema、存储格式或 Host API。
 
 
 
@@ -79,9 +83,12 @@ backdrop: {
   titleBrand: string | null,           // 静态：恒为皮肤 title（字段已移除，v2.4.1 #5）；不含分隔符
   favicon: { href, mime } | null,      // 可选；href 为 builtin dataURL 或资产 URL
   backdrop: {                           // 可选
-    image: string | null,               // 已解析 URL；null = 皮肤无背景覆写
-    scrim: { light: number, dark: number },   // 0–100
-    blur: number,                       // px，0 = 无
+    imageLight: string | null,          // 已解析 CSS background-image；明暗各一
+    imageDark: string | null,
+    overlayLight: string | null,        // 可选叠层（scrim 可由 project 派生）
+    overlayDark: string | null,
+    blur: number,                       // 0–24px；原 base/Web blur
+    desktopBlur: { light: number, dark: number } | null, // 可选 Desktop-only total blur pair
   } | null,
   tokenOverrides: { [token]: { light, dark } } | null,  // 走 overrideTokens({light,dark})
   cssVariables: { [name]: { light, dark } } | null,     // 裸 style 注入兜底通道

@@ -63,6 +63,7 @@ test("project at factory P=35: riding alphas, constants, scrim and blur", () => 
   assert.equal(fx.backdrop.imageLight, `url("${WALLPAPER_URL}")`);
   assert.equal(fx.backdrop.imageDark, `url("${WALLPAPER_URL}")`);
   assert.equal(fx.backdrop.blur, 1);
+  assert.deepEqual(fx.backdrop.desktopBlur, { light: 1 + 35 / 55, dark: 1 + 35 / 55 });
   assert.ok(fx.backdrop.overlayLight.includes("rgba(252, 250, 246, 0.040)"));
   assert.ok(fx.backdrop.overlayDark.includes("rgba(16, 16, 26, 0.040)"));
   const t = fx.tokenOverrides;
@@ -89,12 +90,17 @@ test("project at factory P=35: riding alphas, constants, scrim and blur", () => 
 test("project at P=0: pure wallpaper, no blur layer; at P=100 alphas clamp to 1.00", () => {
   const zero = project({ panelOpacity: 0 });
   assert.equal(zero.backdrop.blur, 0);
+  assert.deepEqual(zero.backdrop.desktopBlur, { light: 0, dark: 0 });
   assert.equal(zero.cssVariables, null);
   assert.equal(zero.tokenOverrides["--dsw-alias-bg-base"].light, "rgba(250, 249, 246, 0.00)");
   assert.ok(zero.backdrop.overlayLight.includes("rgba(252, 250, 246, 0.000)"));
+  const middle = project({ panelOpacity: 55 });
+  assert.equal(middle.backdrop.blur, 4);
+  assert.deepEqual(middle.backdrop.desktopBlur, { light: 5, dark: 5 });
   const full = project({ panelOpacity: 100 });
   assert.equal(full.tokenOverrides["--dsw-specific-sidebar-fill"].dark, "rgba(18, 18, 26, 1.00)");
   assert.equal(full.backdrop.blur, 12);
+  assert.deepEqual(full.backdrop.desktopBlur, { light: 12 + 100 / 55, dark: 12 + 100 / 55 });
 });
 
 test("project falls back to factory slogan when the field is missing", () => {

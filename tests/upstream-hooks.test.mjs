@@ -21,6 +21,14 @@ test("bubble decoration: union selector ships in all three skins (light + dark)"
 	assert.equal(client.split(GOAL_UNION).length - 1, 6, "goal-panel bubble union");
 });
 
+test("Desktop backdrop bundle carries the public marker and all stable skin scopes", () => {
+  assert.ok(client.includes("html[data-windows-titlebar]"), "Desktop override must be gated by the public Windows marker");
+  for (const attribute of ["data-dsh-openbmc-skin", "data-dsh-uefi-harness", "data-dsh-meirenzhi-skin"]) {
+    assert.ok(client.includes(attribute), `built client is missing skin scope ${attribute}`);
+  }
+  assert.ok(!client.includes(".centerCol"), "Desktop styling must not depend on a Host CSS Modules class");
+});
+
 test("bubble decoration: the dead rc.2 hash gdEzaW must never return", () => {
 	assert.ok(!client.includes("gdEzaW"), "gdEzaW is the 0.1.1-rc.2 hash that rc.1 rebuilt away — pinning it again re-arms the ADR-0006 failure mode");
 });
