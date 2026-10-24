@@ -20,10 +20,15 @@ const PEERS = [
   "@deepseek-ai/dsh-client-ui-theme",
 ];
 
-test("all six dsh-client peers pin the union floor; cordis peer untouched", () => {
+test("DSH engine floor and six dsh-client peer floors are declared", () => {
   const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
   for (const name of PEERS) assert.equal(pkg.peerDependencies[name], RANGE, name);
   assert.equal(pkg.peerDependencies["@deepseek-ai/cordis"], "^4.0.1");
+  assert.equal(pkg.dsh.engines.dsh, RANGE);
+  for (const version of ["0.2.0-rc.1", "0.2.1-rc.3"]) {
+    assert.ok(semver.satisfies(version, pkg.dsh.engines.dsh, { includePrerelease: true }));
+  }
+  assert.ok(!semver.satisfies("0.1.7-rc.2", pkg.dsh.engines.dsh, { includePrerelease: true }));
 });
 
 test("union floor accepts the target lines and stable futures", () => {

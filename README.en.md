@@ -4,7 +4,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/iasiv5/dsh-skins/ci.yml?branch=main&label=CI)](../../actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/iasiv5/dsh-skins?label=License)](./LICENSE)
 [![npm](https://img.shields.io/npm/v/@iasiv5/dsh-skins?label=npm)](https://www.npmjs.com/package/@iasiv5/dsh-skins)
-[![DSH Web](https://img.shields.io/badge/DSH%20Web-0.2.0--rc.2%20verified-2563eb)](#faq)
+[![DSH Web](https://img.shields.io/badge/DSH%20Web-0.2.1--rc.3%20verified-2563eb)](#faq)
 
 English · [中文](./README.md)
 
@@ -182,7 +182,7 @@ Pick "DeepSeek Harness (Official)" in the skin switcher, or open `/?skin=officia
 Update duty has moved to the dsh-m marketplace and the DSH CLI (ADR-0008); the skin switcher only handles skins and personalization.
 
 **Which DSH Web versions are supported?**
-Verified with DSH Web `0.2.0-rc.2`. Later rc builds of the same series are expected to work, but unverified versions carry no promise. Requires DSH `0.2.0-rc.1` or later; older DSH versions are blocked from upgrading to 1.5.8+ by the peer dependency floor.
+Verified with DSH Web `0.2.0-rc.2` and `0.2.1-rc.3`; the rc.3 config route smoke test returned HTTP 200. Later rc builds of the same series are expected to work, but unverified versions carry no promise. Requires DSH `0.2.0-rc.1` or later; older DSH versions are blocked from upgrading to 1.5.8+ by the peer dependency floor.
 
 **Is the Desktop profile supported?**
 Yes. The DSH Desktop app and the Web profile are installed independently and do not affect each other; the desktop form (solid chrome + wallpaper in the conversation area) is described under "The Desktop profile". Verified with dsh Desktop `0.2.1-rc.2` (Windows).

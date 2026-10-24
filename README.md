@@ -4,7 +4,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/iasiv5/dsh-skins/ci.yml?branch=main&label=CI)](../../actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/iasiv5/dsh-skins?label=License)](./LICENSE)
 [![npm](https://img.shields.io/npm/v/@iasiv5/dsh-skins?label=npm)](https://www.npmjs.com/package/@iasiv5/dsh-skins)
-[![DSH Web](https://img.shields.io/badge/DSH%20Web-0.2.0--rc.2%20verified-2563eb)](#faq)
+[![DSH Web](https://img.shields.io/badge/DSH%20Web-0.2.1--rc.3%20verified-2563eb)](#faq)
 
 [English](./README.en.md) · 中文
 
@@ -182,7 +182,7 @@ URL 也能切皮肤：`/?skin=official`、`/?skin=openbmc`、`/?skin=uefi-harnes
 更新职责已移交 dsh-m 市场与 DSH CLI（ADR-0008）；皮肤切换器只负责换肤与个性化。
 
 **支持哪些 DSH Web 版本？**
-已使用 DSH Web `0.2.0-rc.2` 验证。同系列 rc 版本理论上兼容，未经验证的版本不作承诺。最低支持 DSH `0.2.0-rc.1`：更旧的 DSH 版本会被 peer 依赖门槛挡住，无法升级到 1.5.8+。
+已使用 DSH Web `0.2.0-rc.2` 与 `0.2.1-rc.3` 验证；rc.3 配置路由冒烟返回 200。同系列 rc 版本理论上兼容，未经验证的版本不作承诺。最低支持 DSH `0.2.0-rc.1`：更旧的 DSH 版本会被 peer 依赖门槛挡住，无法升级到 1.5.8+。
 
 **支持 Desktop profile 吗？**
 支持。DSH Desktop 应用与 Web profile 各自独立安装、互不影响；桌面形态（实色外壳 + 会话区壁纸）见「Desktop profile 上的形态」。已使用 dsh Desktop `0.2.1-rc.2`（Windows）验证。
