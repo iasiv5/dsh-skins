@@ -613,10 +613,13 @@ export function createConfigClient(options = {}) {
   /**
    * One gallery write through the unified PATCH dialect (ADR-0015), serialized
    * on the write chain with field flushes (a pending debounced flush must
-   * never race the delete's baseRevision). Conflict semantics: 409 → refetch
-   * → the goal is already achieved (asset gone / library empty) → silent
-   * success (GLOSSARY 悬空预览/B2); otherwise retry once on the fresh
-   * baseRevision, then a named error. Success keeps the post-success refetch:
+   * never race the delete's baseRevision). Conflict semantics (ADR-0018): the
+   * conflict family (REVISION_CONFLICT and unknown 409s) → refetch → the goal
+   * is already achieved (asset gone / library empty) → silent success
+   * (GLOSSARY 悬空预览/B2); otherwise retry once on the fresh baseRevision,
+   * then a named error; STORE_RECOVERY_REQUIRED is dispatched by name — one
+   * refetch, then the host-stable code passes through unsuppressed, with no
+   * goal check and no retry. Success keeps the post-success refetch:
    * deletes rewrite server-computed references, which no local merge can
    * reproduce (asymmetric with the append-only upload).
    */
