@@ -185,7 +185,7 @@ URL 也能切皮肤：`/?skin=official`、`/?skin=openbmc`、`/?skin=uefi-harnes
 已使用 DSH Web `0.2.0-rc.2` 与 `0.2.1-rc.3` 验证；rc.3 配置路由冒烟返回 200。同系列 rc 版本理论上兼容，未经验证的版本不作承诺。最低支持 DSH `0.2.0-rc.1`：更旧的 DSH 版本会被 peer 依赖门槛挡住，无法升级到 1.5.8+。
 
 **支持 Desktop profile 吗？**
-支持。DSH Desktop 应用与 Web profile 各自独立安装、互不影响；桌面形态（实色外壳 + 会话区壁纸）见「Desktop profile 上的形态」。已使用 dsh Desktop `0.2.1-rc.2`（Windows）验证。
+支持。DSH Desktop 应用与 Web profile 各自独立安装、互不影响；桌面形态（实色外壳 + 会话区壁纸）见「Desktop profile 上的形态」。已使用 DSH Desktop `0.2.1-rc.3` 验证。
 
 **外观偏好在不同的浏览器间同步吗？**
 在 DSH 所在机器的浏览器（loopback）上，偏好由 DSH Host 持久化，天然共享。其他远程浏览器由插件将偏好存入本地 `localStorage`，各浏览器独立、互不覆盖。
