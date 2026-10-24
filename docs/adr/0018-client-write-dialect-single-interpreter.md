@@ -43,6 +43,7 @@ date: 2026-10-24
 
 ## Amendments
 
+- **2026-10-24（发版收口）**：本决定以 `1.5.16` 搭车收编（同日完成）：全门禁绿（`pnpm run check` exit 0，含 verify:hooks strict 真跑）+ Release workflow success（RUN=40076648641）+ npm 三键核验（per-version 200 / dist-tags.latest=1.5.16 / time=2026-10-24T08:22:36Z，staged 窗口约 16 分钟）。client-only（HMR 生效、零像素、免截图 gate）；同日前置的两轮独立评审（计划 4 题＋产出 1 题，全修复复核通过）与「计划外建议落地」提交（O2 恰一次断言、seam RETRY 绊线、跨缝恢复钉）随本版本入库。
 - **2026-10-24（计划外建议落地轮的事实修正）**：背景节「恢复态竞态窗口内……终态错报 REVISION_CONFLICT」的机理描述经跨缝集成钉复核需修正——宿主 `snapshot()` 在恢复模式下 `library` 为**空**（重建候选在 `recovery.candidateLibrary`，store.js `initOnce`/`snapshot`）。因此真实生产竞态（宿主重启入恢复态＋旧标签页持过期常态快照）下，旧 `runGalleryOp` 的实际行为是 `goalAchieved` 短路成**静默假成功** `{affectedSkins: []}`（图未删而报已删）；错报 REVISION_CONFLICT 的变体需要「恢复快照保留库资产」这一真实宿主不会产生的快照形状（评审 I3 探针 PROBE-A 构造形）。两种旧处置均为缺陷，均由 Decision 3 的具名分发根治（`onRecoveryRequired` 不查 goal、不重试、码穿透，对两种快照形状一致收敛为具名返回）。全部 Decision 不变；单元钉保留「保留资产」夹具以钉死错名分支的消灭（并按评审 O2 加固 PATCH 恰一次断言、按评审次要观察加 seam RETRY 绊线），跨缝钉（write-dialect.test.mjs 恢复钉）把守真实协议形状（空库＋candidateLibrary 存活＋门禁零 PATCH）。
 
 ## 附录：grill 共识（Q1–Q15，2026-10-24 会话存档）
