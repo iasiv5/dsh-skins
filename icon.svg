@@ -1,0 +1,20 @@
+<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="dsh-skins">
+  <!-- dsh-skins 皮肤：三张扇形色卡（紫/青/蓝）绕底部枢轴 ±30° 展开 = 多套品牌皮肤热切换 -->
+  <rect x="11.5" y="9.5" width="13" height="17.5" rx="3.2" fill="url(#v)" transform="rotate(-30 18 29)"/>
+  <rect x="11.5" y="9.5" width="13" height="17.5" rx="3.2" fill="url(#t)"/>
+  <rect x="11.5" y="9.5" width="13" height="17.5" rx="3.2" fill="url(#b)" transform="rotate(30 18 29)"/>
+  <defs>
+    <linearGradient id="b" x1="11.5" y1="9.5" x2="24.5" y2="27" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#69B9FF"/>
+      <stop offset="1" stop-color="#324DE2"/>
+    </linearGradient>
+    <linearGradient id="t" x1="11.5" y1="9.5" x2="24.5" y2="27" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#45E7A4"/>
+      <stop offset="1" stop-color="#05909D"/>
+    </linearGradient>
+    <linearGradient id="v" x1="11.5" y1="9.5" x2="24.5" y2="27" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B18CFF"/>
+      <stop offset="1" stop-color="#6C4DE2"/>
+    </linearGradient>
+  </defs>
+</svg>

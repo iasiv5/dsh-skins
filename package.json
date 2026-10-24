@@ -1,6 +1,7 @@
 {
   "name": "@iasiv5/dsh-skins",
   "description": "DSH Web 皮肤插件：多套品牌皮肤侧栏热切换。",
+  "icon": "./icon.svg",
   "version": "1.5.16",
   "homepage": "https://github.com/iasiv5/dsh-skins#readme",
   "repository": {
@@ -36,7 +37,8 @@
     "cordis.patch.yml",
     "README.md",
     "README.en.md",
-    "LICENSE"
+    "LICENSE",
+    "icon.svg"
   ],
   "dsh": {
     "bundle": {
