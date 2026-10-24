@@ -1096,10 +1096,13 @@ test("deleteImage: 409 twice → named REVISION_CONFLICT error", async () => {
 });
 
 test("deleteImage: 409 STORE_RECOVERY_REQUIRED mid-race → named recovery, never misread as conflict (ADR-0018)", async () => {
-  // ADR-0018 正名钉：gate 通过后、PATCH 落地前宿主翻入恢复态的竞态。恢复态
-  // 快照必须保留库内资产（宿主 snapshot() 在恢复模式仍返回 library 全量），
-  // 否则 goalAchieved 短路成静默成功、错报不可复现（评审 I3）。PATCH 恒回
-  // 恢复码——现状会盲重试第二次 PATCH，收敛后只发一次，handler 两者都扛。
+  // ADR-0018 正名钉：gate 通过后、PATCH 落地前宿主翻入恢复态的竞态。夹具
+  // 刻意让恢复态快照保留库内资产，以隔离旧实现的「错报 REVISION_CONFLICT」
+  // 分支——真实协议下恢复快照 library 为空、候选在 recovery.candidateLibrary，
+  // 旧实现走 goalAchieved 短路成静默假成功；两种旧处置均为缺陷，均由具名
+  // 分发根治（真实形状由 write-dialect.test.mjs 恢复钉把守；ADR-0018
+  // Amendment 事实修正）。PATCH 恒回恢复码——旧形态会盲重试第二次 PATCH，
+  // 收敛后只发一次，handler 两种都扛。
   const asset = { id: "u_a", displayName: "a.png", extension: "png" };
   let gets = 0;
   const fetchImpl = makeFetch((n, url, init) => {
@@ -1115,6 +1118,10 @@ test("deleteImage: 409 STORE_RECOVERY_REQUIRED mid-race → named recovery, neve
   await client.boot();
   const result = await client.deleteImage("u_a");
   assert.deepEqual(result, { error: "STORE_RECOVERY_REQUIRED" });
+  // 评审 O2 加固：恢复码具名穿透——PATCH 恰一次（旧形态会盲重试第二次；
+  // seam 对 onRecoveryRequired 的返回不经 RETRY 检查，此断言即结构绊线）。
+  assert.equal(fetchImpl.calls.filter((call) => call.init?.method === "PATCH").length, 1,
+    "the recovery code never blind-retries — PATCH exactly once");
   client.dispose();
 });
 

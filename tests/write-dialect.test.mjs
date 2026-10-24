@@ -13,10 +13,17 @@
  *   acceptance ⑤  riders: upload merges locally (no GET between POST and the
  *                 next op) and the upload-armed preview flushes at once; the
  *                 flush success resync (GET /config) is preserved behavior.
+ *   recovery pin   ADR-0018: recovery mode crosses the seam as a snapshot
+ *                 that KEEPS the rebuilt library, and the client's write gate
+ *                 holds locally (zero PATCH). The mid-race named dispatch
+ *                 (409 STORE_RECOVERY_REQUIRED on the wire) is pinned at the
+ *                 unit seam (config-client.test.mjs): a single store instance
+ *                 cannot flip mid-flight without a host restart — the
+ *                 production race IS a restarted host against a stale tab.
  */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createPersonalizationStore } from "../src/host/personalization/store.js";
@@ -202,5 +209,36 @@ test("acceptance ⑤: upload merges locally; the armed preview flushes at once; 
     "GET /dsh-skins/config", // flush-success resync (config-client §write): preserved behavior
   ]);
   assert.equal(h.store.snapshot().skins.openbmc.wallpaper, upload.asset.id);
+  client.dispose();
+});
+
+test("recovery across the seam: candidates survive, the library empties, and the client gate holds with zero PATCH (ADR-0018)", async () => {
+  const h = makeHarness();
+
+  // Seed one real asset with a throwaway writer-store, then corrupt the state
+  // file BEFORE the harness store's lazy init — the next touch boots it into
+  // Recovery branch A (candidates rebuilt from the blob on disk).
+  const setupStore = createPersonalizationStore({ dataDir: h.dir });
+  const { asset } = await setupStore.uploadAsset(pngBytes(), { displayName: "w.png", declaredMime: "image/png" });
+  writeFileSync(join(h.dir, "state.json"), "{corrupt: not json", "utf8");
+
+  const client = h.makeClient();
+  await client.boot();
+  const state = client.getState();
+  assert.equal(state.mode, "recovery");
+  // The REAL recovery protocol shape: the library EMPTIES and the rebuilt
+  // candidates ride under recovery.candidateLibrary (store.js snapshot()) —
+  // the exact shape under which the pre-ADR-0018 goalAchieved short-circuit
+  // faked success (ADR-0018 Amendment, 2026-10-24).
+  assert.equal(state.library.length, 0, "the recovery snapshot empties the library");
+  assert.ok(state.recovery?.candidateLibrary?.[asset.id],
+    "the rebuilt candidate survives across the seam");
+
+  // The write gate holds LOCALLY: a gallery delete never leaves the client
+  // while recovery is pending (ADR-0003 amendment: canWrite absorbs the gate).
+  const result = await client.deleteImage(asset.id);
+  assert.deepEqual(result, { error: "recovery" });
+  assert.equal(h.calls.filter((call) => call.startsWith("PATCH")).length, 0,
+    "no PATCH may cross the seam while recovery is pending");
   client.dispose();
 });

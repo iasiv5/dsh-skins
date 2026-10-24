@@ -256,7 +256,17 @@ export function createConfigClient(options = {}) {
               if (decision === RETRY) continue;
               return decision;
             }
-            if (code === "STORE_RECOVERY_REQUIRED") return policy.onRecoveryRequired(errorMessage);
+            if (code === "STORE_RECOVERY_REQUIRED") {
+              const decision = await policy.onRecoveryRequired(errorMessage);
+              // Contract tripwire (ADR-0018, review note): only the conflict /
+              // unknown-409 policies may resolve RETRY; a recovery policy doing
+              // so would leak the sentinel to callers — fail closed instead,
+              // in the same spirit as the retained typeof guard (ADR-0017 D5).
+              if (decision === RETRY) {
+                throw new Error("[dsh-skins] onRecoveryRequired must resolve, never RETRY");
+              }
+              return decision;
+            }
             const decision = await policy.onUnknown409({ attempt, errorMessage });
             if (decision === RETRY) continue;
             return decision;
