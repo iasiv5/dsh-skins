@@ -1095,6 +1095,29 @@ test("deleteImage: 409 twice → named REVISION_CONFLICT error", async () => {
   client.dispose();
 });
 
+test("deleteImage: 409 STORE_RECOVERY_REQUIRED mid-race → named recovery, never misread as conflict (ADR-0018)", async () => {
+  // ADR-0018 正名钉：gate 通过后、PATCH 落地前宿主翻入恢复态的竞态。恢复态
+  // 快照必须保留库内资产（宿主 snapshot() 在恢复模式仍返回 library 全量），
+  // 否则 goalAchieved 短路成静默成功、错报不可复现（评审 I3）。PATCH 恒回
+  // 恢复码——现状会盲重试第二次 PATCH，收敛后只发一次，handler 两者都扛。
+  const asset = { id: "u_a", displayName: "a.png", extension: "png" };
+  let gets = 0;
+  const fetchImpl = makeFetch((n, url, init) => {
+    if (init?.method === "PATCH") {
+      return jsonResponse(409, { error: "配置状态待恢复", code: "STORE_RECOVERY_REQUIRED" });
+    }
+    gets += 1;
+    return gets === 1
+      ? snapshotBody({ library: [asset] })
+      : snapshotBody({ mode: "recovery", library: [asset] });
+  });
+  const client = flushingClient(fetchImpl);
+  await client.boot();
+  const result = await client.deleteImage("u_a");
+  assert.deepEqual(result, { error: "STORE_RECOVERY_REQUIRED" });
+  client.dispose();
+});
+
 test("deleteImage: 400 ASSET_NOT_FOUND after the asset vanished → silent success", async () => {
   const asset = { id: "u_b", displayName: "b.png", extension: "png" };
   let gets = 0;
