@@ -47,11 +47,23 @@ test("unknown top-level spec key throws (fail-closed)", () => {
 });
 
 test("missing required spec fields throw", () => {
-  for (const key of ["id", "label", "bodyAttribute", "riding", "scrim", "tints", "cssSegments", "Mark"]) {
+  // 产物评审 Q5-①：REQUIRED 全键逐个参数化（数组漂移即有钉可拦）。
+  const required = [
+    "id", "label", "description", "titleBrand", "favicon", "anchor", "bodyAttribute",
+    "riding", "scrim", "blur", "glassVar", "desktopBlur", "wallpaper", "tints",
+    "cssSegments", "Mark", "Name",
+  ];
+  for (const key of required) {
     const spec = minSpec();
     delete spec[key];
     assert.throws(() => defineSkin(spec), new RegExp(`Missing required.*${key}|${key}.*Missing required`), `missing ${key}`);
   }
+});
+
+test("cssSegments rejects non-array and non-string items (fail-closed)", () => {
+  assert.throws(() => defineSkin(minSpec({ cssSegments: "frost" })), /cssSegments must be an array/);
+  assert.throws(() => defineSkin(minSpec({ cssSegments: ["decoration", null] })), /Invalid segment item/);
+  assert.throws(() => defineSkin(minSpec({ cssSegments: ["decoration", 42] })), /Invalid segment item/);
 });
 
 test("unknown cssSegments name throws", () => {
@@ -90,6 +102,11 @@ test("assets-kind wallpaper derives no sentinel and no art key (MRZ semantics)",
   const skin = defineSkin(minSpec());
   assert.equal("art" in skin.builtinAssets, false);
   const fx = skin.project({ panelOpacity: 35, slogan: { zh: "t", en: "t" } }, null);
+  // 口径注（产物评审 Q4）：sentinel 派生（builtin:<id>:art）不可经公共缝行为
+  // 观测——resolveImageRef 对一切 builtin: 形串恒判 kind="builtin"
+  // （catalog.js:226–229），translucency.js:70–71 的自定义图判定被
+  // kind==="user" 短路，故本钉只守「不泄漏进 effects」；派生正确性由
+  // 源码人工核证（产物评审 R2 台账：与旧字面量逐字同）。
   assert.ok(!("sentinel" in fx), "sentinel never leaks into effects");
 });
 
@@ -116,11 +133,12 @@ test("desktopBlur.rate defaults to 55", () => {
   assert.equal(boosted, Math.min(24, blurPx + 100 / 55));
 });
 
-test("production face is exactly seven fields", () => {
+test("production face is exactly seven fields (factory return order pinned)", () => {
   const skin = defineSkin(minSpec());
+  // 产物评审 Q5-②：键序钉（工厂返回字面序），非集合钉。
   assert.deepEqual(
-    Object.keys(skin).sort(),
-    ["Mark", "Name", "builtinAssets", "description", "id", "label", "project"],
+    Object.keys(skin),
+    ["id", "label", "description", "Mark", "Name", "project", "builtinAssets"],
   );
 });
 

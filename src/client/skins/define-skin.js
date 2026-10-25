@@ -16,7 +16,8 @@
  * 空行）连同注释由裸串段自持。项判别：badge|decoration|streaming|rootclear|frost
  * 五个保留名精确匹配即展开为装饰/家族调用；形如裸标识符（^[a-z][a-z0-9-]*$）
  * 的其他字符串一律 Unknown segment throw（拼写错误 fail-closed）；含 CSS 语法的
- * 字符串为裸串段原样透传（注释、keyframes 等必含语法字符，永不落入标识符形状）。
+ * 字符串为裸串段原样透传（注释、keyframes 等必含语法字符，永不落入标识符形状）；
+ * 非字符串项与非数组一律 throw（产物评审 Q5-③ 加固）。
  *
  * schema 校验中间档（Decision 4）：未知顶层规格键、缺必填、未知段名、段参数
  * 缺失均 throw；深层值形状不校验——分支知识留在投影核，防第二解释器。
@@ -96,7 +97,11 @@ export function defineSkin(spec) {
   }
 
   const scope = scopeOf(spec.bodyAttribute);
-  const staticCss = spec.cssSegments.map((item) => expandSegment(item, spec, scope)).join("");
+  if (!Array.isArray(spec.cssSegments)) throw new Error("cssSegments must be an array");
+  const staticCss = spec.cssSegments.map((item) => {
+    if (typeof item !== "string") throw new Error(`Invalid segment item: ${typeof item}`);
+    return expandSegment(item, spec, scope);
+  }).join("");
   const builtinAssets = Object.assign(
     {},
     spec.backgroundArt ? { art: { mime: spec.backgroundArt.mime, url: spec.backgroundArt.url } } : {},
