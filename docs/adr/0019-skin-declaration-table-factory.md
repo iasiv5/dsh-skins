@@ -1,7 +1,7 @@
 # 皮肤声明表工厂收拢：defineSkin 单源三皮脚手架
 
 ---
-status: proposed
+status: accepted
 date: 2026-10-25
 ---
 
