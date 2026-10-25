@@ -1,9 +1,9 @@
 /**
  * OpenBMC Studio 背景原画数据模块（ADR-0019 Task 5 原画出仓）。
- * 鎏金电路板原画（1920×1080 WebP，base64 内嵌）。若要更换：设为
- * "data:image/webp;base64," + "<base64 -w0 my-bg.webp 的输出>"（推荐
- * 1920×1080 WebP，100-200KB）。为空时皮肤规格的明暗两套品牌色氛围渐变
- * 占位生效（见 index.js 的 wallpaper.placeholder）。
+ * 冰窟双翼神鸟原画（2237×1080 原摄 → 1920×927 WebP，base64 内嵌，约 105KB）。
+ * 若要更换：设为 "data:image/webp;base64," + "<base64 -w0 my-bg.webp 的输出>"
+ * （推荐 1920×927 同比例 WebP，约 100KB）。为空时皮肤规格的明暗两套品牌色
+ * 氛围渐变占位生效（见 index.js 的 wallpaper.placeholder）。
  */
 export const BACKGROUND_ART =
     "data:image/webp;base64,UklGRmKYAQBXRUJQVlA4WAoAAAAgAAAAfwcAngMASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCI" +
