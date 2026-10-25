@@ -41,7 +41,7 @@ date: 2026-10-25
 
 ## Amendments
 
--（待发版收口时补记。）
+- **2026-10-25（发版收口）**：本决定以 `1.5.17` 搭车收编（同日完成）：全门禁绿（`pnpm run check` exit 0，364/364；hooks 本机 SKIPPED、CI 结构化真跑）+ Release workflow success（RUN=40188700928）+ npm 三键核验（per-version 200 / dist-tags.latest=1.5.17 / time=2026-10-25T11:40:28.260Z，staged 窗口约 16 分钟，know-how 018 两阶段监视）。client-only（外部形状零变化——投影输出 606 点逐字节全等、零像素、免截图 gate）；产物评审 3 轮 26 项零未决（修复 `7857213` 头注勘误、`af79f13` fail-closed 加固）与主人裁量两项（`63117f3` Q3 SCOPE 跨皮钉＋本 ADR 附录原画勘误）随本版本入库。
 
 ## 附录：grill 共识（Q1–Q20，2026-10-25 会话存档）
 
