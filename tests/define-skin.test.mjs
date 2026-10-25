@@ -1,12 +1,18 @@
 /**
  * defineSkin 工厂 schema 钉（ADR-0019 Task 2）：fail-closed 校验（未知规格键 /
- * 缺必填 / 未知段名 / 段参数缺失）、三类派生（SCOPE / artLayer+sentinel /
- * builtinAssets 合成）、desktopBlur.rate 默认 55、恰好七字段返回面与 label
- * 原样过缝。规格三层语义见 ADR-0019 Decision 2–4 与实施计划「架构快照」。
+ * 缺必填 / 未知段名 / 段参数缺失 / 非数组与非字符串段项）、三类派生（SCOPE /
+ * artLayer+sentinel / builtinAssets 合成）、desktopBlur.rate 默认 55、恰好七字段
+ * 返回面与 label 原样过缝。规格三层语义见 ADR-0019 Decision 2–4 与实施计划
+ * 「架构快照」。末节为跨皮一致性钉（产物评审 Q3 主人裁量落地）：各皮
+ * cssSegments 裸串段内嵌的作用域字面量须与 bodyAttribute 派生值一致——
+ * 测试侧独立重推 kebab（对齐 translucency-contract 的独立基线风格）。
  */
 import assert from "node:assert/strict";
 import test from "node:test";
 import { defineSkin } from "../src/client/skins/define-skin.js";
+import { createOpenBmcHarness } from "../src/client/skins/openbmc-harness/index.js";
+import { createUefiHarness } from "../src/client/skins/uefi-harness/index.js";
+import { createMeirenzhiSkin } from "../src/client/skins/meirenzhi/index.js";
 
 /** 最小合法规格（overlay 分支、无 backgroundArt——MRZ 形态）。 */
 function minSpec(overrides = {}) {
@@ -146,4 +152,28 @@ test("label passes through both legal types untouched", () => {
   assert.equal(defineSkin(minSpec()).label, "Test Skin");
   const bilingual = defineSkin(minSpec({ label: { zh: "美人志", en: "Meirenzhi" } })).label;
   assert.deepEqual(bilingual, { zh: "美人志", en: "Meirenzhi" });
+});
+
+test("all scope literals in each skin's staticCss match the bodyAttribute derivation (Q3 pin)", () => {
+  // 产物评审 Q3 主人裁量落地：全等门退役后，cssSegments 裸串段内嵌的作用域
+  // 字面量（如 meirenzhi 氛围规则引用的 SCOPE 常量）与工厂派生值的一致性
+  // 由本钉看守。测试侧独立重推 kebab 派生（不 import 工厂实现），对齐
+  // translucency-contract 的独立基线风格。
+  const kebab = (bodyAttribute) =>
+    bodyAttribute.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+  const factories = {
+    openbmc: () => createOpenBmcHarness({ jsx: () => null }),
+    "uefi-harness": () => createUefiHarness({ jsx: () => null }),
+    meirenzhi: () => createMeirenzhiSkin({ jsx: () => null }),
+  };
+  for (const [id, factory] of Object.entries(factories)) {
+    const skin = factory();
+    const fx = skin.project({ panelOpacity: 50, slogan: { zh: "t", en: "t" } }, null);
+    const expected = `body[data-${kebab(fx.bodyAttribute)}]`;
+    const found = fx.staticCss.match(/body\[data-dsh-[a-z0-9-]+\]/g) ?? [];
+    assert.ok(found.length >= 1, `${id}: pin is non-vacuous (at least one scope literal)`);
+    for (const literal of found) {
+      assert.equal(literal, expected, `${id}: scope literal must match the derived scope`);
+    }
+  }
 });
