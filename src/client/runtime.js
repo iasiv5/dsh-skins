@@ -418,6 +418,17 @@ export function createSkinRuntime({ profile = "web" } = {}) {
         const tag = styleTag(`dsh-skins/${skin.id}.shell.css`,
           buildShellAlignmentCss(effects.bodyAttribute, opaqueFills, backdrop));
         stops.push(() => tag.remove());
+        // Fullscreen frost base (ADR-0020): state-scoped by the layout's
+        // data-rightbar-fullscreen marker — the fullscreen right sidebar
+        // covers the chat area, so its column base concentrates to a 94%
+        // skin tone + frost blur; the docked column never matches. Same
+        // opaqueFills derivation as the Desktop shell rules; profile-neutral
+        // (inert-but-harmless under the Desktop opaque occupant rules).
+        const fullscreenCss = buildFullscreenBaseCss(effects.bodyAttribute, opaqueFills);
+        if (fullscreenCss !== "") {
+          const fullscreenTag = styleTag(`dsh-skins/${skin.id}.fullscreen.css`, fullscreenCss);
+          stops.push(() => fullscreenTag.remove());
+        }
       }
 
       const backdrop = backdropCss(effects);

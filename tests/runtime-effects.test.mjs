@@ -6,7 +6,7 @@
  */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createSkinRuntime, shellAlignment, PRODUCTION_FIELDS } from "../src/client/runtime.js";
+import { createSkinRuntime, shellAlignment, buildFullscreenBaseCss, PRODUCTION_FIELDS } from "../src/client/runtime.js";
 import { createOpenBmcHarness } from "../src/client/skins/openbmc-harness/index.js";
 import { createMeirenzhiSkin } from "../src/client/skins/meirenzhi/index.js";
 
@@ -210,8 +210,16 @@ test("shell-frame alignment: solid chrome rules + opaque token + wallpaper-in-co
     imageDark: stripImage(lines[7]),
   }), "runtime emission and the exported builder must agree");
   assert.doesNotMatch(tag.textContent, /centerCol[^\"]/, "the content column is only ever targeted structurally");
+  const fullscreenTag = dom.styleTag("dsh-skins/openbmc.fullscreen.css");
+  assert.ok(fullscreenTag, "fullscreen frost base must mount with the skin");
+  assert.equal(
+    fullscreenTag.textContent,
+    buildFullscreenBaseCss("dshOpenbmcSkin", { light: "rgb(238, 246, 251)", dark: "rgb(13, 30, 44)" }),
+    "runtime emission and the exported builder must agree",
+  );
   dispose();
   assert.equal(dom.styleTag("dsh-skins/openbmc.shell.css"), null, "shell tag must unmount with the skin");
+  assert.equal(dom.styleTag("dsh-skins/openbmc.fullscreen.css"), null, "fullscreen tag must unmount with the skin");
 });
 
 test("shell-frame alignment: no caption tag is emitted (superseded by the opaque shell token, ADR-0009 v4)", () => {
@@ -237,11 +245,15 @@ test("shell-frame alignment: A→B switch swaps the tag; official restores the u
   const dom = installDom();
   const { runtime } = bootMeirenzhi(dom);
   assert.ok(dom.styleTag("dsh-skins/meirenzhi.shell.css"));
+  assert.ok(dom.styleTag("dsh-skins/meirenzhi.fullscreen.css"), "meirenzhi fullscreen base must mount");
   runtime.select("openbmc");
   assert.equal(dom.styleTag("dsh-skins/meirenzhi.shell.css"), null, "old skin shell tag must go");
+  assert.equal(dom.styleTag("dsh-skins/meirenzhi.fullscreen.css"), null, "old skin fullscreen tag must go");
   assert.ok(dom.styleTag("dsh-skins/openbmc.shell.css"), "new skin shell tag must mount");
+  assert.ok(dom.styleTag("dsh-skins/openbmc.fullscreen.css"), "new skin fullscreen tag must mount");
   runtime.select("official");
   assert.equal(dom.styleTag("dsh-skins/openbmc.shell.css"), null, "official must drop the alignment so opaque host paints stand alone");
+  assert.equal(dom.styleTag("dsh-skins/openbmc.fullscreen.css"), null, "official must drop the fullscreen base");
 });
 
 test("N1: a successful hot-update keeps the live skin fully intact", () => {
