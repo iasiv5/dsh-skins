@@ -381,10 +381,11 @@ if (sidebarPackage === "") {
 } else if (!directAsarLayout) {
 	console.error(`${YELLOW}upstream-hooks: sidebar-root paint premise is desktop-only (ADR-0009 v2) — not judged against the web store (ADR-0011 附录 P3)${RESET}`);
 }
-// Page-wide inventory: [class*="_frame"] / [class*="_sidebarCol"] must only
-// ever match the AppFrame pair. Any OTHER package shipping a *_frame /
-// *_sidebarCol class selector is a new false-positive surface and forces a
-// re-review instead of silently widening the selectors.
+// Page-wide inventory: [class*="_frame"] / [class*="_sidebarCol"] /
+// [class*="_rightbarCol"] must only ever match the AppFrame pair. Any OTHER
+// package shipping one of these class selectors is a new false-positive
+// surface and forces a re-review instead of silently widening the selectors
+// (rightbarCol's whitelist is layout-only — ADR-0020, impl-review P1).
 const SHELL_LOCAL_NAMES = ["frame", "sidebarCol", "centerCol", "rightbarCol"];
 const shellInventory = new Map(); // local name -> Set<pkg>
 for (const name of SHELL_LOCAL_NAMES) {
@@ -407,20 +408,27 @@ for (const name of SHELL_LOCAL_NAMES) {
 	// 2026-10-19 (ADR-0011 附录 P2): dsh-client-ui-attachment ships an
 	// attachment tile/thumbnail `._frame` — no _sidebarCol child, it can
 	// never match rule 1 or rule 2.
-	const reviewed = name === "frame"
-		? new Set([
-			"dsh-client-ui-layout",
-			"dsh-client-ui-chat",
-			"dsh-client-ui-sidebar-browser",
-			"dsh-client-ui-sidebar-documentpreview",
-			"dsh-client-ui-subagent",
-			"dsh-client-ui-user-questions",
-			"dsh-client-ui-attachment",
-		])
-		: new Set(["dsh-client-ui-layout", "dsh-client-ui-settings-shell"]);
+	// ADR-0020: rightbarCol is the layout AppFrame's own structural face — its
+	// whitelist is the strictest (layout only). settings-shell ships no such
+	// class and has no reviewed basis to shelter it, so it must not ride the
+	// shared non-frame reviewed set (impl-review P1).
+	const reviewed = name === "rightbarCol"
+		? new Set(["dsh-client-ui-layout"])
+		: name === "frame"
+			? new Set([
+				"dsh-client-ui-layout",
+				"dsh-client-ui-chat",
+				"dsh-client-ui-sidebar-browser",
+				"dsh-client-ui-sidebar-documentpreview",
+				"dsh-client-ui-subagent",
+				"dsh-client-ui-user-questions",
+				"dsh-client-ui-attachment",
+			])
+			: new Set(["dsh-client-ui-layout", "dsh-client-ui-settings-shell"]);
 	const unexpected = [...found].filter((pkg) => !reviewed.has(pkg));
 	if (unexpected.length > 0) {
-		problems.push(`new *_${name} class selector in ${unexpected.join(", ")} — new false-positive surface for the ADR-0009 [class*="_${name}"] selectors, re-review them`);
+		const adr = name === "rightbarCol" ? "ADR-0020" : "ADR-0009";
+		problems.push(`new *_${name} class selector in ${unexpected.join(", ")} — new false-positive surface for the ${adr} [class*="_${name}"] selectors, re-review them`);
 	}
 }
 
