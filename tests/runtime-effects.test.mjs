@@ -9,6 +9,7 @@ import test from "node:test";
 import { createSkinRuntime, shellAlignment, buildFullscreenBaseCss, PRODUCTION_FIELDS } from "../src/client/runtime.js";
 import { createOpenBmcHarness } from "../src/client/skins/openbmc-harness/index.js";
 import { createMeirenzhiSkin } from "../src/client/skins/meirenzhi/index.js";
+import { createUefiHarness } from "../src/client/skins/uefi-harness/index.js";
 
 // ---- minimal DOM stub --------------------------------------------------------
 
@@ -254,6 +255,24 @@ test("shell-frame alignment: A→B switch swaps the tag; official restores the u
   runtime.select("official");
   assert.equal(dom.styleTag("dsh-skins/openbmc.shell.css"), null, "official must drop the alignment so opaque host paints stand alone");
   assert.equal(dom.styleTag("dsh-skins/openbmc.fullscreen.css"), null, "official must drop the fullscreen base");
+});
+
+test("fullscreen base: uefi column mounts with its own fills (three-skin parity, impl-review B2)", () => {
+  const dom = installDom();
+  const runtime = createSkinRuntime();
+  const uefi = createUefiHarness(stubJsx);
+  runtime.register(uefi);
+  runtime.setPersonalization(personalizationFor(new Map([["uefi-harness", uefi]])));
+  const dispose = runtime.apply(makeCtx()); // apply() mounts order[0] = uefi
+  const tag = dom.styleTag("dsh-skins/uefi-harness.fullscreen.css");
+  assert.ok(tag, "uefi fullscreen base must mount with the skin");
+  assert.equal(
+    tag.textContent,
+    buildFullscreenBaseCss("dshUefiHarness", { light: "rgb(238, 235, 255)", dark: "rgb(25, 20, 48)" }),
+    "uefi emission and the exported builder must agree",
+  );
+  dispose();
+  assert.equal(dom.styleTag("dsh-skins/uefi-harness.fullscreen.css"), null, "uefi fullscreen tag must unmount with the skin");
 });
 
 test("N1: a successful hot-update keeps the live skin fully intact", () => {

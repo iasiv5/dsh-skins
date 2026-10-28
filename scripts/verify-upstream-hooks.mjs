@@ -427,6 +427,9 @@ for (const name of SHELL_LOCAL_NAMES) {
 			: new Set(["dsh-client-ui-layout", "dsh-client-ui-settings-shell"]);
 	const unexpected = [...found].filter((pkg) => !reviewed.has(pkg));
 	if (unexpected.length > 0) {
+		// Memo (impl-review B3): a future structural face joining
+		// SHELL_LOCAL_NAMES extends this parameterized pattern — its own
+		// reviewed branch above and its own ADR reference here.
 		const adr = name === "rightbarCol" ? "ADR-0020" : "ADR-0009";
 		problems.push(`new *_${name} class selector in ${unexpected.join(", ")} — new false-positive surface for the ${adr} [class*="_${name}"] selectors, re-review them`);
 	}

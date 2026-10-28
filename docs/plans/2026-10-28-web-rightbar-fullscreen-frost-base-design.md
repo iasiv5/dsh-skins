@@ -131,7 +131,8 @@ body[data-dsh-<kebab>] [data-rightbar-fullscreen] [class*="_rightbarCol"]{
    - 停靠态右栏玻璃感与改前逐像素一致（图三基准）；
    - 全屏后聊天输入框文字与壁纸文字均不可辨（图二修复）；
    - 明/暗两模式、三皮各过一遍；官方皮不受影响；
-   - 全屏↔停靠往返无残留底色。
+   - 全屏↔停靠往返无残留底色；
+   - 全屏态右栏列内部浮层/下拉定位正常（评审 B1 增补，2026-10-28：列底 backdrop-filter 创建 stacking context/containing block，列内若有 fixed 后代其定位基准随之改变——94% 定值实测时顺带观察）。
 
 ## 8. 未决事项
 
