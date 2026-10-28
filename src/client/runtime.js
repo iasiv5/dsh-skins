@@ -98,11 +98,11 @@ function buildShellAlignmentCss(bodyAttribute, opaqueFills, backdrop) {
 
 /** 全屏态右栏列霜面底（ADR-0020）：data-rightbar-fullscreen 期间把右栏
  * 列底色提到 94% 皮色 + frost blur——聊天透字变不可读柔光，停靠态因选择器
- * 带状态属性而零命中。双表面：①栅格列轨道（[class*="_rightbarCol"]）；
- * ②全屏 occupant（[data-rightbar-col] > *）——dockkit 全屏面板绝对定位、
- * 右缘锚定，max-width 可超出轨道悬挂于 centre 之上，悬挂区无列底可依
- * （2026-10-28 主人红框实证：轨道区已变色、悬挂区仍透字，故扩occupant，
- * 与 Desktop ADR-0009 occupant 实底教义同层）。opaqueFills 与 Desktop
+ * 带状态属性而零命中。双表面：①栅格列轨道（[class*="_rightbarCol"]，右
+ * ~45% 条带）；②dockkit 全屏面板根（[data-sidebar-right-panel="fullscreen"]，
+ * 全窗尺寸、背景透明、自带 fullscreen 状态自门控——它不是 rightbarCol 的
+ * 直子，occupant 直子选择器打不中；2026-10-28 主人 Console DOM 实测定面）。
+ * opaqueFills 与 Desktop
  * shell 对齐同源（riding sidebar-fill 的 rgb 通道）；null（皮未 ride
  * sidebar-fill）返回空串，调用方跳过挂载。固定值不随通透度旋钮联动
  * （frost 家族同律）。blur 只声明在 light 规则、暗色经级联继承（frost
@@ -112,11 +112,11 @@ export function buildFullscreenBaseCss(bodyAttribute, opaqueFills) {
   if (opaqueFills === null) return "";
   const body = `body[${datasetAttribute(bodyAttribute)}]`;
   const column = " [data-rightbar-fullscreen] [class*=\"_rightbarCol\"]";
-  const occupant = " [data-rightbar-fullscreen] [data-rightbar-col] > *";
+  const dockPanel = " [data-sidebar-right-panel=\"fullscreen\"]";
   return [
     "/* dsh-skins fullscreen frost base (ADR-0020): 94% skin-tone column base + frost blur while data-rightbar-fullscreen is set — chat bleed becomes unreadable soft glow; the docked column is untouched */",
-    `${body}${column},${body}${occupant}{background-color:color-mix(in srgb, ${opaqueFills.light} 94%, transparent)!important;backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
-    `${body}[data-ds-dark-theme]${column},${body}[data-ds-dark-theme]${occupant}{background-color:color-mix(in srgb, ${opaqueFills.dark} 94%, transparent)!important}`,
+    `${body}${column},${body}${dockPanel}{background-color:color-mix(in srgb, ${opaqueFills.light} 94%, transparent)!important;backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
+    `${body}[data-ds-dark-theme]${column},${body}[data-ds-dark-theme]${dockPanel}{background-color:color-mix(in srgb, ${opaqueFills.dark} 94%, transparent)!important}`,
   ].join("\n");
 }
 

@@ -381,6 +381,15 @@ if (sidebarPackage === "") {
 } else if (!directAsarLayout) {
 	console.error(`${YELLOW}upstream-hooks: sidebar-root paint premise is desktop-only (ADR-0009 v2) — not judged against the web store (ADR-0011 附录 P3)${RESET}`);
 }
+// ADR-0020: the dockkit fullscreen panel root (cards carrier, full-window,
+// self-gated by its own state attribute) is one of the two frost-base
+// surfaces. Pin the marker against its owning package.
+const sidebarRight = readAll("dsh-client-ui-sidebar-right");
+if (sidebarRight === "") {
+	problems.push("dsh-client-ui-sidebar-right is not installed under the runtime — the ADR-0020 dockkit fullscreen panel hook cannot be evaluated");
+} else if (!sidebarRight.includes("data-sidebar-right-panel")) {
+	problems.push('fullscreen hook dead: "data-sidebar-right-panel" no longer in dsh-client-ui-sidebar-right — the dockkit fullscreen panel marker drifted, re-derive the ADR-0020 selectors');
+}
 // Page-wide inventory: [class*="_frame"] / [class*="_sidebarCol"] /
 // [class*="_rightbarCol"] must only ever match the AppFrame pair. Any OTHER
 // package shipping one of these class selectors is a new false-positive
