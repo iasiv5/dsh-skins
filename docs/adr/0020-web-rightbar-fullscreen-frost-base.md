@@ -30,4 +30,5 @@ Web 形态下 riding 表把 `--dsw-alias-bg-base` 改写为 rgba（ADR-0013/0017
 
 ## Amendments
 
+- **2026-10-28（首版当日热部署实证修订）**：全屏透出面不止栅格列轨道——dockkit 全屏面板（occupant，`[data-rightbar-col] > *`）绝对定位、右缘锚定，max-width（100vw−侧栏）可超出轨道（≈45% 视口）悬挂于 centre 之上；悬挂区无列底可依，仍透聊天文字。主人红框实证：轨道区 94% 底已生效变色、悬挂区未变。霜面底据此扩为双表面（列轨道 + 全屏 occupant，配方 94%+blur(14px) saturate(1.3) 不变），与 Desktop ADR-0009 的 occupant 实底教义同层归一。选择器仍全部状态限定于 `[data-rightbar-fullscreen]`，停靠态零改动不变。
 - 无（首版）。
