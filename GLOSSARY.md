@@ -84,8 +84,8 @@ _Avoid_: 默认值（与字段目录的 default 混淆）、基线（丢掉 web 
 _Avoid_: 弹窗毛玻璃（仅家族一支）、浮层样式（无家族语义）
 
 **霜面底（fullscreen base）**:
-右栏列在全屏态（`data-rightbar-fullscreen`）的免透字处理：94% 皮肤同族实底叠 frost blur（固定值，不随通透度联动），色源与 Desktop 实底同源（riding sidebar-fill 的 rgb 通道）。停靠态因选择器带状态属性而零命中，玻璃感原样保留（ADR-0020）。
-_Avoid_: 全屏实底（丢了霜面语义）、全屏壁纸（那是被盖住的对象）
+右栏列在全屏态（`data-sidebar-right-panel=fullscreen` / `data-rightbar-fullscreen`）的免透字处理：皮肤同族**实底**直盖 dockkit 全屏面板根与栅格列轨道（全屏面板托管活会话 UI，半透明会让正常界面读作「漏出」——故不做半透明、不随通透度联动），色源与 Desktop 实底同源（riding sidebar-fill 的 rgb 通道）。停靠态因选择器带状态属性而零命中，玻璃感原样保留（ADR-0020； frost 半透明方案已被实底推翻，史见其 Amendments）。
+_Avoid_: 全屏壁纸（那是被盖住的对象）、frost 残留（半透明方案已退役）
 
 ### 会话装饰
 

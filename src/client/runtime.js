@@ -102,6 +102,9 @@ function buildShellAlignmentCss(bodyAttribute, opaqueFills, backdrop) {
  * ~45% 条带）；②dockkit 全屏面板根（[data-sidebar-right-panel="fullscreen"]，
  * 全窗尺寸、背景透明、自带 fullscreen 状态自门控——它不是 rightbarCol 的
  * 直子，occupant 直子选择器打不中；2026-10-28 主人 Console DOM 实测定面）。
+ * 浓度裁定（2026-10-28 第三次热部署）：全屏面板托管的是活会话 UI（标签/
+ * 消息/输入框），半透明霜面会让正常界面读作「漏出」——主人裁定全屏改
+ * 实底（rgb 直出，无 blur），与官方全屏观感对齐；停靠态半透明不受影响。
  * opaqueFills 与 Desktop
  * shell 对齐同源（riding sidebar-fill 的 rgb 通道）；null（皮未 ride
  * sidebar-fill）返回空串，调用方跳过挂载。固定值不随通透度旋钮联动
@@ -114,9 +117,9 @@ export function buildFullscreenBaseCss(bodyAttribute, opaqueFills) {
   const column = " [data-rightbar-fullscreen] [class*=\"_rightbarCol\"]";
   const dockPanel = " [data-sidebar-right-panel=\"fullscreen\"]";
   return [
-    "/* dsh-skins fullscreen frost base (ADR-0020): 94% skin-tone column base + frost blur while data-rightbar-fullscreen is set — chat bleed becomes unreadable soft glow; the docked column is untouched */",
-    `${body}${column},${body}${dockPanel}{background-color:color-mix(in srgb, ${opaqueFills.light} 94%, transparent)!important;backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}`,
-    `${body}[data-ds-dark-theme]${column},${body}[data-ds-dark-theme]${dockPanel}{background-color:color-mix(in srgb, ${opaqueFills.dark} 94%, transparent)!important}`,
+    "/* dsh-skins fullscreen base (ADR-0020): solid skin-tone base while data-rightbar-fullscreen is set — the fullscreen dockkit panel hosts the LIVE session UI (tabs/messages/composer), so translucency reads as bleed-through; solid matches the official look. Docked column untouched */",
+    `${body}${column},${body}${dockPanel}{background-color:${opaqueFills.light}!important}`,
+    `${body}[data-ds-dark-theme]${column},${body}[data-ds-dark-theme]${dockPanel}{background-color:${opaqueFills.dark}!important}`,
   ].join("\n");
 }
 

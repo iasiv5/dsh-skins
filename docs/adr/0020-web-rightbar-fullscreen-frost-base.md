@@ -30,6 +30,7 @@ Web 形态下 riding 表把 `--dsw-alias-bg-base` 改写为 rgba（ADR-0013/0017
 
 ## Amendments
 
+- **2026-10-28（第三次热部署，浓度裁定推翻霜面）**：主人 Console DOM 实测进一步表明全屏面板内托管的是**活会话 UI**（对话/上下文/编队标签、消息、右栏自有 composer，z=7 sticky 座）——94% 霜面让这套正常界面读作「漏出+幽灵输入」（主人裁定：明显 BUG）。全屏底改**纯实色**（`rgb()` 直出、去 blur），与官方全屏观感对齐；「94% 起步、残影升 96%」的浓度阶梯随之作废。官方皮肤+活跃会话+全屏的对照截图待主人补验（若官方在同状态隐藏会话视图，另追宿主开关）。
 - **2026-10-28（第二次热部署实证修订， supersede 上一条）**：主人 Console DOM 实测（全屏态 live 取样）推翻「occupant 直子」定面——dockkit 全屏面板根（`P3OORG_panel[data-sidebar-right-panel=fullscreen]`）才是卡片载体：全窗尺寸、背景透明、**不是** `[data-rightbar-col]` 的直子，`> *` 选择器打不中（第一次热部署只刷亮了栅格列轨道 ≈45% 条带，即主人红框）。霜面底第二表面改为该面板根：其 `fullscreen` 状态属性自门控（停靠态为 `push` 不命中），无需 frame 属性前缀；守卫补 `dsh-client-ui-sidebar-right` 的 `data-sidebar-right-panel` 标记钉。列轨道面保留（层叠冗余无害）。
 - **2026-10-28（首版当日热部署实证修订）**：全屏透出面不止栅格列轨道——dockkit 全屏面板悬挂于 centre 之上，悬挂区无列底可依，仍透聊天文字。霜面底由单表面（列轨道）扩为双表面，配方 94%+blur(14px) saturate(1.3) 不变。
 - 无（首版）。

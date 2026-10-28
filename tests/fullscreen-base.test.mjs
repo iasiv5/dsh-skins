@@ -16,9 +16,9 @@ test("fullscreen base: selector shape, 94% frost recipe, light+dark, byte-pinned
   });
   const lines = css.split("\n");
   assert.equal(lines.length, 3, "comment + light rule + dark rule");
-  assert.equal(lines[0], "/* dsh-skins fullscreen frost base (ADR-0020): 94% skin-tone column base + frost blur while data-rightbar-fullscreen is set — chat bleed becomes unreadable soft glow; the docked column is untouched */");
-  assert.equal(lines[1], 'body[data-dsh-openbmc-skin] [data-rightbar-fullscreen] [class*="_rightbarCol"],body[data-dsh-openbmc-skin] [data-sidebar-right-panel="fullscreen"]{background-color:color-mix(in srgb, rgb(238, 246, 251) 94%, transparent)!important;backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}');
-  assert.equal(lines[2], 'body[data-dsh-openbmc-skin][data-ds-dark-theme] [data-rightbar-fullscreen] [class*="_rightbarCol"],body[data-dsh-openbmc-skin][data-ds-dark-theme] [data-sidebar-right-panel="fullscreen"]{background-color:color-mix(in srgb, rgb(13, 30, 44) 94%, transparent)!important}');
+  assert.equal(lines[0], "/* dsh-skins fullscreen base (ADR-0020): solid skin-tone base while data-rightbar-fullscreen is set — the fullscreen dockkit panel hosts the LIVE session UI (tabs/messages/composer), so translucency reads as bleed-through; solid matches the official look. Docked column untouched */");
+  assert.equal(lines[1], 'body[data-dsh-openbmc-skin] [data-rightbar-fullscreen] [class*="_rightbarCol"],body[data-dsh-openbmc-skin] [data-sidebar-right-panel="fullscreen"]{background-color:rgb(238, 246, 251)!important}');
+  assert.equal(lines[2], 'body[data-dsh-openbmc-skin][data-ds-dark-theme] [data-rightbar-fullscreen] [class*="_rightbarCol"],body[data-dsh-openbmc-skin][data-ds-dark-theme] [data-sidebar-right-panel="fullscreen"]{background-color:rgb(13, 30, 44)!important}');
 });
 
 test("fullscreen base: state-scoped — every rule sits under data-rightbar-fullscreen", () => {
