@@ -75,3 +75,8 @@ test("shell-frame alignment ships exactly once, marker-gated, structural local n
 test("bubble decoration: the dead rc.2 hash gdEzaW must never return", () => {
 	assert.ok(!client.includes("gdEzaW"), "gdEzaW is the 0.1.1-rc.2 hash that rc.1 rebuilt away — pinning it again re-arms the ADR-0006 failure mode");
 });
+
+test("fullscreen frost base hooks ship in the built client (ADR-0020)", () => {
+	assert.ok(client.includes("[data-rightbar-fullscreen]"), "fullscreen-state marker ships");
+	assert.ok(client.includes('[class*="_rightbarCol"]'), "rightbar column structural hook ships");
+});

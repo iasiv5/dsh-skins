@@ -348,7 +348,7 @@ if (layout === "") {
 	if (!layout.includes("data-windows-titlebar")) {
 		problems.push('shell-frame hook dead: "data-windows-titlebar" no longer in dsh-client-ui-layout — the public Desktop marker drifted (ADR-0009)');
 	}
-	for (const name of ["frame", "sidebarCol"]) {
+	for (const name of ["frame", "sidebarCol", "rightbarCol"]) {
 		// Hashes may be underscore-led (`_2H3hWW_root`, 0.2.0-rc.2 desktop build).
 		if (!new RegExp(`\\.[A-Za-z0-9_]+_${name}[{,:\\[.]`).test(layout)) {
 			problems.push(`shell-frame hook dead: no .*_${name} class selector in dsh-client-ui-layout — the AppFrame local name drifted, re-derive the ADR-0009 selectors`);
@@ -359,6 +359,9 @@ if (layout === "") {
 	}
 	if (!layout.includes("data-rightbar-col")) {
 		problems.push('shell-frame hook dead: "data-rightbar-col" no longer in dsh-client-ui-layout — the right-panel solid-backdrop anchor drifted (ADR-0009 v6)');
+	}
+	if (!layout.includes("data-rightbar-fullscreen")) {
+		problems.push('fullscreen hook dead: "data-rightbar-fullscreen" no longer in dsh-client-ui-layout — the fullscreen-state marker drifted, re-derive the ADR-0020 selectors');
 	}
 }
 // ADR-0009 v2: the third neutralized paint lives on the ui-sidebar root
@@ -382,7 +385,7 @@ if (sidebarPackage === "") {
 // ever match the AppFrame pair. Any OTHER package shipping a *_frame /
 // *_sidebarCol class selector is a new false-positive surface and forces a
 // re-review instead of silently widening the selectors.
-const SHELL_LOCAL_NAMES = ["frame", "sidebarCol", "centerCol"];
+const SHELL_LOCAL_NAMES = ["frame", "sidebarCol", "centerCol", "rightbarCol"];
 const shellInventory = new Map(); // local name -> Set<pkg>
 for (const name of SHELL_LOCAL_NAMES) {
 	// [A-Za-z0-9_]+ — hashes may be underscore-led (see section 7 note above).
@@ -438,4 +441,4 @@ const overlaySummary = frontendChecked
 const sidebarRootSummary = directAsarLayout
 	? "sidebar-root paint alive"
 	: "sidebar-root paint NOT JUDGED (desktop-only premise, ADR-0011 附录 P3)";
-console.log(`✓ upstream-hooks: VERIFIED ${modeSummary} — ${bubbleSummary}; dark attr alive; service-API anchors alive; ${overlaySummary}; shell-frame hooks alive (_frame/_sidebarCol/titlebar marker/content-radius); ${sidebarRootSummary} (${packages.size} @deepseek-ai packages scanned)`);
+console.log(`✓ upstream-hooks: VERIFIED ${modeSummary} — ${bubbleSummary}; dark attr alive; service-API anchors alive; ${overlaySummary}; shell-frame hooks alive (_frame/_sidebarCol/_rightbarCol/titlebar marker/content-radius/fullscreen marker); ${sidebarRootSummary} (${packages.size} @deepseek-ai packages scanned)`);
