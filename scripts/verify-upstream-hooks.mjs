@@ -389,6 +389,8 @@ if (sidebarRight === "") {
 	problems.push("dsh-client-ui-sidebar-right is not installed under the runtime — the ADR-0020 dockkit fullscreen panel hook cannot be evaluated");
 } else if (!sidebarRight.includes("data-sidebar-right-panel")) {
 	problems.push('fullscreen hook dead: "data-sidebar-right-panel" no longer in dsh-client-ui-sidebar-right — the dockkit fullscreen panel marker drifted, re-derive the ADR-0020 selectors');
+} else if (!sidebarRight.includes("data-dockkit-pane")) {
+	problems.push('fullscreen hook dead: "data-dockkit-pane" no longer in dsh-client-ui-sidebar-right — the dockkit pane bleed-surface marker drifted, re-derive the ADR-0020 selectors');
 }
 // Page-wide inventory: [class*="_frame"] / [class*="_sidebarCol"] /
 // [class*="_rightbarCol"] must only ever match the AppFrame pair. Any OTHER
