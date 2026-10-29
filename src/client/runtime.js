@@ -365,6 +365,34 @@ export function createSkinRuntime({ profile = "web" } = {}) {
   }
 
   /**
+   * Generalized stale-paint heal (ADR-0021 amendment): after a runtime skin
+   * switch, some regions can stop repainting (rail: fixed by the paint-order
+   * guard; fullscreen→dock: fixed by the repaint hook; field evidence
+   * 2026-10-29 mobile: the conversation area and composer also went blank
+   * after skin churn). Removing and re-adding every skin style tag forces the
+   * proven style-invalidation repaint, healing all of them at once. Runs only
+   * on a real switch (previous skin mounted), never at cold boot; double rAF
+   * keeps the unstyled window to ~1 frame. Inert in DOM-stub environments.
+   */
+  function refreshSkinStyleTags() {
+    if (typeof requestAnimationFrame !== "function" || typeof document === "undefined" || document.head?.querySelectorAll === undefined) return;
+    const tags = [...document.head.querySelectorAll('style[data-plugin-css^="dsh-skins/"]')];
+    if (tags.length === 0) return;
+    const saved = tags.map((tag) => ({ id: tag.dataset.pluginCss, content: tag.textContent }));
+    for (const tag of tags) tag.remove();
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      for (const { id, content } of saved) {
+        if (document.querySelector(`style[data-plugin-css="${id}"]`) !== null) continue;
+        const fresh = document.createElement("style");
+        fresh.dataset.plugin = "dsh-skins";
+        fresh.dataset.pluginCss = id;
+        fresh.textContent = content;
+        document.head.append(fresh);
+      }
+    }));
+  }
+
+  /**
    * Fullscreen→dock stale-frame unstick (ADR-0021 amendment): when the right
    * panel leaves fullscreen, the compositor can keep painting the last
    * fullscreen frame while layout and hit-testing are already correct
@@ -620,6 +648,7 @@ export function createSkinRuntime({ profile = "web" } = {}) {
     selectedId = skin.id;
     announce(skin.id);
     installRightPanelRepaintHook();
+    if (previous !== null) refreshSkinStyleTags(); // real switch (not cold boot)
     return true;
   }
 
