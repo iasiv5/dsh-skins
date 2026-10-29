@@ -139,10 +139,24 @@ export function buildFullscreenBaseCss(bodyAttribute, opaqueFills) {
   // is hosted; the empty placeholder sheet stays transparent. Hooks
   // "_paneBody"/"_empty" are structural css-modules names (pinned surface).
   const emptyPaneGuard = ':not(:has([class*="_paneBody"] > [class*="_empty"]))';
-  const dockPanel = ` [data-sidebar-right-panel="fullscreen"]${emptyPaneGuard}`;
-  const dockPane = ` [data-sidebar-right-panel="fullscreen"] [data-dockkit-pane]${emptyPaneGuard}`;
+  // Stale-fullscreen gate (ADR-0021 amendment 四, probe evidence 2026-10-30):
+  // collapsing from fullscreen clears data-sidebar-right-open and the frame's
+  // data-rightbar-fullscreen but LEAVES the sheet mounted with a stale
+  // data-sidebar-right-panel="fullscreen" + inline width:100vw while it still
+  // hosts real pane content (so the empty-pane guard declines). Keying the
+  // sheet rules on the stale attribute then paints a solid full-window layer
+  // over the restored conversation (headless bright-px: docked 44839/60749 →
+  // broken 942/4420/7827; only removing fullscreen.css or hiding the sheet
+  // healed; style churn healed nothing — live rule, not a stale frame). The
+  // host reliably keeps data-sidebar-right-open="true" in real fullscreen and
+  // clears it exactly when the panel stops covering the window, so gate the
+  // sheet rules on it; the column rule needs no gate (its frame marker is
+  // cleared by the host on collapse).
+  const openGate = '[data-sidebar-right-open="true"]';
+  const dockPanel = ` [data-sidebar-right-panel="fullscreen"]${openGate}${emptyPaneGuard}`;
+  const dockPane = ` [data-sidebar-right-panel="fullscreen"]${openGate} [data-dockkit-pane]${emptyPaneGuard}`;
   return [
-    "/* dsh-skins fullscreen base (ADR-0020): solid skin-tone base while data-rightbar-fullscreen is set — the fullscreen dockkit PANE paints a translucent bg token where the official theme paints opaque white (DOM-dump evidence), so the pane is the bleed surface; solid matches the official look. Docked column untouched */",
+    "/* dsh-skins fullscreen base (ADR-0020): solid skin-tone base while data-rightbar-fullscreen is set — the fullscreen dockkit PANE paints a translucent bg token where the official theme paints opaque white (DOM-dump evidence), so the pane is the bleed surface; solid matches the official look. Docked column untouched. Sheet rules gated on data-sidebar-right-open (stale-fullscreen collapse, ADR-0021 amendment 四) */",
     `${body}${column},${body}${dockPanel},${body}${dockPane}{background-color:${opaqueFills.light}!important}`,
     `${body}[data-ds-dark-theme]${column},${body}[data-ds-dark-theme]${dockPanel},${body}[data-ds-dark-theme]${dockPane}{background-color:${opaqueFills.dark}!important}`,
   ].join("\n");

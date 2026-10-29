@@ -89,6 +89,28 @@ date: 2026-10-29
 
 ## Amendments
 
+- **2026-10-30（第四面：全屏→收起侧栏后中栏内容空白，实底规则加 open 门；前三面修法全部保留）**：
+  主人四截图实证——OpenBMC 皮肤下「右栏面板全屏（有内容）→ 点收起侧边栏」后，
+  会话区仅剩块状底（代码块头/任务条/composer 在画），正文与壁纸整片空白；
+  官方皮肤同流程正常。headless 复现并定谳（三态标记对比 + 逐标签二分 +
+  sheet 移除试验，探针存 `.dsh-research/skinprobe/collapser*.mjs`）：宿主
+  收起时清除 `data-sidebar-right-open` 与 frame 的 `data-rightbar-fullscreen`，
+  但**不清** sheet 的 `data-sidebar-right-panel="fullscreen"` 与内联
+  `width:100vw`（sheet 滞留全窗、仍托管真实 pane 内容，空 pane 守卫不豁免）
+  ——ADR-0020 的 sheet 实底规则命中陈旧层，实底压住会话内容。判据：dock
+  基线亮像素 44839/60749 → 坏态 942/4420/7827；仅「拔 fullscreen.css /
+  sheet display:none / sheet 移除」治愈（→48203），其余标签与样式 churn 均
+  无效——**活规则命中，非陈旧帧（与第二面机理相反，churn 治不了）**。修法：
+  sheet 两条规则加 `[data-sidebar-right-open="true"]` 门（真全屏 open=true
+  照常实底；坏态 open=null 规则失配透明化，DOM 等价于官方态即正常）；
+  column 规则不加门（frame 标记宿主收起时自清）。新钉子
+  `data-sidebar-right-open` provisional 入 verify-upstream-hooks；新门禁
+  `scripts/repro-fullscreen-collapse.mjs` 入 pnpm test（红自证：旧包
+  7827<50% 基线；绿：修后双循环 ≥70%）。同时裁掉交接遗留的「sheet z 档位」
+  假说：全屏覆盖态实测绘制正常（6372 亮像素即面板内容），残留问题唯一来源
+  即本面。教训句：**宿主状态属性有多个、各自清点时机不同——大面积覆盖类
+  规则必须钉在「被宿主可靠清除」的那个信号上，而不是第一个找到的标记上。**
+
 - **2026-10-29（第三面：会话区空白，通用化重绘；前两面修法保持）**：主人手机
   实证——切肤 churn 后轮到会话内容区（官方态连输入框）停止重绘，跨皮肤持续。
   修法通用化：applyEffects 真切换（非冷启动）后，双 rAF 内移除并重挂全部

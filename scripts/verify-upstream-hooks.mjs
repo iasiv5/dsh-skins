@@ -391,6 +391,8 @@ if (sidebarRight === "") {
 	problems.push('fullscreen hook dead: "data-sidebar-right-panel" no longer in dsh-client-ui-sidebar-right — the dockkit fullscreen panel marker drifted, re-derive the ADR-0020 selectors');
 } else if (!sidebarRight.includes("data-dockkit-pane")) {
 	problems.push('fullscreen hook dead: "data-dockkit-pane" no longer in dsh-client-ui-sidebar-right — the dockkit pane bleed-surface marker drifted, re-derive the ADR-0020 selectors');
+} else if (!sidebarRight.includes("data-sidebar-right-open")) {
+	problems.push('stale-fullscreen hook dead: "data-sidebar-right-open" no longer in dsh-client-ui-sidebar-right — the collapse gate marker drifted, re-derive the ADR-0021 amendment 四 selectors (provisional 2026-10-30, headless three-state probe)');
 }
 // Page-wide inventory: [class*="_frame"] / [class*="_sidebarCol"] /
 // [class*="_rightbarCol"] must only ever match the AppFrame pair. Any OTHER
