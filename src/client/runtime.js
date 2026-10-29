@@ -61,7 +61,7 @@ function parseRgbaChannels(value) {
  * guard is only meaningful when the rail is actually visible.
  */
 function sidebarPaintOrderCss(bodyAttribute) {
-  return `body[${datasetAttribute(bodyAttribute)}]:not(:has([data-sidebar-right-panel="fullscreen"])) [class*="_sidebarCol"]{position:relative;z-index:1}`;
+  return `body[${datasetAttribute(bodyAttribute)}] [class*="_sidebarCol"]{position:relative;z-index:1}`;
 }
 
 /**
@@ -136,19 +136,31 @@ export function buildFullscreenBaseCss(bodyAttribute, opaqueFills) {
   if (opaqueFills === null) return "";
   const body = `body[${datasetAttribute(bodyAttribute)}]`;
   const column = " [data-rightbar-fullscreen] [class*=\"_rightbarCol\"]";
-  const dockPanel = " [data-sidebar-right-panel=\"fullscreen\"]";
-  const dockPane = " [data-sidebar-right-panel=\"fullscreen\"] [data-dockkit-pane]";
-  // ADR-0021 amendment retracted (2026-10-29): a first cut layer-pinned these
-  // targets (position:relative;z-index:0, then isolation:isolate) against a
-  // stale fullscreen frame — but the real culprit was the sidebar paint-order
-  // guard's blanket z-index:1 sidebarCol outpainting the fullscreen sheet
-  // (field evidence: sheet no longer covered the sidebar; translucent stale
-  // frame bled through). With the guard scoped out of fullscreen (:has in
-  // sidebarPaintOrderCss), ADR-0020's original two rules are restored.
+  // The fullscreen sheet stays mounted with data-sidebar-right-panel="fullscreen"
+  // even when it hosts NOTHING but the host's own "_empty pane" placeholder
+  // (field evidence 2026-10-29: that empty sheet, painted solid, covered the
+  // whole window and was mistaken for a compositor stale frame). Solid skin
+  // tone only makes sense when real content is hosted, so both the panel and
+  // the pane opt out while the placeholder is present. Hooks "_paneBody"/
+  // "_empty" are structural css-modules local names (provisional, ADR-0021).
+  const emptyPaneGuard = ':not(:has([class*="_paneBody"] > [class*="_empty"]))';
+  const dockPanel = ` [data-sidebar-right-panel="fullscreen"]${emptyPaneGuard}`;
+  const dockPane = ` [data-sidebar-right-panel="fullscreen"] [data-dockkit-pane]${emptyPaneGuard}`;
+  // ADR-0021 interaction: the sidebar paint-order guard holds sidebarCol at
+  // z-index:1, which would otherwise outpaint the fullscreen sheet (field
+  // evidence 2026-10-29: the sheet stopped covering the sidebar and a
+  // translucent stale frame bled through). While fullscreen, the sheet root
+  // (host position:fixed) is pinned at z-index:2 — above the guard, below
+  // every portal layer; docking drops the attribute and the pin with it.
+  // Note: an element with [data-sidebar-right-panel="fullscreen"] can stay in
+  // the DOM with that value even when nothing looks fullscreen — never key
+  // the GUARD off :has(fullscreen), key the sheet ELEVATION off the state.
   return [
-    "/* dsh-skins fullscreen base (ADR-0020): solid skin-tone base while data-rightbar-fullscreen is set — the fullscreen dockkit PANE paints a translucent bg token where the official theme paints opaque white (DOM-dump evidence), so the pane is the bleed surface; solid matches the official look. Docked column untouched */",
-    `${body}${column},${body}${dockPanel},${body}${dockPane}{background-color:${opaqueFills.light}!important}`,
-    `${body}[data-ds-dark-theme]${column},${body}[data-ds-dark-theme]${dockPanel},${body}[data-ds-dark-theme]${dockPane}{background-color:${opaqueFills.dark}!important}`,
+    "/* dsh-skins fullscreen base (ADR-0020): solid skin-tone base while data-rightbar-fullscreen is set — the fullscreen dockkit PANE paints a translucent bg token where the official theme paints opaque white (DOM-dump evidence), so the pane is the bleed surface; solid matches the official look. Docked column untouched. Fullscreen sheet root rides z-index:2 above the sidebar paint-order guard (ADR-0021) */",
+    `${body}${column}{background-color:${opaqueFills.light}!important}`,
+    `${body}${dockPanel},${body}${dockPane}{z-index:2;background-color:${opaqueFills.light}!important}`,
+    `${body}[data-ds-dark-theme]${column}{background-color:${opaqueFills.dark}!important}`,
+    `${body}[data-ds-dark-theme]${dockPanel},${body}[data-ds-dark-theme]${dockPane}{z-index:2;background-color:${opaqueFills.dark}!important}`,
   ].join("\n");
 }
 
