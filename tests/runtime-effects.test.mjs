@@ -361,7 +361,7 @@ test("N1: selecting a skin that cannot project keeps the current skin", () => {
 
 // ---- ADR-0021: sidebar paint-order guard ------------------------------------
 
-const PAINT_ORDER_CSS = "body[data-dsh-openbmc-skin] [class*=\"_sidebarCol\"]{position:relative;z-index:1}";
+const PAINT_ORDER_CSS = "body[data-dsh-openbmc-skin]:not(:has([data-sidebar-right-panel=\"fullscreen\"])) [class*=\"_sidebarCol\"]{position:relative;z-index:1}";
 
 test("ADR-0021: paint-order guard mounts with the skin, byte-exact rule, scoped to the skin body attr", () => {
   const dom = installDom();

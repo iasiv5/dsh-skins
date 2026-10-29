@@ -53,9 +53,15 @@ function parseRgbaChannels(value) {
  * with it); no runtime scheduling, no timing dependence — an earlier
  * grid-nudge family was rejected on cross-environment evidence (see the
  * ADR's rejected-options history).
+ *
+ * Scoped OUT of the right-panel fullscreen state (:has guard): while the
+ * fullscreen sheet is up the rail is covered anyway, and the blanket z-index:1
+ * made the sidebar outpaint the sheet (field evidence 2026-10-29: sheet no
+ * longer covered the sidebar; translucent stale frame bled through) — the
+ * guard is only meaningful when the rail is actually visible.
  */
 function sidebarPaintOrderCss(bodyAttribute) {
-  return `body[${datasetAttribute(bodyAttribute)}] [class*="_sidebarCol"]{position:relative;z-index:1}`;
+  return `body[${datasetAttribute(bodyAttribute)}]:not(:has([data-sidebar-right-panel="fullscreen"])) [class*="_sidebarCol"]{position:relative;z-index:1}`;
 }
 
 /**
@@ -132,23 +138,17 @@ export function buildFullscreenBaseCss(bodyAttribute, opaqueFills) {
   const column = " [data-rightbar-fullscreen] [class*=\"_rightbarCol\"]";
   const dockPanel = " [data-sidebar-right-panel=\"fullscreen\"]";
   const dockPane = " [data-sidebar-right-panel=\"fullscreen\"] [data-dockkit-pane]";
-  // position:relative;z-index:0 on the COLUMN (in-flow, safe) and
-  // isolation:isolate on the panel/pane (ADR-0021 amendment): promotes each
-  // target to its own paint layer WITHOUT touching host positioning — the
-  // fullscreen→dock transition (attribute churn + big solid repaint) can
-  // leave the compositor stuck on the last fullscreen frame (field evidence
-  // 2026-10-29: removing this tag snapped the view back). A first cut used
-  // position:relative on all three and BROKE the fullscreen panel (its own
-  // position:fixed got overridden → the sheet laid out inside the right
-  // column instead of covering the window); isolation changes stacking only.
-  const columnPin = "position:relative;z-index:0;";
-  const isolate = "isolation:isolate;";
+  // ADR-0021 amendment retracted (2026-10-29): a first cut layer-pinned these
+  // targets (position:relative;z-index:0, then isolation:isolate) against a
+  // stale fullscreen frame — but the real culprit was the sidebar paint-order
+  // guard's blanket z-index:1 sidebarCol outpainting the fullscreen sheet
+  // (field evidence: sheet no longer covered the sidebar; translucent stale
+  // frame bled through). With the guard scoped out of fullscreen (:has in
+  // sidebarPaintOrderCss), ADR-0020's original two rules are restored.
   return [
-    "/* dsh-skins fullscreen base (ADR-0020): solid skin-tone base while data-rightbar-fullscreen is set — the fullscreen dockkit PANE paints a translucent bg token where the official theme paints opaque white (DOM-dump evidence), so the pane is the bleed surface; solid matches the official look. Docked column untouched. Layer-pinned per ADR-0021 amendment (stale-paint workaround; panel/pane isolate-only — position:relative would break the fullscreen sheet's own position:fixed) */",
-    `${body}${column}{${columnPin}background-color:${opaqueFills.light}!important}`,
-    `${body}${dockPanel},${body}${dockPane}{${isolate}background-color:${opaqueFills.light}!important}`,
-    `${body}[data-ds-dark-theme]${column}{${columnPin}background-color:${opaqueFills.dark}!important}`,
-    `${body}[data-ds-dark-theme]${dockPanel},${body}[data-ds-dark-theme]${dockPane}{${isolate}background-color:${opaqueFills.dark}!important}`,
+    "/* dsh-skins fullscreen base (ADR-0020): solid skin-tone base while data-rightbar-fullscreen is set — the fullscreen dockkit PANE paints a translucent bg token where the official theme paints opaque white (DOM-dump evidence), so the pane is the bleed surface; solid matches the official look. Docked column untouched */",
+    `${body}${column},${body}${dockPanel},${body}${dockPane}{background-color:${opaqueFills.light}!important}`,
+    `${body}[data-ds-dark-theme]${column},${body}[data-ds-dark-theme]${dockPanel},${body}[data-ds-dark-theme]${dockPane}{background-color:${opaqueFills.dark}!important}`,
   ].join("\n");
 }
 
