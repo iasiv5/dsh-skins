@@ -16,9 +16,9 @@ test("fullscreen base: selector shape, 94% frost recipe, light+dark, byte-pinned
   });
   const lines = css.split("\n");
   assert.equal(lines.length, 3, "comment + light rule + dark rule");
-  assert.equal(lines[0], "/* dsh-skins fullscreen base (ADR-0020): solid skin-tone base while data-rightbar-fullscreen is set — the fullscreen dockkit PANE paints a translucent bg token where the official theme paints opaque white (DOM-dump evidence), so the pane is the bleed surface; solid matches the official look. Docked column untouched */");
-  assert.equal(lines[1], 'body[data-dsh-openbmc-skin] [data-rightbar-fullscreen] [class*="_rightbarCol"],body[data-dsh-openbmc-skin] [data-sidebar-right-panel="fullscreen"],body[data-dsh-openbmc-skin] [data-sidebar-right-panel="fullscreen"] [data-dockkit-pane]{background-color:rgb(238, 246, 251)!important}');
-  assert.equal(lines[2], 'body[data-dsh-openbmc-skin][data-ds-dark-theme] [data-rightbar-fullscreen] [class*="_rightbarCol"],body[data-dsh-openbmc-skin][data-ds-dark-theme] [data-sidebar-right-panel="fullscreen"],body[data-dsh-openbmc-skin][data-ds-dark-theme] [data-sidebar-right-panel="fullscreen"] [data-dockkit-pane]{background-color:rgb(13, 30, 44)!important}');
+  assert.equal(lines[0], "/* dsh-skins fullscreen base (ADR-0020): solid skin-tone base while data-rightbar-fullscreen is set — the fullscreen dockkit PANE paints a translucent bg token where the official theme paints opaque white (DOM-dump evidence), so the pane is the bleed surface; solid matches the official look. Docked column untouched. Layer-pinned per ADR-0021 amendment (stale-paint workaround) */");
+  assert.equal(lines[1], 'body[data-dsh-openbmc-skin] [data-rightbar-fullscreen] [class*="_rightbarCol"],body[data-dsh-openbmc-skin] [data-sidebar-right-panel="fullscreen"],body[data-dsh-openbmc-skin] [data-sidebar-right-panel="fullscreen"] [data-dockkit-pane]{position:relative;z-index:0;background-color:rgb(238, 246, 251)!important}');
+  assert.equal(lines[2], 'body[data-dsh-openbmc-skin][data-ds-dark-theme] [data-rightbar-fullscreen] [class*="_rightbarCol"],body[data-dsh-openbmc-skin][data-ds-dark-theme] [data-sidebar-right-panel="fullscreen"],body[data-dsh-openbmc-skin][data-ds-dark-theme] [data-sidebar-right-panel="fullscreen"] [data-dockkit-pane]{position:relative;z-index:0;background-color:rgb(13, 30, 44)!important}');
 });
 
 test("fullscreen base: state-scoped — every rule sits under data-rightbar-fullscreen", () => {

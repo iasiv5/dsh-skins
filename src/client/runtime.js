@@ -132,10 +132,17 @@ export function buildFullscreenBaseCss(bodyAttribute, opaqueFills) {
   const column = " [data-rightbar-fullscreen] [class*=\"_rightbarCol\"]";
   const dockPanel = " [data-sidebar-right-panel=\"fullscreen\"]";
   const dockPane = " [data-sidebar-right-panel=\"fullscreen\"] [data-dockkit-pane]";
+  // position:relative;z-index:0 (ADR-0021 amendment): promotes each target to
+  // its own positioned paint layer. Without it, the fullscreen→dock transition
+  // (attribute churn + big solid repaint) can leave the compositor stuck on
+  // the last fullscreen frame — layout and hit-testing correct, visuals stale
+  // (field evidence 2026-10-29: removing this tag snapped the view back). The
+  // z value stays below every portal/overlay layer (handle z-11 and up).
+  const layerPin = "position:relative;z-index:0;";
   return [
-    "/* dsh-skins fullscreen base (ADR-0020): solid skin-tone base while data-rightbar-fullscreen is set — the fullscreen dockkit PANE paints a translucent bg token where the official theme paints opaque white (DOM-dump evidence), so the pane is the bleed surface; solid matches the official look. Docked column untouched */",
-    `${body}${column},${body}${dockPanel},${body}${dockPane}{background-color:${opaqueFills.light}!important}`,
-    `${body}[data-ds-dark-theme]${column},${body}[data-ds-dark-theme]${dockPanel},${body}[data-ds-dark-theme]${dockPane}{background-color:${opaqueFills.dark}!important}`,
+    "/* dsh-skins fullscreen base (ADR-0020): solid skin-tone base while data-rightbar-fullscreen is set — the fullscreen dockkit PANE paints a translucent bg token where the official theme paints opaque white (DOM-dump evidence), so the pane is the bleed surface; solid matches the official look. Docked column untouched. Layer-pinned per ADR-0021 amendment (stale-paint workaround) */",
+    `${body}${column},${body}${dockPanel},${body}${dockPane}{${layerPin}background-color:${opaqueFills.light}!important}`,
+    `${body}[data-ds-dark-theme]${column},${body}[data-ds-dark-theme]${dockPanel},${body}[data-ds-dark-theme]${dockPane}{${layerPin}background-color:${opaqueFills.dark}!important}`,
   ].join("\n");
 }
 

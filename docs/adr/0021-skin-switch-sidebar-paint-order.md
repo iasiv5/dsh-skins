@@ -89,4 +89,16 @@ date: 2026-10-29
 
 ## Amendments
 
+- **2026-10-29（同一疾病第二面：全屏→停靠陈旧帧，层钉扩展）**：主人在 web
+  形态发现——右栏面板全屏（开始页）→点「收起侧边栏」后，布局已正确切换
+  （right="push"、侧栏展开 286px、center 1083px，Console 实测），但画面停在
+  旧的全屏帧；官方皮肤同流程正常；**拔掉 `openbmc.fullscreen.css` 立即弹回**
+  （二分实证，`backdrop.css` 拔除无效）。即：ADR-0020 的三条全屏实底规则
+  （`background-color:rgb()!important`，无 filter）在「属性失配 + 大面积
+  实底→半透明重绘」churn 下同样触发陈旧绘制。处置：三条目标
+  （rightbarCol/dockPanel/dockPane）统一加 `position:relative;z-index:0`
+  层钉——沿用本 ADR 主修复的已验证手法（定位层强制独立重绘；z=0 低于一切
+  门户层）。字节钉（fullscreen-base byte-pinned）与 ADR-0020 语义同步更新。
+  教训句：**皮肤半透明表面 + 宿主状态属性churn = 合成器陈旧帧的高危组合，
+  凡大面积覆盖类规则，一律随规则层钉。**
 - 无（首版）。
