@@ -163,8 +163,8 @@ function sidebarPaintOrderCss(bodyAttribute) {
   （冷加载时 sidebarCol 的 bounding rect；展开形态随形态取列本体——R13②）。
 - 切肤流：弹层选官方 → 再按 `--skin-id` 选目标皮肤 → Escape → 等 1s →
   取 brightAfter / rectAfter / frame inline gtc。
-- 参数：`--url`、`--viewport WxH`、`--skin-id <id>`（openbmc-harness /
-  meirenzhi / uefi-harness；缺省 openbmc-harness）、`--collapse-expand`
+- 参数：`--url`、`--viewport WxH`、`--skin-id <id>`（真实注册 id：openbmc / meirenzhi /
+  uefi-harness；openbmc-harness 为兼容别名；缺省 openbmc）、`--collapse-expand`
   （切肤前收起→展开各一次，B4②）、`--no-fingerprint`（红基线跑法）、
   `--fingerprint-only`（仅探针，热部署生效判据）、`--gate`（门禁模式）。
 - 三态判据（实现期校准定稿，2026-10-29；相对基线体系继承评审
@@ -233,7 +233,7 @@ function sidebarPaintOrderCss(bodyAttribute) {
     代码审读：规则与平台属性正交、collapsedWidth=0 隐藏列无重叠面 →
     结论记入 ADR 验证节；
   - B4④：darwin——同③审读（collapsedWidth=0、宿主自有渐变底）→ 记入 ADR；
-  - B4⑤：三皮肤（openbmc-harness / meirenzhi / uefi-harness）× 官方全互切，
+  - B4⑤：三皮肤（openbmc / meirenzhi / uefi-harness）× 官方全互切，
     窄视口逐皮肤 PASS（UEFI 为本次新增覆盖）。
 - **OpenBMC→官方 spot-check（评审 R16②）**：切回官方后 rail 可见（官方态
   无皮肤属性、无 paintorder 保护——此测只证「卸载规则不残留、不致坏」；
