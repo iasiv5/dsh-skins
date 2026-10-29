@@ -130,8 +130,17 @@ export function buildFullscreenBaseCss(bodyAttribute, opaqueFills) {
   if (opaqueFills === null) return "";
   const body = `body[${datasetAttribute(bodyAttribute)}]`;
   const column = " [data-rightbar-fullscreen] [class*=\"_rightbarCol\"]";
-  const dockPanel = " [data-sidebar-right-panel=\"fullscreen\"]";
-  const dockPane = " [data-sidebar-right-panel=\"fullscreen\"] [data-dockkit-pane]";
+  // Empty-pane guard (ADR-0021 amendment 三): the fullscreen sheet stays
+  // mounted with data-sidebar-right-panel="fullscreen" even when it hosts
+  // nothing but the host's "Empty pane" placeholder — painting it solid turns
+  // it into a full-window opaque overlay that covers the rail and messages
+  // (field evidence 2026-10-29, automated bisect: removing this very tag
+  // restored message paint 0→10484 bright px). Solid only when real content
+  // is hosted; the empty placeholder sheet stays transparent. Hooks
+  // "_paneBody"/"_empty" are structural css-modules names (pinned surface).
+  const emptyPaneGuard = ':not(:has([class*="_paneBody"] > [class*="_empty"]))';
+  const dockPanel = ` [data-sidebar-right-panel="fullscreen"]${emptyPaneGuard}`;
+  const dockPane = ` [data-sidebar-right-panel="fullscreen"] [data-dockkit-pane]${emptyPaneGuard}`;
   return [
     "/* dsh-skins fullscreen base (ADR-0020): solid skin-tone base while data-rightbar-fullscreen is set — the fullscreen dockkit PANE paints a translucent bg token where the official theme paints opaque white (DOM-dump evidence), so the pane is the bleed surface; solid matches the official look. Docked column untouched */",
     `${body}${column},${body}${dockPanel},${body}${dockPane}{background-color:${opaqueFills.light}!important}`,
