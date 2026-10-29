@@ -44,6 +44,21 @@ function parseRgbaChannels(value) {
 }
 
 /**
+ * Build the sidebar paint-order guard for one skin (ADR-0021): after a skin
+ * switch the compositor can paint the center column over the sidebar column
+ * — layout and hit-testing stay correct while the collapsed rail stops
+ * painting ("invisible but clickable"). Pin the sidebar column one explicit
+ * step up the stacking order so its grid sibling can never overpaint it.
+ * Static CSS on the skin's own lifecycle (mounted with the skin, removed
+ * with it); no runtime scheduling, no timing dependence — an earlier
+ * grid-nudge family was rejected on cross-environment evidence (see the
+ * ADR's rejected-options history).
+ */
+function sidebarPaintOrderCss(bodyAttribute) {
+  return `body[${datasetAttribute(bodyAttribute)}] [class*="_sidebarCol"]{position:relative;z-index:1}`;
+}
+
+/**
  * Build the desktop shell alignment CSS for one skin: the three
  * single-paint rules, the opaque shell-fill token override (light and dark),
  * the wallpaper-in-content rules (the center column carries the same
@@ -404,6 +419,20 @@ export function createSkinRuntime({ profile = "web" } = {}) {
 
       if (effects.staticCss !== null) {
         const tag = styleTag(`dsh-skins/${skin.id}.css`, effects.staticCss);
+        stops.push(() => tag.remove());
+      }
+
+      // Sidebar paint-order guard (ADR-0021): after a skin switch the
+      // compositor can paint the center column over the sidebar column —
+      // layout and hit-testing stay correct while the collapsed rail stops
+      // painting ("invisible but clickable"). Pin the sidebar column one
+      // explicit step up the stacking order so its grid sibling can never
+      // overpaint it. Static CSS on the skin's own lifecycle: mounted with
+      // the skin, removed with it; no runtime scheduling, no timing
+      // dependence (an earlier grid-nudge family was rejected — see ADR).
+      {
+        const tag = styleTag(`dsh-skins/${skin.id}.paintorder.css`,
+          sidebarPaintOrderCss(effects.bodyAttribute));
         stops.push(() => tag.remove());
       }
 

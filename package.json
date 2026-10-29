@@ -75,7 +75,7 @@
     "build": "node scripts/build-client.mjs",
     "watch": "node scripts/build-client.mjs --watch",
     "check:lockfile": "pnpm install --frozen-lockfile",
-    "test": "pnpm run build && node smoke-test.cjs && node --test tests/*.test.mjs",
+    "test": "pnpm run build && node smoke-test.cjs && node scripts/repro-stale-grid-paint.mjs --gate && node --test tests/*.test.mjs",
     "verify:readme": "node scripts/verify-readme-pairing.mjs",
     "verify:bundle": "node scripts/verify-bundle-guard.mjs",
     "verify:hooks": "node scripts/verify-upstream-hooks.mjs",

@@ -449,6 +449,7 @@ export function installSidebarSwitcher(ctx, { runtime, jsx, react, reactDom, con
         type: "button",
         role: "menuitemradio",
         "aria-checked": activeId === skin.id,
+        "data-skin-id": skin.id, // ADR-0021/R21: stable hook for tests and headless verification — never match on localized labels
         className: `dsh-skins-pop-card${activeId === skin.id ? " dsh-skins-pop-card-on" : ""}`,
         onClick: () => {
           // Panel open → the card is a panel-target switch (design §7.2,

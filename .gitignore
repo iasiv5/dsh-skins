@@ -7,3 +7,5 @@ pkgcheck/
 .DS_Store
 app.js
 boot.html
+repro-rail.png
+repro-cold.png

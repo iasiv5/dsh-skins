@@ -178,6 +178,18 @@ function makeHarness(viewportHeight = 900, viewportWidth = 1400, workspacesEntri
 
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
+test("⓪ every skin card carries a stable data-skin-id hook (ADR-0021/R21)", async () => {
+  const h = makeHarness();
+  await h.openShell();
+  const expected = ["official", "meirenzhi", "openbmc", "uefi-harness"];
+  for (const skinId of expected) {
+    const card = h.cardButton(skinId);
+    assert.ok(card, `card for "${skinId}" must render`);
+    assert.equal(card.props["data-skin-id"], skinId,
+      `card "${skinId}" must carry its id as data-skin-id — never match localized labels`);
+  }
+});
+
 test("① gear opens the docked panel column and focuses the heading", async () => {
   const h = makeHarness();
   await h.openShell();

@@ -359,6 +359,54 @@ test("N1: selecting a skin that cannot project keeps the current skin", () => {
   assert.ok(dom.styleTag("dsh-skins/meirenzhi.backdrop.css"));
 });
 
+// ---- ADR-0021: sidebar paint-order guard ------------------------------------
+
+const PAINT_ORDER_CSS = "body[data-dsh-openbmc-skin] [class*=\"_sidebarCol\"]{position:relative;z-index:1}";
+
+test("ADR-0021: paint-order guard mounts with the skin, byte-exact rule, scoped to the skin body attr", () => {
+  const dom = installDom();
+  const { runtime } = bootMeirenzhi(dom);
+
+  runtime.select("openbmc");
+  const tag = dom.styleTag("dsh-skins/openbmc.paintorder.css");
+  assert.ok(tag, "paint-order tag must mount with the skin");
+  assert.equal(tag.dataset.plugin, "dsh-skins");
+  assert.equal(tag.textContent, PAINT_ORDER_CSS);
+});
+
+test("ADR-0021: selecting official removes the guard; reselecting remounts it byte-identical", () => {
+  const dom = installDom();
+  const { runtime } = bootMeirenzhi(dom);
+  runtime.select("openbmc");
+  assert.ok(dom.styleTag("dsh-skins/openbmc.paintorder.css"));
+
+  runtime.select("official");
+  assert.equal(dom.styleTag("dsh-skins/openbmc.paintorder.css"), null, "official state has no skin attribute and no guard");
+  assert.equal(dom.document.body.dataset.dshOpenbmcSkin, undefined);
+
+  runtime.select("openbmc");
+  const remounted = dom.styleTag("dsh-skins/openbmc.paintorder.css");
+  assert.ok(remounted, "reselecting the skin must remount the guard");
+  assert.equal(remounted.textContent, PAINT_ORDER_CSS);
+});
+
+test("ADR-0021: a failed same-skin rebuild re-mounts the guard via restorePrevious", () => {
+  const dom = installDom();
+  const { runtime } = bootMeirenzhi(dom);
+  runtime.select("openbmc");
+  assert.ok(dom.styleTag("dsh-skins/openbmc.paintorder.css"));
+
+  dom.injectObserveFailure(1); // next build fails; restorePrevious re-projects and remounts
+  const result = runtime.updateActive();
+  assert.equal(result.applied, false);
+  assert.equal(result.reason, "mount-failed");
+  assert.equal(runtime.active(), "openbmc");
+
+  const tag = dom.styleTag("dsh-skins/openbmc.paintorder.css");
+  assert.ok(tag, "restore path must remount the guard with the rest of the effects");
+  assert.equal(tag.textContent, PAINT_ORDER_CSS);
+});
+
 // Product promise under test: making openbmc the FIRST registered skin (v1.0.6
 // default switch, meirenzhi before it) only affects users with NO stored choice.
 // Each case boots a FRESH DOM/storage/runtime (apply's official branch never
