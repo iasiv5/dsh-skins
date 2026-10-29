@@ -89,6 +89,15 @@ date: 2026-10-29
 
 ## Amendments
 
+- **2026-10-29（第二面终版修法：全屏→停靠定点重绘钩子；层钉与层序试验全撤销）**：
+  上述层钉路线（position:relative → isolation:isolate → z-2 → 空 pane 守卫
+  四次试验）each 引发新回归（全屏铺进右栏 / 盖不住左栏+透字 / 空壳层盖 UI），
+  全部撤销，fullscreen.css 回归 ADR-0020 原样字节。终版修法＝runtime 挂
+  MutationObserver 监听 `[data-sidebar-right-panel]` 从 fullscreen→其他，
+  双 rAF 内移除并重挂本皮 fullscreen.css 标签——用已实证的「大样式失效强制
+  重绘」解卡，作用域仅自身标签。教训句：**同族疾病的两个面要用各自已被实证
+  的解卡手段——rail 面用层钉（持续保护），停靠面用事件驱动定点重绘；跨面
+  复用层序手段每次都引入新回归。**
 - **2026-10-29（同一疾病第二面：全屏→停靠陈旧帧，层钉扩展）**：主人在 web
   形态发现——右栏面板全屏（开始页）→点「收起侧边栏」后，布局已正确切换
   （right="push"、侧栏展开 286px、center 1083px，Console 实测），但画面停在

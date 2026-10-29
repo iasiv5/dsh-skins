@@ -365,6 +365,45 @@ export function createSkinRuntime({ profile = "web" } = {}) {
   }
 
   /**
+   * Fullscreen→dock stale-frame unstick (ADR-0021 amendment): when the right
+   * panel leaves fullscreen, the compositor can keep painting the last
+   * fullscreen frame while layout and hit-testing are already correct
+   * (field evidence 2026-10-29: removing any dsh-skins style tag snapped the
+   * view back). Removing and re-adding our fullscreen.css tag forces exactly
+   * that proven style-invalidation repaint, scoped to our own tag. Installed
+   * once per runtime; inert in DOM-stub environments without MutationObserver.
+   */
+  let rightPanelRepaintHookInstalled = false;
+  function installRightPanelRepaintHook() {
+    if (rightPanelRepaintHookInstalled || typeof MutationObserver !== "function") return;
+    if (typeof document === "undefined" || document.body === undefined || document.body === null) return;
+    rightPanelRepaintHookInstalled = true;
+    const observer = new MutationObserver((records) => {
+      for (const record of records ?? []) {
+        const before = record.oldValue;
+        const after = record.target.getAttribute?.("data-sidebar-right-panel");
+        if (before !== "fullscreen" || after === "fullscreen") continue;
+        const tag = document.querySelector('style[data-plugin-css$=".fullscreen.css"]');
+        if (tag === null) continue;
+        const id = tag.dataset.pluginCss;
+        const content = tag.textContent;
+        tag.remove();
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const fresh = document.createElement("style");
+          fresh.dataset.plugin = "dsh-skins";
+          fresh.dataset.pluginCss = id;
+          fresh.textContent = content;
+          document.head.append(fresh);
+        }));
+      }
+    });
+    observer.observe(document.body, {
+      subtree: true, attributes: true,
+      attributeFilter: ["data-sidebar-right-panel"], attributeOldValue: true,
+    });
+  }
+
+  /**
    * Build a skin's effects WITHOUT touching the mounted state. Every side
    * effect registers its rollback BEFORE mutating (R7): a mid-build crash
    * unwinds itself completely and the previously mounted skin keeps running.
@@ -580,6 +619,7 @@ export function createSkinRuntime({ profile = "web" } = {}) {
     mounted = { skin, effects, overrides, stop };
     selectedId = skin.id;
     announce(skin.id);
+    installRightPanelRepaintHook();
     return true;
   }
 
