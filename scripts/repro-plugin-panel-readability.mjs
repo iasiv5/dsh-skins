@@ -81,7 +81,22 @@ try {
     if (gate) verdict(0, "SKIP", `host unreachable (${baseUrl}) — CI has no live host`);
     verdict(1, "FAIL", `host unreachable (${baseUrl}): ${error.message.split("\n")[0]}`);
   }
-  await page.waitForTimeout(3000);
+  // Skin bundle injection is server-aggregated and can lag behind
+  // domcontentloaded on a cold cache (field evidence 2026-10-31: the reading
+  // tag flapped ABSENT→PRESENT across identical runs within one minute, and
+  // one full run saw the tag ABSENT at +3s yet PASS after navigation). Poll
+  // for the skin's own style tags + body scope attribute instead of a fixed
+  // sleep; judge only after they have landed. Old libs settle the same way
+  // (skin tags mount, reading.css never does) — the disease path is unaffected.
+  await page
+    .waitForFunction(
+      () => document.querySelector('style[data-plugin-css^="dsh-skins/"]') !== null
+        && Object.keys(document.body.dataset).some((key) => /^dsh[A-Z]/.test(key)),
+      undefined,
+      { timeout: 20000 },
+    )
+    .catch(() => {});
+  await page.waitForTimeout(500);
 
   const state = await page.evaluate((readingSelector) => ({
     skinKey: Object.keys(document.body.dataset).find((key) => /^dsh[A-Z]/.test(key)) ?? null,
@@ -92,7 +107,9 @@ try {
     verdict(state.readingTag ? 0 : 1, "FINGERPRINT",
       state.readingTag
         ? `reading tag present on the live page (${baseUrl}) — deployed lib carries ADR-0022`
-        : "reading tag ABSENT on the live page — deployed lib predates ADR-0022");
+        : state.skinKey === null
+          ? `no active skin on ${baseUrl} — reading tag absent is expected (official state)`
+          : "reading tag ABSENT on the live page — deployed lib predates ADR-0022");
   }
 
   if (state.skinKey === null) {
