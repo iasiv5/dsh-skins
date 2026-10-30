@@ -88,33 +88,51 @@ try {
   // for the skin's own style tags + body scope attribute instead of a fixed
   // sleep; judge only after they have landed. Old libs settle the same way
   // (skin tags mount, reading.css never does) — the disease path is unaffected.
+  let skinSettled = true;
   await page
     .waitForFunction(
       () => document.querySelector('style[data-plugin-css^="dsh-skins/"]') !== null
-        && Object.keys(document.body.dataset).some((key) => /^dsh[A-Z]/.test(key)),
+        && Object.keys(document.body.dataset).some((key) => /^dsh/.test(key)),
       undefined,
       { timeout: 20000 },
     )
-    .catch(() => {});
+    .catch(() => { skinSettled = false; });
   await page.waitForTimeout(500);
 
   const state = await page.evaluate((readingSelector) => ({
-    skinKey: Object.keys(document.body.dataset).find((key) => /^dsh[A-Z]/.test(key)) ?? null,
+    skinKey: Object.keys(document.body.dataset).find((key) => /^dsh/.test(key)) ?? null,
     readingTag: document.querySelector(readingSelector) !== null,
   }), READING_TAG_SELECTOR);
 
+  if (state.skinKey === null) {
+    // No recognizable skin scope attribute — three distinct causes with
+    // different verdicts (impl-review R2/R3): poll TIMEOUT without any
+    // dsh-skins tag (cold aggregation window longer than the budget, or the
+    // skin plugin crashed) and an out-of-namespace body attribute with tags
+    // mounted are both fail-closed INVALID; only a settled page without any
+    // dsh-skins tag is a real official state.
+    const hasSkinTags = await page.evaluate(
+      () => document.querySelector('style[data-plugin-css^="dsh-skins/"]') !== null,
+    );
+    if (!skinSettled) {
+      await page.screenshot({ path: `repro-reading-${++shotIndex}.png` });
+      verdict(3, "INVALID", `skin bundle did not inject within 20s on ${baseUrl} (no dsh-skins style tags, no body scope attribute) — cold aggregation window longer than the budget or the skin plugin crashed; re-run before trusting any verdict`);
+    }
+    if (hasSkinTags) {
+      await page.screenshot({ path: `repro-reading-${++shotIndex}.png` });
+      verdict(3, "INVALID", `dsh-skins style tags present but no body scope attribute matching /(^dsh)/ on ${baseUrl} — skin bodyAttribute outside the supported namespace; extend the detector before trusting a verdict`);
+    }
+    if (fingerprintOnly) {
+      verdict(1, "FINGERPRINT", `no active skin on ${baseUrl} — reading tag absent is expected (official state)`);
+    }
+    if (gate) verdict(0, "SKIP", `official skin active on ${baseUrl} — nothing to verify (mount a skin to exercise the reading base)`);
+    verdict(2, "REVIEW", `official skin active on ${baseUrl} — the reading base is skin-scoped; mount a skin first`);
+  }
   if (fingerprintOnly) {
     verdict(state.readingTag ? 0 : 1, "FINGERPRINT",
       state.readingTag
         ? `reading tag present on the live page (${baseUrl}) — deployed lib carries ADR-0022`
-        : state.skinKey === null
-          ? `no active skin on ${baseUrl} — reading tag absent is expected (official state)`
-          : "reading tag ABSENT on the live page — deployed lib predates ADR-0022");
-  }
-
-  if (state.skinKey === null) {
-    if (gate) verdict(0, "SKIP", `official skin active on ${baseUrl} — nothing to verify (mount a skin to exercise the reading base)`);
-    verdict(2, "REVIEW", `official skin active on ${baseUrl} — the reading base is skin-scoped; mount a skin first`);
+        : "reading tag ABSENT on the live page — deployed lib predates ADR-0022");
   }
   console.log(`skin: ${state.skinKey} (${state.readingTag ? "reading tag present" : "reading tag ABSENT — pre-ADR-0022 lib"})`);
 

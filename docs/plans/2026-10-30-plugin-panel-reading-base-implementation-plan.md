@@ -156,6 +156,7 @@ if (!pluginManager) {
 - 脚本规格（逐条实现，注释头对齐 repro-fullscreen-collapse.mjs 的 ADR/流程/模式/退出码格式）：
   1. 冷加载 base URL；`goto` 失败且 `--gate` → 打印 `SKIP: host unreachable` exit 0（非 gate 则 exit 1）
   2. 皮肤检测：`Object.keys(document.body.dataset).find((k) => /^dsh.+Skin$/.test(k))`；无 → `--gate` 打印 `SKIP: official skin active` exit 0，否则 exit 2
+     - **实现修正（impl-review R3，2026-10-31）**：检测正则落地为 `/^dsh/`——本计划原稿 `/^dsh.+Skin$/` 对 uefi 皮（bodyAttribute=`dshUefiHarness`，Harness 结尾）不命中，会把 uefi 激活态误判 official、判据漏跑；`/^dsh/` 亦覆盖 `dsDarkTheme` 之外的 dsh 家族键。残余边界（bodyAttribute 完全不带 dsh 前缀的自定义皮）→ 实现为 fail-closed INVALID（dsh-skins tag 在场但无可识别作用域属性），永不静默 SKIP。
   3. 指纹探针：`!!document.querySelector('style[data-plugin-css$=".reading.css"]')`；`--fingerprint-only` 模式打印在场与否，exit 0/1（热部署效果检查用）
   4. 主判据（非 fingerprint-only）：点 `getByText(/^(插件|Plugins)$/, { exact: true })` 进插件页，等 `[data-plugin-panel]` 出现；页面内求值：
      - `[data-plugin-panel="true"]` 节点数 === 1（唯一性钉），否则 FAIL
