@@ -6,7 +6,7 @@
  */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createSkinRuntime, shellAlignment, buildFullscreenBaseCss, PRODUCTION_FIELDS } from "../src/client/runtime.js";
+import { createSkinRuntime, shellAlignment, buildFullscreenBaseCss, buildReadingBaseCss, PRODUCTION_FIELDS } from "../src/client/runtime.js";
 import { createOpenBmcHarness } from "../src/client/skins/openbmc-harness/index.js";
 import { createMeirenzhiSkin } from "../src/client/skins/meirenzhi/index.js";
 import { createUefiHarness } from "../src/client/skins/uefi-harness/index.js";
@@ -247,14 +247,18 @@ test("shell-frame alignment: A→B switch swaps the tag; official restores the u
   const { runtime } = bootMeirenzhi(dom);
   assert.ok(dom.styleTag("dsh-skins/meirenzhi.shell.css"));
   assert.ok(dom.styleTag("dsh-skins/meirenzhi.fullscreen.css"), "meirenzhi fullscreen base must mount");
+  assert.ok(dom.styleTag("dsh-skins/meirenzhi.reading.css"), "meirenzhi reading base must mount");
   runtime.select("openbmc");
   assert.equal(dom.styleTag("dsh-skins/meirenzhi.shell.css"), null, "old skin shell tag must go");
   assert.equal(dom.styleTag("dsh-skins/meirenzhi.fullscreen.css"), null, "old skin fullscreen tag must go");
+  assert.equal(dom.styleTag("dsh-skins/meirenzhi.reading.css"), null, "old skin reading tag must go");
   assert.ok(dom.styleTag("dsh-skins/openbmc.shell.css"), "new skin shell tag must mount");
   assert.ok(dom.styleTag("dsh-skins/openbmc.fullscreen.css"), "new skin fullscreen tag must mount");
+  assert.ok(dom.styleTag("dsh-skins/openbmc.reading.css"), "new skin reading base must mount");
   runtime.select("official");
   assert.equal(dom.styleTag("dsh-skins/openbmc.shell.css"), null, "official must drop the alignment so opaque host paints stand alone");
   assert.equal(dom.styleTag("dsh-skins/openbmc.fullscreen.css"), null, "official must drop the fullscreen base");
+  assert.equal(dom.styleTag("dsh-skins/openbmc.reading.css"), null, "official must drop the reading base");
 });
 
 test("fullscreen base: uefi column mounts with its own fills (three-skin parity, impl-review B2)", () => {
@@ -271,8 +275,40 @@ test("fullscreen base: uefi column mounts with its own fills (three-skin parity,
     buildFullscreenBaseCss("dshUefiHarness", { light: "rgb(238, 235, 255)", dark: "rgb(25, 20, 48)" }),
     "uefi emission and the exported builder must agree",
   );
+  const readingTag = dom.styleTag("dsh-skins/uefi-harness.reading.css");
+  assert.ok(readingTag, "uefi reading base must mount with the skin");
+  assert.equal(
+    readingTag.textContent,
+    buildReadingBaseCss("dshUefiHarness", { light: "rgb(238, 235, 255)", dark: "rgb(25, 20, 48)" }),
+    "uefi reading emission and the exported builder must agree",
+  );
   dispose();
   assert.equal(dom.styleTag("dsh-skins/uefi-harness.fullscreen.css"), null, "uefi fullscreen tag must unmount with the skin");
+  assert.equal(dom.styleTag("dsh-skins/uefi-harness.reading.css"), null, "uefi reading tag must unmount with the skin");
+});
+
+// ---- ADR-0022: plugin panel reading base ------------------------------------
+
+test("ADR-0022: reading base mounts with the skin, byte-exact rules, scoped to the skin body attr", () => {
+  const { dom, dispose } = bootOpenBmcWithDesktopBlur({ light: 0, dark: 0 });
+  const tag = dom.styleTag("dsh-skins/openbmc.reading.css");
+  assert.ok(tag, "reading base tag must mount with the skin");
+  assert.equal(
+    tag.textContent,
+    buildReadingBaseCss("dshOpenbmcSkin", { light: "rgb(238, 246, 251)", dark: "rgb(13, 30, 44)" }),
+    "runtime emission and the exported builder must agree",
+  );
+  const lines = tag.textContent.split("\n");
+  assert.equal(lines[0].startsWith("/* dsh-skins reading base (ADR-0022):"), true, "family comment header");
+  assert.equal(lines[1], 'body[data-dsh-openbmc-skin] [data-plugin-panel="true"]{position:relative;z-index:0;background-color:rgb(238, 246, 251)!important}');
+  assert.equal(lines[2], 'body[data-dsh-openbmc-skin][data-ds-dark-theme] [data-plugin-panel="true"]{position:relative;z-index:0;background-color:rgb(13, 30, 44)!important}');
+  assert.equal(lines.length, 3, "comment + light rule + dark rule");
+  dispose();
+  assert.equal(dom.styleTag("dsh-skins/openbmc.reading.css"), null, "reading base tag must unmount with the skin");
+});
+
+test("ADR-0022: builder without a fill override fails closed to an empty string", () => {
+  assert.equal(buildReadingBaseCss("dshXSkin", null), "");
 });
 
 test("N1: a successful hot-update keeps the live skin fully intact", () => {

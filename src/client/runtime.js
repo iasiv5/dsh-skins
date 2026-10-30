@@ -162,6 +162,27 @@ export function buildFullscreenBaseCss(bodyAttribute, opaqueFills) {
   ].join("\n");
 }
 
+/**
+ * 阅读底（ADR-0022）：插件面板路由容器（data-plugin-panel）的免透字实底。
+ * 活体 DOM 取证（2026-10-30，web rc.4）：官方主题给内容面涂不透明 token，皮肤
+ * 把唯一实底 token 骑写成 rgba 后，整条路由容器（已安装/插件市场 Tab、
+ * settings-* 设置子页）透明，文字直接压在「半透明 token × 壁纸」合成层上——
+ * 实色皮色底与官方观感对齐。色源与 Desktop shell/fullscreen 同源（riding
+ * sidebar-fill 的 rgb 通道）；null（皮未 ride）返回空串，调用方跳过挂载。
+ * 固定值不随通透度联动（frost 家族同律）。元素自绑定：路由离开 DOM 即失配，
+ * 无需状态门；层钉随规则（ADR-0021 修订二教义：大面积覆盖类规则一律随规则层钉）。
+ */
+export function buildReadingBaseCss(bodyAttribute, opaqueFills) {
+  if (opaqueFills === null) return "";
+  const body = `body[${datasetAttribute(bodyAttribute)}]`;
+  const panel = ' [data-plugin-panel="true"]';
+  return [
+    "/* dsh-skins reading base (ADR-0022): solid skin-tone base under the plugin panel route container — the live page paints the whole route transparent over the wallpaper while the official theme paints an opaque bg token (DOM-dump evidence 2026-10-30), so text sits on a translucent token x wallpaper composite; solid matches the official look. Element-bound: the route leaves the DOM with the page, no state gate needed. Layer pin per ADR-0021 amendment doctrine (large-area cover rules always carry the pin). */",
+    `${body}${panel}{position:relative;z-index:0;background-color:${opaqueFills.light}!important}`,
+    `${body}[data-ds-dark-theme]${panel}{position:relative;z-index:0;background-color:${opaqueFills.dark}!important}`,
+  ].join("\n");
+}
+
 export const shellAlignment = { parseRgbaChannels, buildShellAlignmentCss };
 
 /**
@@ -557,6 +578,16 @@ export function createSkinRuntime({ profile = "web" } = {}) {
         if (fullscreenCss !== "") {
           const fullscreenTag = styleTag(`dsh-skins/${skin.id}.fullscreen.css`, fullscreenCss);
           stops.push(() => fullscreenTag.remove());
+        }
+        // Reading base (ADR-0022): the plugin panel route container paints
+        // solid — same opaqueFills derivation as the shell/fullscreen rules;
+        // skipped (fail-closed) when the skin does not ride
+        // --dsw-specific-sidebar-fill. Profile-neutral: the route container is
+        // identical on Web and Desktop.
+        const readingCss = buildReadingBaseCss(effects.bodyAttribute, opaqueFills);
+        if (readingCss !== "") {
+          const readingTag = styleTag(`dsh-skins/${skin.id}.reading.css`, readingCss);
+          stops.push(() => readingTag.remove());
         }
       }
 

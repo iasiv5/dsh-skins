@@ -87,6 +87,10 @@ _Avoid_: 弹窗毛玻璃（仅家族一支）、浮层样式（无家族语义�
 右栏列在全屏态（`data-sidebar-right-panel=fullscreen` / `data-rightbar-fullscreen`）的免透字处理：皮肤同族**实底**直盖 dockkit 全屏面板根与栅格列轨道（全屏面板托管活会话 UI，半透明会让正常界面读作「漏出」——故不做半透明、不随通透度联动），色源与 Desktop 实底同源（riding sidebar-fill 的 rgb 通道）。停靠态因选择器带状态属性而零命中，玻璃感原样保留（ADR-0020； frost 半透明方案已被实底推翻，史见其 Amendments）。
 _Avoid_: 全屏壁纸（那是被盖住的对象）、frost 残留（半透明方案已退役）
 
+**阅读底（reading base）**:
+插件管理页等文字密集内容页在皮肤态的免透字处理：皮肤同族实底直盖页面路由容器（`data-plugin-panel`），色源与霜面底、桌面实底同源（riding sidebar-fill 的 rgb 通道）；随皮事务挂载，路由卸载即失配，不随通透度联动。已安装 Tab、插件市场 Tab 与全部设置子页在同一容器内渲染，一个钩子全覆盖（ADR-0022）。
+_Avoid_: 遮罩（那是壁纸级纱幕）、内容纱面（半透明配方已被实色裁定取代）
+
 ### 绘制与层叠
 
 **Rail**:

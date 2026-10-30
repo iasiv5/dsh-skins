@@ -394,6 +394,16 @@ if (sidebarRight === "") {
 } else if (!sidebarRight.includes("data-sidebar-right-open")) {
 	problems.push('stale-fullscreen hook dead: "data-sidebar-right-open" no longer in dsh-client-ui-sidebar-right — the collapse gate marker drifted, re-derive the ADR-0021 amendment 四 selectors (provisional 2026-10-30, headless three-state probe)');
 }
+// ADR-0022 reading base: the plugin panel route container is keyed on the
+// data-plugin-panel marker emitted by dsh-client-ui-plugin-manager (live DOM
+// evidence 2026-10-30). Pin the marker against its owning package; container
+// uniqueness is asserted at runtime by the repro gate.
+const pluginManager = readAll("dsh-client-ui-plugin-manager");
+if (pluginManager === "") {
+	problems.push("dsh-client-ui-plugin-manager is not installed under the runtime — the ADR-0022 reading base hook cannot be evaluated");
+} else if (!pluginManager.includes("data-plugin-panel")) {
+	problems.push('reading-base hook dead: "data-plugin-panel" no longer in dsh-client-ui-plugin-manager — the plugin panel route marker drifted, re-derive the ADR-0022 selectors');
+}
 // Page-wide inventory: [class*="_frame"] / [class*="_sidebarCol"] /
 // [class*="_rightbarCol"] must only ever match the AppFrame pair. Any OTHER
 // package shipping one of these class selectors is a new false-positive
