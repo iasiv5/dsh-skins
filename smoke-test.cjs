@@ -407,7 +407,7 @@ if (window.__DSH_SKINS__.active() !== "meirenzhi") throw new Error("meirenzhi mu
 if (body.dataset.dshMeirenzhiSkin !== "") throw new Error("meirenzhi body scope attr missing");
 const mrzBackdrop = styleTag("meirenzhi.backdrop");
 if (!mrzBackdrop || mrzBackdrop.removed) throw new Error("meirenzhi backdrop stylesheet missing");
-if (!mrzBackdrop.textContent.includes("data:image/webp")) throw new Error("meirenzhi backdrop must embed the bundled factory wallpaper (WebP)");
+if (!mrzBackdrop.textContent.includes('url("/dsh-skins/assets/b_meirenzhi_yuntai.webp')) throw new Error("meirenzhi backdrop must reference the routed factory wallpaper (ADR-0023)");
 // ADR-0010 hinge floor: the WEB wallpaper rule (pointer-events terminator)
 // carries no blur; the marker-scoped desktopBlur candidate may still appear.
 if (mrzBackdrop.textContent.includes("pointer-events:none;filter:blur(")) throw new Error("meirenzhi factory P=35 sits on the ADR-0010 hinge floor — the web wallpaper rule must ship with zero blur");

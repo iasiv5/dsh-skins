@@ -155,7 +155,9 @@ for (const [skinId, spec] of Object.entries(GOLD)) {
       const dark = expectedScrimPrefix(66, spec, "dark");
       assert.ok(fx.backdrop.imageLight.startsWith(light), `${skinId} P=66 scrim light prefix`);
       assert.ok(fx.backdrop.imageDark.startsWith(dark), `${skinId} P=66 scrim dark prefix`);
-      assert.ok(fx.backdrop.imageLight.includes(", url(data:image/webp"), `${skinId} art layer present`);
+      // ADR-0023 per-skin branch: openbmc inline (factory skin), uefi routed.
+      const artPrefix = skinId === "openbmc" ? ", url(data:image/webp" : ", url(/dsh-skins/assets/b_uefi-harness_art";
+      assert.ok(fx.backdrop.imageLight.includes(artPrefix), `${skinId} art layer present`);
     } else {
       assert.deepEqual(fx.backdrop.overlayLight, expectedOverlayScrim(66, spec, "light"));
       assert.deepEqual(fx.backdrop.overlayDark, expectedOverlayScrim(66, spec, "dark"));
@@ -173,7 +175,9 @@ for (const [skinId, spec] of Object.entries(GOLD)) {
       // skin.art; pin them here against the independent gold.
       assert.ok(fx.backdrop.imageLight.startsWith(expectedScrimPrefix(0, spec, "light")), `${skinId} P=0 scrim light prefix`);
       assert.ok(fx.backdrop.imageDark.startsWith(expectedScrimPrefix(0, spec, "dark")), `${skinId} P=0 scrim dark prefix`);
-      assert.ok(fx.backdrop.imageLight.includes(", url(data:image/webp"), `${skinId} art layer present`);
+      // ADR-0023 per-skin branch: openbmc inline (factory skin), uefi routed.
+      const artPrefix = skinId === "openbmc" ? ", url(data:image/webp" : ", url(/dsh-skins/assets/b_uefi-harness_art";
+      assert.ok(fx.backdrop.imageLight.includes(artPrefix), `${skinId} art layer present`);
     } else {
       assert.deepEqual(fx.backdrop.overlayLight, expectedOverlayScrim(0, spec, "light"));
       assert.deepEqual(fx.backdrop.overlayDark, expectedOverlayScrim(0, spec, "dark"));

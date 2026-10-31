@@ -109,7 +109,7 @@ test("success path emits webp files + URL-table module + manifest (ADR-0023)", (
 
   // Module: URL table — imports the helper, zero inline data, zero markers.
   const text = readFileSync(ws.outPath, "utf8");
-  assert.ok(text.includes(`import { builtinAssetUrl } from "../builtin-assets.js";`), "imports the URL helper");
+  assert.ok(text.includes(`import { builtinAssetUrl } from "../../builtin-assets.js";`), "imports the URL helper");
   assert.equal(text.includes("data:image"), false, "no inline data URLs");
   assert.equal(/^\/\/ TOTAL_WEBP_BYTES=/m.test(text), false, "old marker lines are gone (guards moved to manifest)");
   const urlLines = [...text.matchAll(/^export const WALLPAPER_[A-Z]+ = builtinAssetUrl\("meirenzhi", "[a-z]+"\);$/gm)];
