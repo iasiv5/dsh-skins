@@ -26,6 +26,7 @@
 import fs from "node:fs";
 import { chromium } from "playwright-core";
 import { countBrightPixels, decodePng, edgeActivity, lum } from "./lib/paint-metrics.mjs";
+import { awaitWallpaperSettled } from "./lib/wallpaper-settled.mjs";
 
 // ---- args --------------------------------------------------------------------
 
@@ -296,6 +297,17 @@ try {
     await pickSkin(page, skinId);
     await page.keyboard.press("Escape");
     await page.waitForTimeout(1000);
+    // ADR-0023: per-hop settle — hops have no navigation (the 1000ms wait has
+    // no networkidle guarantee), so the routed wallpaper must be settled
+    // before measuring. The COLD baseline above deliberately gets no such
+    // wait: its gotoSettled already covers the cold-load fetch (networkidle).
+    // Timeout is INVALID, not FAIL.
+    try {
+      await awaitWallpaperSettled(page);
+    } catch (error) {
+      console.error(`INVALID: ${error.message}`);
+      process.exit(3);
+    }
 
     const after = await measureColumn(page, hop === HOPS - 1 ? "repro-rail.png" : undefined);
     if (after === null) fail(`hop ${hop + 1}: sidebarCol vanished from the DOM after the switch`);
