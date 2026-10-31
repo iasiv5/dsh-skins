@@ -214,7 +214,11 @@ try {
 		JSON.parse(readFileSync(manifestPath, "utf8")); // must at least be valid JSON (trusted metadata)
 
 		const clientText = readFileSync(join(packageDir, "lib", "client.js"), "utf8");
-		if (!clientText.includes(`?v=${version}`)) problem(`lib/client.js lacks the ?v=${version} asset-rev literal`);
+		// Minified shape: the define substitutes `rev = "<version>"` feeding the
+		// `?v=${rev}` template — `?v=<version>` never appears contiguously.
+		const revEscaped = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		if (!new RegExp(`rev\\s*=\\s*"${revEscaped}"`).test(clientText)) problem(`lib/client.js lacks the asset-rev define literal rev = "${version}"`);
+		if (!clientText.includes("?v=")) problem("lib/client.js lacks the ?v= cache-busting template");
 		if (clientText.includes("__DSH_SKINS_ASSET_REV__")) problem("lib/client.js carries unresolved __DSH_SKINS_ASSET_REV__");
 
 		for (const file of assetFiles) {
