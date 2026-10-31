@@ -71,7 +71,27 @@ function verdict(code, label, detail) {
 
 // ---- main --------------------------------------------------------------------
 
-const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
+// Reachability probe BEFORE the browser launch (house pattern,
+// repro-fullscreen-collapse.mjs): CI has neither a live host nor playwright
+// browsers, so --gate runs must SKIP before touching chromium (release run
+// 41179487722: launch-then-probe crashed the CI check in 22s).
+let reachable = false;
+try {
+  const probe = await fetch(baseUrl, { signal: AbortSignal.timeout(3000) });
+  reachable = probe.ok;
+} catch {}
+if (!reachable) {
+  if (gate) verdict(0, "SKIP", `no live host at ${baseUrl} — CI has no live host`);
+  verdict(1, "FAIL", `host unreachable (${baseUrl})`);
+}
+
+let browser;
+try {
+  browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
+} catch (error) {
+  if (gate) verdict(0, "SKIP", `playwright browser unavailable — ${error.message.split("\n")[0]}`);
+  verdict(1, "FAIL", `browser launch failed: ${error.message.split("\n")[0]}`);
+}
 let shotIndex = 0;
 try {
   const page = await browser.newPage({ viewport });
