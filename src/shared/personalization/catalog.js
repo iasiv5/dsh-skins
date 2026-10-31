@@ -45,18 +45,6 @@ export const ASSET_ID_PREFIX = "u_";
 /** Builtin refs are compile-time, read-only, and skin-scoped. */
 export const BUILTIN_REF_PATTERN = /^builtin:([a-z0-9][a-z0-9-]*):([a-z0-9][a-z0-9-]*)$/;
 
-/**
- * The skin's factory wallpaper ref (e.g. "builtin:meirenzhi:yuntai") — read
- * off the existing field tables, no new literal sources (ADR-0023 Q14: the
- * select()-time preload warms the effective-or-default wallpaper).
- */
-export function defaultWallpaperRef(skinId) {
-  const skin = SKINS[skinId];
-  if (skin === undefined) return undefined;
-  const field = skin.fields.find((candidate) => candidate.key === "wallpaper");
-  return field?.default ?? undefined;
-}
-
 export const USER_IMAGE_MIMES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,4 @@
 import { projectSkin } from "./personalization/projector.js";
-import { BUILTIN_REF_PATTERN, defaultWallpaperRef } from "../shared/personalization/catalog.js";
 
 const SKIN_STORAGE_KEY = "dsh-skins:active";
 const SKIN_URL_PARAM = "skin";
@@ -12,30 +11,6 @@ const ACTIVE_EVENT = "dsh-skins:active-changed";
 /** dataset camelCase → attribute name: dshMeirenzhiSkin → data-dsh-meirenzhi-skin. */
 function datasetAttribute(key) {
   return `data-${key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
-}
-
-/**
- * Preload URL resolution (ADR-0023 Q14), pure for tests: the wallpaper the
- * target skin will effectively show — the persisted override when present,
- * else the catalog default — but ONLY when it resolves to an externally
- * routed builtin asset. Inline data URLs (factory skin), user library refs,
- * official and unknown skins all return null (nothing worth preloading).
- */
-export function resolvePreloadUrl(skins, personalization, skinId, defaultRef) {
-  if (typeof skinId !== "string" || skinId === "" || skinId === OFFICIAL_SKIN_ID) return null;
-  let ref = defaultRef;
-  try {
-    const override = personalization?.getOverrides?.(skinId)?.wallpaper;
-    if (typeof override === "string" && override !== "") ref = override;
-  } catch {
-    // Override lookup is best-effort: fall back to the catalog default.
-  }
-  if (typeof ref !== "string") return null;
-  const match = BUILTIN_REF_PATTERN.exec(ref);
-  if (match === null) return null; // user library ref (or garbage): cache-warm via panel anyway
-  const asset = skins.get?.(match[1])?.builtinAssets?.[match[2]];
-  const url = asset?.url;
-  return typeof url === "string" && url.startsWith("/dsh-skins/assets/") ? url : null;
 }
 
 /** Create the registry and single-mounted-skin runtime. */
@@ -788,21 +763,6 @@ export function createSkinRuntime({ profile = "web" } = {}) {
       : { applied: false, reason: "mount-failed" };
   }
 
-  // ADR-0023 Q14: warm the target skin's effective wallpaper cache at select
-  // time — the first-ever switch to a routed-art skin shows base colors for
-  // the fetch window otherwise. Best-effort: never blocks or fails the switch.
-  function preloadEffectiveWallpaper(normalizedId) {
-    try {
-      const url = resolvePreloadUrl(skins, personalization, normalizedId, defaultWallpaperRef(normalizedId));
-      if (url !== null && typeof Image === "function") {
-        const image = new Image();
-        image.src = url;
-      }
-    } catch {
-      // Preload is decorative: swallow everything.
-    }
-  }
-
   function select(id) {
     const normalizedId = normalizeChoiceId(id);
     const skin = skins.get(normalizedId);
@@ -810,8 +770,6 @@ export function createSkinRuntime({ profile = "web" } = {}) {
       throw new Error(`[dsh-skins] unknown skin "${id}" — available: ${[OFFICIAL_SKIN_ID, ...order].join(", ")}`);
     }
     if (selectedId === normalizedId && mounted !== null) return normalizedId;
-
-    preloadEffectiveWallpaper(normalizedId);
 
     if (normalizedId === OFFICIAL_SKIN_ID) {
       unmount();

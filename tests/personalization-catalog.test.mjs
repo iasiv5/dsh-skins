@@ -6,7 +6,6 @@ import {
   GIF_MAX_PIXELS,
   GLOBAL_MAX_PIXELS,
   SKINS,
-  defaultWallpaperRef,
   defaultsFor,
   getField,
   getSkinSchema,
@@ -261,11 +260,4 @@ test("legacy skin catalog defaults are same-source with the factories' static di
     assert.equal(panelOpacity.max, 100);
     assert.equal(panelOpacity.step, 1);
   }
-});
-
-test("defaultWallpaperRef reads each skin's factory wallpaper off the field tables (ADR-0023 Q14)", () => {
-  assert.equal(defaultWallpaperRef("openbmc"), "builtin:openbmc:art");
-  assert.equal(defaultWallpaperRef("uefi-harness"), "builtin:uefi-harness:art");
-  assert.equal(defaultWallpaperRef("meirenzhi"), "builtin:meirenzhi:yuntai");
-  assert.equal(defaultWallpaperRef("nosuch-skin"), undefined);
 });

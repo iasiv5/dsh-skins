@@ -164,7 +164,7 @@ function decodeDisplayName(request) {
 }
 
 export function mountPersonalizationRoutes(host, options) {
-  const { store, assetsBasePath = "/dsh-skins/assets", trustedHosts = [], serveBuiltinAsset } = options;
+  const { store, assetsBasePath = "/dsh-skins/assets", trustedHosts = [] } = options;
   const disposers = [];
 
   const fence = (request, response) => {
@@ -270,13 +270,7 @@ export function mountPersonalizationRoutes(host, options) {
       if (!fence(request, response)) return;
       if (!method(request, response, "GET")) return;
       try {
-        // One seam, two adapters (ADR-0023): user gallery blobs from the
-        // store, builtin artwork from the package assets — same prefix, same
-        // headers, same trusted-metadata path discipline.
-        const requestUrl = String(request.url ?? "");
-        const blob = store.serveAsset(requestUrl)
-          ?? serveBuiltinAsset?.(requestUrl)
-          ?? null;
+        const blob = store.serveAsset(String(request.url ?? ""));
         if (blob === null) {
           return sendJson(response, 404, { error: "asset not found", code: "ASSET_NOT_FOUND" });
         }

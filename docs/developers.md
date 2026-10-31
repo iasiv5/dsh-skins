@@ -16,7 +16,7 @@
 
 插件怎么构成。
 
-**双端结构**。客户端负责皮肤与切换界面，Host 负责个性化配置、图库与资产路由。esbuild 产出 `lib/client.js` 与 `lib/index.js`，产物随仓库提交——npm 安装不在目标机器上构建。内置资产交付（ADR-0023）：非出厂皮的壁纸/原画字节住包根 `assets/`（`manifest.json` 为宿主 trusted metadata），经 `/dsh-skins/assets/b_<skin>_<key>.webp` 路由按需取回（immutable + etag，URL 带 `?v=<插件版本>` 构建期注入）；出厂皮肤（openbmc）的默认原画保持 bundle 内联——规则见 ADR-0023 Decision 2，守卫 `verify-bundle` 固定 bundle 上限并校验 manifest 漂移。
+**双端结构**。客户端负责皮肤与切换界面，Host 负责个性化配置、图库与资产路由。esbuild 产出 `lib/client.js` 与 `lib/index.js`，产物随仓库提交——npm 安装不在目标机器上构建。
 
 **个性化写路径（ADR-0015）**。一切状态写走同一种带前置条件的方言：`PATCH /dsh-skins/config` 的 operations 词汇为 `set | delete | deleteAsset | clearLibrary`（白名单之外即 400），`baseRevision` 过期返回 409；图库删除因会连带回退引用字段，所以也是配置写；`clearLibrary` 服务端展开、单次提交。批量校验失败时响应携带 `params.issues: [{opIndex?, skinId?, key?, assetId?, code}]`（逐项裁决；`opIndex` 标注逐 op 校验的失败位，**终态不变量**的 issue 是状态级裁决、不携带 `opIndex`；`params.code` 保留兼容老读者），客户端据此对悬空引用（`MISSING_ASSET`/`BAD_ASSET`）点名摘除预览并回退（GLOSSARY「悬空预览」），其余错误保脏具名重试。**图库上传豁免前置条件**：纯追加不改写字段，不存在覆盖他人数据的冲突面——这是设计裁决而非缺口。旧式 `DELETE /library/{id}` 路由保留为混版宽容适配器（升级瞬间旧标签页无前置条件直删，语义不变），新客户端一律走 PATCH 方言。
 
@@ -51,8 +51,8 @@ export function createMySkin(jsxRuntime) {
     glassVar: "--dsh-my-skin-glass-blur",
     desktopBlur: { dark: "boost" }, // rate 默认 55，规格不持
     wallpaper: { kind: "assets" }, // 或 legacy-baked：{ kind, placeholder: { light, dark } | null }；sentinel 由工厂派生 builtin:<id>:art
-    backgroundArt: { mime: "image/webp", url: builtinAssetUrl("<skinId>", "art") }, // 可选；非出厂皮一律外置：字节入 assets/<skinId>/，url 走 helper（ADR-0023）；仅出厂皮默认原画允许 data URL 内联
-    builtinAssets: { /* 额外资产 key → { mime, url }；url 用 builtinAssetUrl("<skinId>", "<key>")；art 键由 backgroundArt 派生排前 */ },
+    backgroundArt: { mime: "image/webp", url: "data:image/webp;base64,…" }, // 可选；原画建议独居 <skin>/background-art.js（三皮形态）
+    builtinAssets: { /* 额外资产 key → { mime, url }；art 键由 backgroundArt 派生排前 */ },
     badge: { selector: ".dsh-my-badge", colors: { light: { bg: "#…", fg: "#…" }, dark: { bg: "#…", fg: "#…" } }, metrics: { lineHeight: "16px", fontWeight: 600 } }, // 可选；用到 badge 段才必填
     decoration: { light: "R, G, B", dark: "R, G, B" }, // 用户+goal 气泡描边色
     streaming: { decay: "R, G, B" }, // 流式呼吸光条衰减色（惯例 = 暗色品牌主色）
@@ -80,7 +80,7 @@ export function createMySkin(jsxRuntime) {
 
 标签页品牌段由声明表的 `titleBrand` 驱动（经投影结果的 `effects.titleBrand` 生效，ADR-0013），接受与 `label` 相同的字符串或 `{ zh, en }` 形式。官方 `DocumentTitle` 投影器会把标签页维护为「会话名 — DeepSeek Harness」，皮肤挂载期间只替换其中的品牌段、保留会话名；选择官方外观或插件卸载时换回官方品牌。
 
-每个皮肤目录自持品牌标识、favicon、品牌 CSS 段与标语，不从其他皮肤目录导入视觉资源；`runtime.js` 与 `sidebar-switcher.js` 只承载通用机制。家族级机制住 `src/client/skins/` 平级共享模块——投影核 `translucency.js`（ADR-0013）、装饰族 `decoration.js`（ADR-0016）、浮层毛玻璃 `frost-family.js`（ADR-0012）、声明表工厂 `define-skin.js`（ADR-0019）、内置资产 URL 单源 `builtin-assets.js`（ADR-0023）——色值与品牌资源仍由各皮自持；非出厂皮原画字节外置包根 `assets/`（ADR-0023），新增/替换资产后跑 `node scripts/build-builtin-manifest.mjs` 再生 manifest。
+每个皮肤目录自持品牌标识、favicon、品牌 CSS 段与标语，不从其他皮肤目录导入视觉资源；`runtime.js` 与 `sidebar-switcher.js` 只承载通用机制。家族级机制住 `src/client/skins/` 平级共享模块——投影核 `translucency.js`（ADR-0013）、装饰族 `decoration.js`（ADR-0016）、浮层毛玻璃 `frost-family.js`（ADR-0012）、声明表工厂 `define-skin.js`（ADR-0019）——色值与品牌资源仍由各皮自持；原画资产独居各皮 `background-art.js`。
 
 ## 本地开发与验证
 

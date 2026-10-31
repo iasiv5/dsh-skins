@@ -28,8 +28,7 @@ test("skin contract: identity, slots and 12 builtin assets", () => {
   );
   for (const asset of Object.values(skin.builtinAssets)) {
     assert.equal(asset.mime, "image/webp");
-    // ADR-0023: builtin wallpapers ride the host asset route (b_ keys).
-    assert.ok(asset.url.startsWith("/dsh-skins/assets/b_meirenzhi_"));
+    assert.ok(asset.url.startsWith("data:image/webp;base64,"));
   }
 });
 

@@ -49,7 +49,7 @@ function makeResponse() {
   };
 }
 
-function makeHarness({ serveBuiltinAsset } = {}) {
+function makeHarness() {
   const routes = [];
   const host = {
     webServer: {
@@ -64,7 +64,7 @@ function makeHarness({ serveBuiltinAsset } = {}) {
   };
   const dir = mkdtempSync(join(tmpdir(), "dsh-skins-routes-"));
   const store = createPersonalizationStore({ dataDir: dir });
-  const dispose = mountPersonalizationRoutes(host, { store, trustedHosts: [], serveBuiltinAsset });
+  const dispose = mountPersonalizationRoutes(host, { store, trustedHosts: [] });
   async function call(request) {
     const response = makeResponse();
     // Mirror the DSH webserver: exact registrations win over prefix ones.
@@ -267,58 +267,6 @@ test("asset serving rejects unknown ids, wrong extensions and traversal shapes",
     const state = await call(makeRequest({ url, headers: TRUSTED }));
     assert.equal(state.status, 404, url);
   }
-});
-
-test("builtin assets serve over b_ keys with inherited headers (bare and ?v= query)", async () => {
-  const { createBuiltinAssetServer } = await import("../src/host/builtin-assets.js");
-  const { createHash } = await import("node:crypto");
-  const { mkdirSync } = await import("node:fs");
-  const dir = mkdtempSync(join(tmpdir(), "dsh-skins-builtin-"));
-  mkdirSync(join(dir, "meirenzhi"), { recursive: true });
-  const bytes = Buffer.from("fake-webp-bytes-b_meirenzhi_yuntai");
-  writeFileSync(join(dir, "meirenzhi", "b_meirenzhi_yuntai.webp"), bytes);
-  const sha256 = createHash("sha256").update(bytes).digest("hex");
-  const manifest = {
-    entries: [{
-      skinId: "meirenzhi",
-      assetKey: "yuntai",
-      file: "meirenzhi/b_meirenzhi_yuntai.webp",
-      mime: "image/webp",
-      bytes: bytes.length,
-      sha256,
-    }],
-  };
-  const { serveBuiltinAsset } = createBuiltinAssetServer({ assetsDir: dir, manifest });
-  const { call } = makeHarness({ serveBuiltinAsset });
-  for (const url of [
-    "/dsh-skins/assets/b_meirenzhi_yuntai.webp",
-    "/dsh-skins/assets/b_meirenzhi_yuntai.webp?v=1.5.22",
-  ]) {
-    const state = await call(makeRequest({ url, headers: TRUSTED }));
-    assert.equal(state.status, 200, url);
-    assert.equal(state.headers["content-type"], "image/webp");
-    assert.equal(state.headers["cache-control"], "private, max-age=31536000, immutable");
-    assert.equal(state.headers.etag, `"${sha256}"`);
-    assert.equal(state.headers["x-content-type-options"], "nosniff");
-    assert.equal(state.headers["cross-origin-resource-policy"], "same-origin");
-    assert.deepEqual(state.body, bytes);
-  }
-  // Unknown key, illegal shapes, wrong extension: 404 via the strict pattern.
-  for (const url of [
-    "/dsh-skins/assets/b_meirenzhi_nosuch.webp",
-    "/dsh-skins/assets/b_.._x.webp",
-    "/dsh-skins/assets/b_meirenzhi_yuntai.png",
-    "/dsh-skins/assets/b_meirenzhi_yuntai.webp/extra",
-  ]) {
-    const state = await call(makeRequest({ url, headers: TRUSTED }));
-    assert.equal(state.status, 404, url);
-  }
-});
-
-test("without serveBuiltinAsset, b_ requests 404 (fail-open default)", async () => {
-  const { call } = makeHarness();
-  const state = await call(makeRequest({ url: "/dsh-skins/assets/b_meirenzhi_yuntai.webp?v=1.5.22", headers: TRUSTED }));
-  assert.equal(state.status, 404);
 });
 
 test("recovery route confirms a corrupted store after a host restart", async () => {

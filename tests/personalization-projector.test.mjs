@@ -222,10 +222,7 @@ test("the REAL openbmc and uefi factories project their baked defaults verbatim"
     assert.equal(result.degraded, "none", skin.id);
     // Behaviour, not packaging (ADR-0014/B13): read everything off the effects.
     assert.ok(result.effects.backdrop.imageLight.startsWith("linear-gradient(rgba("), "baked scrim ships at the anchor");
-    // ADR-0023: per-skin art delivery — openbmc stays inline (factory skin),
-    // uefi rides the host asset route.
-    const artPrefix = skin.id === "openbmc" ? ", url(data:image/webp" : ", url(/dsh-skins/assets/b_uefi-harness_art";
-    assert.ok(result.effects.backdrop.imageLight.includes(artPrefix), "art layer rides the scrim");
+    assert.ok(result.effects.backdrop.imageLight.includes(", url(data:image/webp"), "art layer rides the scrim");
     assert.ok(result.effects.backdrop.imageDark.startsWith("linear-gradient(rgba("));
     assert.deepEqual(result.effects.slogans, defaultsFor(skin.id).slogan, "catalog is the single slogan source (B14)");
     assert.equal(result.effects.titleBrand, skin.id === "openbmc" ? "OpenBMC Studio" : "UEFI Studio");
@@ -345,7 +342,7 @@ test("uefi-harness projects baked defaults through its own curve (ADR-0004)", as
     floor.effects.backdrop.imageLight.startsWith("linear-gradient(rgba(248, 247, 255, 0.00) 0%, rgba(238, 234, 255, 0.00) 100%)"),
     "P=0 scrim prefix (Task 1 contract gold)",
   );
-  assert.ok(floor.effects.backdrop.imageLight.includes(", url(/dsh-skins/assets/b_uefi-harness_art"), "art layer present");
+  assert.ok(floor.effects.backdrop.imageLight.includes(", url(data:image/webp"), "art layer present");
 
   // Blur ramps quadratically from the P=55 anchor: P=77 → 6, P=100 → 24 (cap).
   const mid = project({ panelOpacity: 77 });
