@@ -45,7 +45,7 @@ window.__ModuleLoader__.load({
         }
         const meta = configClient.getState().library.find((entry) => entry.id === ref.id);
         return meta
-          ? { url: `/dsh-skins/assets/${meta.id}.${meta.extension}`, mime: meta.mime }
+          ? { url: configClient.assetUrl(meta), mime: meta.mime }
           : null;
       };
       const metaProvider = (id) => configClient.getState().library.find((entry) => entry.id === id) ?? null;
