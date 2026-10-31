@@ -147,7 +147,10 @@ async function openSidebarIfNeeded(page) {
   const width = await page.evaluate(() => Math.round(document.querySelector('[class*="_rightbarCol"]')?.getBoundingClientRect().width ?? -1));
   if (width !== 0) return true;
   await page.evaluate(() => {
-    const hit = [...document.querySelectorAll("button")].find((el) => (el.getAttribute("aria-label") || el.title || "") === "Open right sidebar");
+    // Locale-agnostic (2026-11-01: anonymous fresh contexts flipped en→zh and
+    // the English-only lookup stopped opening the sidebar — INVALID drift).
+    const want = ["Open right sidebar", "打开右侧边栏"];
+    const hit = [...document.querySelectorAll("button")].find((el) => want.includes(el.getAttribute("aria-label") || el.title || ""));
     if (hit) hit.click();
   });
   await page.waitForTimeout(1800);
@@ -183,8 +186,10 @@ async function enterFullscreen(page) {
 
 async function collapseSidebar(page) {
   return page.evaluate(() => {
+    // Locale-agnostic, same drift as openSidebarIfNeeded (2026-11-01).
+    const want = ["Collapse right sidebar", "收起右侧边栏"];
     const hit = [...document.querySelectorAll("button")].find((el) =>
-      (el.getAttribute("aria-label") || el.title || "") === "Collapse right sidebar" && el.getBoundingClientRect().width > 0);
+      want.includes(el.getAttribute("aria-label") || el.title || "") && el.getBoundingClientRect().width > 0);
     if (!hit) return false;
     hit.click();
     return true;

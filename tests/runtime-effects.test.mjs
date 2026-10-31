@@ -13,7 +13,9 @@ import { createUefiHarness } from "../src/client/skins/uefi-harness/index.js";
 
 // ---- minimal DOM stub --------------------------------------------------------
 
-function makeNode(tag) {
+// Removal log shared by every stub node of one installDom() — the sweep tests
+// assert per-tag removal counts (teardown vs teardown+sweep).
+function makeNode(tag, removals = null) {
   return {
     tagName: tag,
     children: [],
@@ -24,14 +26,25 @@ function makeNode(tag) {
     append(child) { this.appendChild(child); },
     remove() {
       this.removed = true;
+      if (removals !== null && typeof this.dataset?.pluginCss === "string") removals.push(this.dataset.pluginCss);
       if (this.parentElement !== null) {
         const index = this.parentElement.children.indexOf(this);
         if (index >= 0) this.parentElement.children.splice(index, 1);
       }
     },
     querySelectorAll(selector) {
-      const rel = /link\[rel="(icon|shortcut icon)"\]/.test(selector);
-      return this.children.filter((child) => rel && child.tagName === "link");
+      const rel = /link\[rel="(icon|shortcut icon)"\]/.exec(selector);
+      if (rel !== null) return this.children.filter((child) => child.tagName === "link");
+      // The ADR-0021 sweep selector: skin tags by prefix, one exact exclusion.
+      const sweep = /^style\[data-plugin-css\^="([^"]+)"\]:not\(\[data-plugin-css="([^"]+)"\]\)$/.exec(selector);
+      if (sweep !== null) {
+        const [prefix, excluded] = [sweep[1], sweep[2]];
+        return this.children.filter((child) => child.tagName === "style"
+          && typeof child.dataset.pluginCss === "string"
+          && child.dataset.pluginCss.startsWith(prefix)
+          && child.dataset.pluginCss !== excluded);
+      }
+      return [];
     },
     querySelector(selector) {
       const match = /style\[data-plugin-css="(.+)"\]/.exec(selector);
@@ -44,15 +57,17 @@ function makeNode(tag) {
 function installDom() {
   const head = makeNode("head");
   const body = makeNode("body");
+  const removals = [];
   const document = {
     head,
     body,
     title: "DeepSeek Harness",
-    createElement: (tag) => makeNode(tag),
+    createElement: (tag) => makeNode(tag, removals),
     querySelector: (selector) => head.querySelector(selector),
   };
   const observers = [];
   const events = [];
+  let rafCalls = 0;
   let observeFailuresLeft = 0;
   class MutationObserver {
     constructor(callback) { this.callback = callback; }
@@ -75,6 +90,9 @@ function installDom() {
     addEventListener: () => {},
     removeEventListener: () => {},
     location: { search: "" },
+    // Counted, never run: the sweep must stay synchronous (ADR-0021 flash-free
+    // revision) — a scheduled frame between remove and re-add is the flash.
+    requestAnimationFrame: () => { rafCalls += 1; return 0; },
   };
   globalThis.CustomEvent = class { constructor(type, options) { this.type = type; this.detail = options?.detail; } };
   globalThis.MutationObserver = MutationObserver;
@@ -83,7 +101,8 @@ function installDom() {
     setItem: (key, value) => storage.set(key, value),
   };
   return {
-    document, events, observers,
+    document, events, observers, removals,
+    get rafCalls() { return rafCalls; },
     storage: {
       getItem: (key) => (storage.has(key) ? storage.get(key) : null),
       setItem: (key, value) => storage.set(key, value),
@@ -524,4 +543,60 @@ test("PRODUCTION_FIELDS pins the whitelist content (ADR-0014)", () => {
   assert.deepEqual([...PRODUCTION_FIELDS].sort(), [
     "Mark", "Name", "builtinAssets", "description", "id", "label", "project",
   ]);
+});
+
+// ---- ADR-0021 sweep, flash-free revision (2026-11-01 field report) ----------
+
+test("sweep: a real skin switch invalidates in-task, never schedules a frame, and keeps tag ownership", () => {
+  const dom = installDom();
+  const { runtime, dispose } = bootMeirenzhi(dom);
+  assert.ok(dom.styleTag("dsh-skins/meirenzhi.css"));
+  dom.removals.length = 0;
+  runtime.select("openbmc");
+  // Synchronous: the new skin's tags are live within the same task — the old
+  // double-rAF revision left a 2-frame unstyled window (the page-wide flash).
+  assert.ok(dom.styleTag("dsh-skins/openbmc.css"), "new skin tag live synchronously");
+  assert.equal(dom.rafCalls, 0, "the sweep must not wait for a frame — that window is the flash");
+  assert.equal(
+    dom.removals.filter((id) => id === "dsh-skins/meirenzhi.css").length, 1,
+    "the old skin's tag is removed exactly once (the teardown)",
+  );
+  // Identity preserved: the sweep must not re-create tags — a fresh copy
+  // would be unmanaged and survive the unmount as a ghost (the swept tag
+  // object is the one the transaction's stop removes).
+  const swept = dom.styleTag("dsh-skins/openbmc.paintorder.css");
+  runtime.select("official");
+  assert.equal(swept.removed, true, "the transaction still owns the swept tag — no ghosts");
+  assert.equal(dom.styleTag("dsh-skins/openbmc.paintorder.css"), null);
+  dispose();
+});
+
+test("sweep: sidebar.css is never swept — the open popover keeps its styles", () => {
+  const dom = installDom();
+  const { runtime, dispose } = bootMeirenzhi(dom);
+  const sidebar = dom.document.createElement("style");
+  sidebar.dataset.pluginCss = "dsh-skins/sidebar.css";
+  sidebar.textContent = ".dsh-skins-pop{position:fixed}";
+  dom.document.head.append(sidebar);
+  dom.removals.length = 0;
+  runtime.select("openbmc");
+  assert.equal(sidebar.removed, false, "the switcher's own stylesheet is not a skin surface");
+  assert.equal(dom.rafCalls, 0);
+  dispose();
+});
+
+test("sweep: same-skin hot updates skip the sweep (translucency/slogan edits never flash)", () => {
+  const dom = installDom();
+  const { runtime, dispose } = bootMeirenzhi(dom);
+  const before = dom.styleTag("dsh-skins/meirenzhi.css");
+  dom.removals.length = 0;
+  runtime.updateActive(); // same skin, fresh projection
+  assert.ok(dom.styleTag("dsh-skins/meirenzhi.css"));
+  assert.notEqual(dom.styleTag("dsh-skins/meirenzhi.css"), before, "the transaction still rebuilds tags synchronously");
+  assert.equal(
+    dom.removals.filter((id) => id === "dsh-skins/meirenzhi.css").length, 1,
+    "one teardown removal only — a second would be the sweep (the flash)",
+  );
+  assert.equal(dom.rafCalls, 0);
+  dispose();
 });

@@ -414,26 +414,57 @@ export function createSkinRuntime({ profile = "web" } = {}) {
    * guard; fullscreen→dock: fixed by the repaint hook; field evidence
    * 2026-10-29 mobile: the conversation area and composer also went blank
    * after skin churn). Removing and re-adding every skin style tag forces the
-   * proven style-invalidation repaint, healing all of them at once. Runs only
-   * on a real switch (previous skin mounted), never at cold boot; double rAF
-   * keeps the unstyled window to ~1 frame. Inert in DOM-stub environments.
+   * proven style-invalidation repaint, healing all of them at once.
+   *
+   * Flash-free revision (2026-11-01 field report: page-wide flash on every
+   * switch and on every personalization edit; the open switcher popover
+   * exploded to full width and snapped back while the panel was open). The
+   * original double-rAF dance PAINTED the unstyled window — the ADR's
+   * "about one frame, imperceptible" cost turned out to be very perceptible —
+   * and its `dsh-skins/` prefix also swept the switcher's own sidebar.css,
+   * collapsing the popover layout for those frames. The heal only needs the
+   * style invalidation, not a painted unstyled frame: empty each tag's
+   * textContent, force a synchronous style+layout flush (read a layout
+   * property), restore the content, force a second flush — the style
+   * ELEMENTS keep their identity, so the mounted transaction's stops stay
+   * valid (the old remove/re-create revision would have left unmanaged ghost
+   * tags behind on unmount). The intermediate state marks every element
+   * paint-dirty but never reaches a frame; the next paint rasters the FINAL
+   * styles over everything — same compositor unstick, zero flash. Two
+   * further scopings:
+   *   - only SKIN tags are swept: `dsh-skins/sidebar.css` (switcher shell +
+   *     panel CSS) is excluded — it is not a skin surface, and its absence
+   *     mid-intermediate would also reset the panel column's scroll position;
+   *   - applyEffects sweeps only on a real skin change; same-skin hot
+   *     updates (translucency slider, slogan typing) skip the sweep — their
+   *     tags are rebuilt synchronously by the transaction anyway, and no
+   *     churn-stale was ever observed without a skin change.
+   * Inert in DOM-stub environments.
    */
+  const SWEEP_SELECTOR =
+    'style[data-plugin-css^="dsh-skins/"]:not([data-plugin-css="dsh-skins/sidebar.css"])';
+  function flushStylesForSweep() {
+    // Reading a layout property forces the pending style recalc + layout to
+    // run NOW, committing the invalidation as paint dirt before the sweep's
+    // other half runs. Stub bodies have no layout to read; that is fine.
+    try { void document.body?.offsetHeight; } catch {}
+  }
   function refreshSkinStyleTags() {
-    if (typeof requestAnimationFrame !== "function" || typeof document === "undefined" || document.head?.querySelectorAll === undefined) return;
-    const tags = [...document.head.querySelectorAll('style[data-plugin-css^="dsh-skins/"]')];
+    if (typeof document === "undefined" || document.head?.querySelectorAll === undefined) return;
+    const tags = [...document.head.querySelectorAll(SWEEP_SELECTOR)];
     if (tags.length === 0) return;
-    const saved = tags.map((tag) => ({ id: tag.dataset.pluginCss, content: tag.textContent }));
-    for (const tag of tags) tag.remove();
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      for (const { id, content } of saved) {
-        if (document.querySelector(`style[data-plugin-css="${id}"]`) !== null) continue;
-        const fresh = document.createElement("style");
-        fresh.dataset.plugin = "dsh-skins";
-        fresh.dataset.pluginCss = id;
-        fresh.textContent = content;
-        document.head.append(fresh);
-      }
-    }));
+    // Element identity is PRESERVED: the mounted transaction's stops close
+    // over these exact nodes, so the sweep must not remove/re-create them
+    // (a fresh copy would be unmanaged — a ghost tag the teardown can never
+    // remove). Emptying textContent detaches the stylesheet (official-look
+    // recalc) and restoring it re-attaches (skin-look recalc) on the same
+    // element, with no frame in between: the intermediate state only marks
+    // paint dirt, the next paint rasters the FINAL styles over everything.
+    const saved = tags.map((tag) => ({ tag, content: tag.textContent }));
+    for (const { tag } of saved) tag.textContent = "";
+    flushStylesForSweep();
+    for (const { tag, content } of saved) tag.textContent = content;
+    flushStylesForSweep();
   }
 
   /**
@@ -702,7 +733,11 @@ export function createSkinRuntime({ profile = "web" } = {}) {
     selectedId = skin.id;
     announce(skin.id);
     installRightPanelRepaintHook();
-    if (previous !== null) refreshSkinStyleTags(); // real switch (not cold boot)
+    // Real switch only (ADR-0021 amendment, flash-free revision): same-skin
+    // hot updates (config edits) rebuild their tags synchronously in the
+    // transaction above and must not pay the invalidation sweep — sweeping
+    // them was the page-wide flash on every translucency/slogan edit.
+    if (previous !== null && previous.skin.id !== skin.id) refreshSkinStyleTags();
     return true;
   }
 
