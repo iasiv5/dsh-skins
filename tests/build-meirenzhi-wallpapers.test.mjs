@@ -9,6 +9,7 @@
  */
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -56,11 +57,12 @@ fs.writeFileSync(out, Buffer.alloc(Number(process.env.FAKE_WEBP_BYTES), 7));
     ffprobeBin: JSON.stringify([process.execPath, ffprobeShim]),
     controlledTmp,
     outPath: join(root, "wallpapers.js"),
+    assetsDir: join(root, "assets"),
   };
 }
 
-function runBuilder({ srcDir, ffmpegBin, ffprobeBin, controlledTmp, outPath }, fakeBytes) {
-  return spawnSync(process.execPath, [SCRIPT, "--src", srcDir, "--out", outPath], {
+function runBuilder({ srcDir, ffmpegBin, ffprobeBin, controlledTmp, outPath, assetsDir }, fakeBytes) {
+  return spawnSync(process.execPath, [SCRIPT, "--src", srcDir, "--out", outPath, "--assets", assetsDir], {
     encoding: "utf8",
     env: {
       ...process.env,
@@ -99,15 +101,41 @@ test("total drift guard fails cleanly: no temp work dir, sentinel output untouch
   assert.equal(readFileSync(ws.outPath, "utf8"), "SENTINEL", "existing output must not be truncated or replaced");
 });
 
-test("success path writes the module with standalone machine-readable markers", (t) => {
+test("success path emits webp files + URL-table module + manifest (ADR-0023)", (t) => {
   const ws = makeWorkspace(t);
   const result = runBuilder(ws, 100_000); // 6 × 100,000 = 600,000, inside both guards
 
   assert.equal(result.status, 0, "exit code must be 0");
+
+  // Module: URL table — imports the helper, zero inline data, zero markers.
   const text = readFileSync(ws.outPath, "utf8");
-  const total = [...text.matchAll(/^\/\/ TOTAL_WEBP_BYTES=(\d+)$/gm)].map((m) => Number(m[1]));
-  assert.deepEqual(total, [600_000], "exactly one standalone TOTAL_WEBP_BYTES marker");
-  assert.ok(/^\/\/ ENCODE_WIDTH=2560$/m.test(text), "standalone ENCODE_WIDTH marker");
-  assert.ok(/^\/\/ ENCODE_QUALITY=80$/m.test(text), "standalone ENCODE_QUALITY marker");
+  assert.ok(text.includes(`import { builtinAssetUrl } from "../builtin-assets.js";`), "imports the URL helper");
+  assert.equal(text.includes("data:image"), false, "no inline data URLs");
+  assert.equal(/^\/\/ TOTAL_WEBP_BYTES=/m.test(text), false, "old marker lines are gone (guards moved to manifest)");
+  const urlLines = [...text.matchAll(/^export const WALLPAPER_[A-Z]+ = builtinAssetUrl\("meirenzhi", "[a-z]+"\);$/gm)];
+  assert.equal(urlLines.length, 6, "six wallpaper URL exports");
+  assert.ok(text.includes("Per-image provenance"), "provenance header preserved");
+  assert.ok(text.includes("TOTAL        600000 bytes"), "provenance total preserved");
+
+  // Assets: six webp files with the shim's exact bytes.
+  const keys = ["yuntai", "mupeiling", "ziling", "nangongwan", "nangongque", "yinyue"];
+  const skinDir = join(ws.assetsDir, "meirenzhi");
+  for (const key of keys) {
+    const bytes = readFileSync(join(skinDir, `b_meirenzhi_${key}.webp`));
+    assert.equal(bytes.length, 100_000, `b_meirenzhi_${key}.webp byte count`);
+    assert.ok(bytes.every((b) => b === 7), `b_meirenzhi_${key}.webp shim payload`);
+  }
+
+  // Manifest: six entries, sha256 over the shim payload.
+  const manifest = JSON.parse(readFileSync(join(ws.assetsDir, "manifest.json"), "utf8"));
+  const mrz = manifest.entries.filter((entry) => entry.skinId === "meirenzhi");
+  assert.equal(mrz.length, 6, "six manifest entries");
+  const sha = createHash("sha256").update(Buffer.alloc(100_000, 7)).digest("hex");
+  for (const entry of mrz) {
+    assert.equal(entry.bytes, 100_000, `manifest bytes for ${entry.assetKey}`);
+    assert.equal(entry.sha256, sha, `manifest sha256 for ${entry.assetKey}`);
+    assert.equal(entry.mime, "image/webp", `manifest mime for ${entry.assetKey}`);
+  }
+
   assert.deepEqual(leakedWorkDirs(ws.controlledTmp), [], "success must clean up the temp work dir too");
 });

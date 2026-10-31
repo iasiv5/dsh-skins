@@ -1,0 +1,53 @@
+{
+  "generator": "scripts/build-builtin-manifest.mjs",
+  "entries": [
+    {
+      "skinId": "meirenzhi",
+      "assetKey": "mupeiling",
+      "file": "meirenzhi/b_meirenzhi_mupeiling.webp",
+      "mime": "image/webp",
+      "bytes": 315928,
+      "sha256": "461d05d22ddf2b764094f5b7217e91c4c6941b01be34f7557cc2bced909fece8"
+    },
+    {
+      "skinId": "meirenzhi",
+      "assetKey": "nangongque",
+      "file": "meirenzhi/b_meirenzhi_nangongque.webp",
+      "mime": "image/webp",
+      "bytes": 495218,
+      "sha256": "f856964e66704d8e5f440558e3b224ae5c11a4da5fcdeb8516002c08de8bd45b"
+    },
+    {
+      "skinId": "meirenzhi",
+      "assetKey": "nangongwan",
+      "file": "meirenzhi/b_meirenzhi_nangongwan.webp",
+      "mime": "image/webp",
+      "bytes": 283616,
+      "sha256": "8a0d7c4bd18984e0a4235c88f678794d089f44d4469a8c7ccf051ad34b7ab805"
+    },
+    {
+      "skinId": "meirenzhi",
+      "assetKey": "yinyue",
+      "file": "meirenzhi/b_meirenzhi_yinyue.webp",
+      "mime": "image/webp",
+      "bytes": 417198,
+      "sha256": "d1e3d02014e07fc1b715ab30388ca617fae73fb442a6b177bc68ccc8a50103a0"
+    },
+    {
+      "skinId": "meirenzhi",
+      "assetKey": "yuntai",
+      "file": "meirenzhi/b_meirenzhi_yuntai.webp",
+      "mime": "image/webp",
+      "bytes": 283460,
+      "sha256": "7c3a833ca0d0d6c2f6449b750b34faf1700eb1d0beabfbf7d0d5f71584386282"
+    },
+    {
+      "skinId": "meirenzhi",
+      "assetKey": "ziling",
+      "file": "meirenzhi/b_meirenzhi_ziling.webp",
+      "mime": "image/webp",
+      "bytes": 415498,
+      "sha256": "009425f493e41e6370153251ac7f52c8c83e02ede0f42172ae503a562a6c889e"
+    }
+  ]
+}
