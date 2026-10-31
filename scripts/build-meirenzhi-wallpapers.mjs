@@ -35,6 +35,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import process from "node:process";
+import { writeManifest } from "./build-builtin-manifest.mjs";
 
 const args = process.argv.slice(2);
 const option = (name, fallback) => {
@@ -62,6 +63,7 @@ function execTool(bin, args, opts) {
 
 const srcDir = resolve(option("--src", "/home/ubuntu/tmp/凡人修仙传"));
 const outPath = resolve(option("--out", "src/client/skins/meirenzhi/wallpapers.js"));
+const assetsDir = resolve(option("--assets", "assets"));
 const ENCODE_WIDTH = 2560;
 const ENCODE_QUALITY = 80;
 const FFMPEG = toolFromEnv("FFMPEG_BIN", "ffmpeg");
@@ -145,12 +147,12 @@ try {
     fail(`total ${total} bytes exceeds the ${MAX_TOTAL_BYTES}-byte drift guard — was the source image replaced?`);
   }
 
-  // ---- emit module (machine-readable markers as standalone line comments) ----
+  // ---- emit assets + URL-table module + manifest (ADR-0023) ----
   const provenance = rows.map((row) => {
     return ` *   ${row.key.padEnd(12)} ${row.sha256} / ${row.width}x${row.height} / q${ENCODE_QUALITY} / ${row.bytes}`;
   });
   const body = rows.map((row) => {
-    return `export const ${CONST_NAME(row.key)} = "data:image/webp;base64,${row.data.toString("base64")}";`;
+    return `export const ${CONST_NAME(row.key)} = builtinAssetUrl("meirenzhi", "${row.key}");`;
   });
   const header = `/**
  * Bundled 美人志 (meirenzhi) wallpaper artwork — 6 pieces (1 group + 5 solo).
@@ -161,12 +163,23 @@ try {
 ${provenance.join("\n")}
  *   TOTAL        ${total} bytes
  */
-// TOTAL_WEBP_BYTES=${total}
-// ENCODE_WIDTH=${ENCODE_WIDTH}
-// ENCODE_QUALITY=${ENCODE_QUALITY}
+
+// 交付通道 (ADR-0023): bytes live in assets/meirenzhi/*.webp, served over the
+// host /dsh-skins/assets/ route (b_ keys, immutable + etag); this module only
+// carries route URLs. Byte-drift guards moved to assets/manifest.json checks
+// (scripts/verify-bundle-guard.mjs).
+
+import { builtinAssetUrl } from "../builtin-assets.js";
+
 `;
 
   // ---- atomic delivery + summary ----
+  const skinAssetsDir = join(assetsDir, "meirenzhi");
+  mkdirSync(skinAssetsDir, { recursive: true });
+  for (const row of rows) {
+    writeFileSync(join(skinAssetsDir, `b_meirenzhi_${row.key}.webp`), row.data);
+  }
+  const { out: manifestOut } = writeManifest(assetsDir);
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(tempOut, header + body.join("\n") + "\n");
   renameSync(tempOut, outPath);
@@ -176,7 +189,7 @@ ${provenance.join("\n")}
     console.log(`${row.key.padEnd(12)} ${row.width}x${row.height}  ${row.bytes} bytes`);
   }
   console.log(`TOTAL        ${total} bytes (guard ≤ ${MAX_TOTAL_BYTES})`);
-  console.log(`✓ wrote ${outPath}`);
+  console.log(`✓ wrote ${outPath} + ${rows.length} webp files + ${manifestOut}`);
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   process.exitCode = 1;
