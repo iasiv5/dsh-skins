@@ -26,6 +26,7 @@
 import fs from "node:fs";
 import { chromium } from "playwright-core";
 import { countBrightPixels, decodePng, edgeActivity, lum } from "./lib/paint-metrics.mjs";
+import { observedLocale } from "./lib/ui-locale.mjs";
 
 // ---- args --------------------------------------------------------------------
 
@@ -280,6 +281,7 @@ try {
     process.exit(3);
   }
   console.log(`baseline: brightCold=${brightCold} rect=${Math.round(rectCold.x)},${Math.round(rectCold.y)} ${Math.round(rectCold.width)}x${Math.round(rectCold.height)} gtc="${rectCold.gtc}"`);
+  console.log(`ui locale observed: ${await observedLocale(page)}`);
 
   if (collapseExpand) await collapseExpandOnce(page);
 

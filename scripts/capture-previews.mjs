@@ -2,8 +2,9 @@
  * Capture README preview shots from the live DSH Web GUI.
  *
  * Privacy protocol (see README contribution docs):
- *   1. UI forced to zh-CN; every workspace row in the sidebar is collapsed
- *      into its folder (aria-expanded=false) before shooting;
+ *   1. UI language follows the host's stored preference (docs assets need
+ *      zh-CN — the script warns otherwise); every workspace row in the sidebar
+ *      is collapsed into its folder (aria-expanded=false) before shooting;
  *   2. "New Session" is clicked so the conversation area is an empty session —
  *      no conversation content ever enters the frame;
  *   3. foreign banners (e.g. the dsh-auth "internal testing" notice) are
@@ -32,6 +33,7 @@ import { chromium } from "playwright-core";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { resolveCaptureOutDir } from "./capture-output.mjs";
+import { UI, exactLabelRegex, labelRegex, observedLocale } from "./lib/ui-locale.mjs";
 
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(name);
@@ -75,7 +77,9 @@ async function toWebp(page, pngBuffer, quality = WEBP_QUALITY) {
 
 /** Dismiss the official first-visit "internal testing" notice dialog. */
 async function dismissNotices(page) {
-  const modal = page.locator('div[role="presentation"]:has(button:has-text("继续"))').first();
+  const modal = page.locator('div[role="presentation"]')
+    .filter({ has: page.locator("button", { hasText: labelRegex(UI.continueNotice) }) })
+    .first();
   if (await modal.count() === 0) return false;
   await modal.locator("button").last().click();
   try {
@@ -89,20 +93,31 @@ async function newPage(colorScheme) {
   const context = await browser.newContext({
     viewport: VIEWPORT,
     colorScheme,
-    locale: "zh-CN", // screenshots use the Chinese UI (primary audience)
+    // Browser-side hint only: it does not pin the host UI language, which
+    // follows locale.preference (see the warning below).
+    locale: "zh-CN",
   });
   const page = await context.newPage();
   await page.goto(`${baseUrl}/?skin=${skin}`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector(".dsh-skins-switcher-btn", { timeout: 30_000 });
   await page.waitForTimeout(2_500); // let React settle and the backdrop paint
   await dismissNotices(page);
+  const uiLocale = await observedLocale(page);
+  if (!uiLocale.startsWith("zh")) {
+    console.warn(`WARN: UI language is ${uiLocale}; README assets expect zh-CN. The host follows locale.preference — set it to Chinese in Settings → General before capturing.`);
+  }
   return { context, page };
 }
 
 /** Click "New Session" so the conversation area is a fresh empty session. */
 async function startEmptySession(page) {
-  for (const selector of ['button[class*="newSession"]', '[aria-label="新建会话"]', 'button:has-text("新会话")']) {
-    const button = page.locator(selector).first();
+  // Class hook first (locale-free). The accessible-name fallback matches the
+  // exact host label in either language, never a per-workspace variant.
+  const candidates = [
+    page.locator('button[class*="newSession"]').first(),
+    page.getByRole("button", { name: exactLabelRegex(UI.newSession) }).first(),
+  ];
+  for (const button of candidates) {
     if (await button.count() >= 1 && await button.isVisible()) {
       await button.click();
       await page.waitForTimeout(1_500);
@@ -312,7 +327,7 @@ if (gate) {
   // playwright auto-DISMISSES native dialogs, which would silently no-op the
   // reset, so accept it explicitly.
   gpage.once("dialog", (dialog) => dialog.accept());
-  await gpage.locator('.dsh-skins-pz-panel button', { hasText: "恢复默认" }).click();
+  await gpage.locator('.dsh-skins-pz-panel button', { hasText: labelRegex(UI.restoreDefaults) }).click();
   await gpage.waitForTimeout(1200);
   await gpage.reload();
   await preparePrivateCapture(gpage);

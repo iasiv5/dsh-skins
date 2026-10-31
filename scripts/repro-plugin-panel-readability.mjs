@@ -38,6 +38,7 @@
 //        [--viewport 1920x1080] [--fingerprint-only] [--no-fingerprint] [--gate]
 
 import { chromium } from "playwright-core";
+import { observedLocale } from "./lib/ui-locale.mjs";
 
 // ---- args --------------------------------------------------------------------
 
@@ -119,6 +120,7 @@ try {
     .catch(() => { skinSettled = false; });
   await page.waitForTimeout(500);
 
+  console.log(`ui locale observed: ${await observedLocale(page)}`);
   const state = await page.evaluate((readingSelector) => ({
     skinKey: Object.keys(document.body.dataset).find((key) => /^dsh/.test(key)) ?? null,
     readingTag: document.querySelector(readingSelector) !== null,

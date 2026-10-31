@@ -39,6 +39,7 @@
 import fs from "node:fs";
 import { chromium } from "playwright-core";
 import { countBrightPixels, decodePng } from "./lib/paint-metrics.mjs";
+import { UI, observedLocale } from "./lib/ui-locale.mjs";
 
 // ---- args --------------------------------------------------------------------
 
@@ -146,13 +147,11 @@ async function measureCenter(page, label, shotPath) {
 async function openSidebarIfNeeded(page) {
   const width = await page.evaluate(() => Math.round(document.querySelector('[class*="_rightbarCol"]')?.getBoundingClientRect().width ?? -1));
   if (width !== 0) return true;
-  await page.evaluate(() => {
-    // Locale-agnostic (2026-11-01: anonymous fresh contexts flipped en→zh and
-    // the English-only lookup stopped opening the sidebar — INVALID drift).
-    const want = ["Open right sidebar", "打开右侧边栏"];
-    const hit = [...document.querySelectorAll("button")].find((el) => want.includes(el.getAttribute("aria-label") || el.title || ""));
+  // Labels come from the shared UI table (both languages; scripts/lib/ui-locale.mjs).
+  await page.evaluate((labels) => {
+    const hit = [...document.querySelectorAll("button")].find((el) => labels.includes(el.getAttribute("aria-label") || el.title || ""));
     if (hit) hit.click();
-  });
+  }, UI.openRightSidebar);
   await page.waitForTimeout(1800);
   return true;
 }
@@ -185,15 +184,13 @@ async function enterFullscreen(page) {
 }
 
 async function collapseSidebar(page) {
-  return page.evaluate(() => {
-    // Locale-agnostic, same drift as openSidebarIfNeeded (2026-11-01).
-    const want = ["Collapse right sidebar", "收起右侧边栏"];
+  return page.evaluate((labels) => {
     const hit = [...document.querySelectorAll("button")].find((el) =>
-      want.includes(el.getAttribute("aria-label") || el.title || "") && el.getBoundingClientRect().width > 0);
+      labels.includes(el.getAttribute("aria-label") || el.title || "") && el.getBoundingClientRect().width > 0);
     if (!hit) return false;
     hit.click();
     return true;
-  });
+  }, UI.collapseRightSidebar);
 }
 
 function fail(message) {
@@ -244,6 +241,7 @@ try {
   await ensureDark(page);
   await openSession(page);
 
+  console.log(`ui locale observed: ${await observedLocale(page)}`);
   const rightbarClosed = await page.evaluate(() => Math.round(document.querySelector('[class*="_rightbarCol"]')?.getBoundingClientRect().width ?? -1) === 0);
   if (rightbarClosed) await openSidebarIfNeeded(page);
   await page.waitForTimeout(500);
