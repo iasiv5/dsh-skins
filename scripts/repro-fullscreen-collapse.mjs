@@ -40,6 +40,7 @@ import fs from "node:fs";
 import { chromium } from "playwright-core";
 import { countBrightPixels, decodePng } from "./lib/paint-metrics.mjs";
 import { UI, observedLocale } from "./lib/ui-locale.mjs";
+import { awaitWallpaperSettled } from "./lib/wallpaper-settled.mjs";
 
 // ---- args --------------------------------------------------------------------
 
@@ -238,6 +239,15 @@ try {
   // browser state is untouched).
   await page.evaluate(([key, id]) => localStorage.setItem(key, id), [SKIN_STORAGE_KEY, skinId]);
   await gotoSettled(page);
+  // ADR-0023: builtin wallpaper now arrives over the asset route — settle it
+  // before any bright-pixel baseline (timeout is INVALID, not FAIL: the gate
+  // cannot judge paint without its substrate).
+  try {
+    await awaitWallpaperSettled(page);
+  } catch (error) {
+    console.error(`INVALID: ${error.message}`);
+    process.exit(3);
+  }
   await ensureDark(page);
   await openSession(page);
 
