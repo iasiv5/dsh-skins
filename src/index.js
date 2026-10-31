@@ -1,8 +1,10 @@
 import { homedir } from "node:os";
-import { cpSync, existsSync, mkdtempSync, readdirSync, renameSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createPersonalizationStore } from "./host/personalization/store.js";
 import { mountPersonalizationRoutes } from "./host/personalization-routes.js";
+import { createBuiltinAssetServer } from "./host/builtin-assets.js";
 import { resolveTrustedHosts } from "./host/trusted-hosts.js";
 
 export const name = "@iasiv5/dsh-skins";
@@ -61,9 +63,24 @@ export function apply(ctx) {
       profile,
     });
     hostContext.effect(() => {
+      // Builtin artwork delivery (ADR-0023): package assets served over the
+      // same /dsh-skins/assets/ prefix as gallery uploads. src/ and lib/ both
+      // sit one level below the package root, so "../assets" resolves in dev
+      // and in the built bundle alike. Best-effort mount: a missing manifest
+      // simply leaves serveBuiltinAsset undefined and b_ requests 404 —
+      // fail-open (Decision 6), base colors + scrim still render.
+      let serveBuiltinAsset;
+      try {
+        const assetsDir = join(dirname(fileURLToPath(import.meta.url)), "..", "assets");
+        const manifest = JSON.parse(readFileSync(join(assetsDir, "manifest.json"), "utf8"));
+        serveBuiltinAsset = createBuiltinAssetServer({ assetsDir, manifest }).serveBuiltinAsset;
+      } catch {
+        // No manifest or unreadable assets: fail-open, see above.
+      }
       return mountPersonalizationRoutes(hostContext, {
         store: personalization,
         trustedHosts: () => resolveTrustedHosts(ctx),
+        serveBuiltinAsset,
       });
     }, "dsh-skins: personalization routes");
   });
