@@ -365,7 +365,8 @@
   - Run: `pnpm --dir <workspace>/.dsh-research/dsh-skins-1521 run build`
 - Expected: 旧树 `lib/client.js` 构建成功。
 - [ ] Step 2: 写 A/B 脚本并跑确定性负对照
-  - 脚本按夹具设计实现；正式流程：对 3 皮 × 2 明暗各起页（transitions 冻结）、`awaitWallpaperSettled` 后整窗截图，paint-metrics 解码逐像素对比；另 dump `body` 与 pinned 表面集（与 repro-plugin-panel-readability 同集）computed style，diff 仅容 `background-image` url 串。
+  - 脚本按夹具设计实现；正式流程：对 3 皮 × 2 明暗各起页（transitions 冻结）、`awaitWallpaperSettled` 后整窗截图，paint-metrics 解码逐像素对比；另 dump `body` 系 computed style（bg color、::before/::after、body attrs），diff 仅容 `background-image` url 串。
+    【执行期修正 2026-10-31，产出评审 R-2】：原句「pinned 表面集与 repro-plugin-panel-readability 同集」不可实现——该 gate 的 pinned 面是宿主 UI 表面，自建合成页（桩 jsx、无真 React 渲染）不存在这些表面。补偿控制：① 整窗像素 δmax=0 覆盖一切已渲染表面（含任何类 panel 面）；② panel 表面 computed 契约由 repro-plugin-panel-readability 在 live-host 常规链（CI）继续守护；③ ADR-0023 改动面（资产交付通道）经评审确认无传播路径到 panel 表面。
   - 负对照（确定性，非时序性）：`--abort-builtin-assets` 模式用 playwright route 拦截 **abort** 全部 `/dsh-skins/assets/b_` 请求——期望 (a) 新旧树 δ≠0（壁纸缺席必然可检出，不依赖时序）；(b) **fail-open 实证（断言面按皮分支——runtime.js backdropCss 的 `::after` 纱层规则仅 overlay 型产出，uefi/openbmc 为烘焙型无 `::after`）**：meirenzhi（overlay 型）断言 `body::after` 规则在位且 background-image 含 linear-gradient、`body` 底色照常；uefi（烘焙型）断言 computed `background-image` 仍含 linear-gradient 首层（纱层 gradient 与 art 为同层多背景、独立绘制，art 被 abort 后 gradient 照常画）。二者共同构成 B4 契约 + B5「冷缓存首载 fail-open 呈现」的离线近似。
   - Run: `node scripts/ab-delivery-compare.mjs --old <workspace>/.dsh-research/dsh-skins-1521 --new . --abort-builtin-assets`
 - Expected: 报出非零 δ 且 fail-open 断言过（负对照成立，证明非恒真断言）。
