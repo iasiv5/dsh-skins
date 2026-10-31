@@ -48,6 +48,14 @@
       "mime": "image/webp",
       "bytes": 415498,
       "sha256": "009425f493e41e6370153251ac7f52c8c83e02ede0f42172ae503a562a6c889e"
+    },
+    {
+      "skinId": "uefi-harness",
+      "assetKey": "art",
+      "file": "uefi-harness/b_uefi-harness_art.webp",
+      "mime": "image/webp",
+      "bytes": 70110,
+      "sha256": "5b4509ce32e5f7b90a1e8456ed1f8aee257c1b629d23b05b6d8d3129b97ce006"
     }
   ]
 }
