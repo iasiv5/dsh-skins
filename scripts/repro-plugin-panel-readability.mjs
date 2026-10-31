@@ -105,23 +105,30 @@ try {
   }), READING_TAG_SELECTOR);
 
   if (state.skinKey === null) {
-    // No recognizable skin scope attribute — three distinct causes with
-    // different verdicts (impl-review R2/R3): poll TIMEOUT without any
-    // dsh-skins tag (cold aggregation window longer than the budget, or the
-    // skin plugin crashed) and an out-of-namespace body attribute with tags
-    // mounted are both fail-closed INVALID; only a settled page without any
-    // dsh-skins tag is a real official state.
-    const hasSkinTags = await page.evaluate(
-      () => document.querySelector('style[data-plugin-css^="dsh-skins/"]') !== null,
+    // No dsh-prefixed body scope attribute — three causes with different
+    // verdicts (impl-review R2/R3/R4):
+    //   partial injection — a dsh-skins style tag exists but the scope
+    //     attribute never appeared (out-of-namespace skin or torn injection)
+    //     → fail-closed INVALID, message names the observed signal shape;
+    //   settled race — both signals landed at settle time but the attribute
+    //     is gone at read time (millisecond unmount window) → INVALID;
+    //   ZERO dsh signals after the full 20s budget — an official page and an
+    //     active skin that never injected are indistinguishable via pure DOM
+    //     probing (R2 residual window): print an explicit WARN and take the
+    //     official chain per the plan's T5 spec. Never a green PASS here —
+    //     the reachable verdicts are SKIP/REVIEW/FINGERPRINT-absent only.
+    const signals = await page.evaluate(
+      () => ({ skinTags: document.querySelector('style[data-plugin-css^="dsh-skins/"]') !== null }),
     );
-    if (!skinSettled) {
+    if (!skinSettled && signals.skinTags) {
       await page.screenshot({ path: `repro-reading-${++shotIndex}.png` });
-      verdict(3, "INVALID", `skin bundle did not inject within 20s on ${baseUrl} (no dsh-skins style tags, no body scope attribute) — cold aggregation window longer than the budget or the skin plugin crashed; re-run before trusting any verdict`);
+      verdict(3, "INVALID", `partial skin-bundle injection on ${baseUrl}: dsh-skins style tag present but no body scope attribute matching /(^dsh)/ — out-of-namespace skin or torn injection; re-run / extend the detector`);
     }
-    if (hasSkinTags) {
+    if (skinSettled && signals.skinTags) {
       await page.screenshot({ path: `repro-reading-${++shotIndex}.png` });
-      verdict(3, "INVALID", `dsh-skins style tags present but no body scope attribute matching /(^dsh)/ on ${baseUrl} — skin bodyAttribute outside the supported namespace; extend the detector before trusting a verdict`);
+      verdict(3, "INVALID", `skin scope attribute matching /(^dsh)/ was present at settle but vanished by read time on ${baseUrl} — millisecond unmount race; re-run`);
     }
+    console.warn(`WARN: zero dsh signals after the full 20s settle budget on ${baseUrl} — official state or an injection failure indistinguishable via DOM; official chain taken, human review advised (impl-review R2 residual window)`);
     if (fingerprintOnly) {
       verdict(1, "FINGERPRINT", `no active skin on ${baseUrl} — reading tag absent is expected (official state)`);
     }
