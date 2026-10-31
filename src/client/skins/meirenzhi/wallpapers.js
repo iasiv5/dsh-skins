@@ -18,7 +18,7 @@
 // carries route URLs. Byte-drift guards moved to assets/manifest.json checks
 // (scripts/verify-bundle-guard.mjs).
 
-import { builtinAssetUrl } from "../builtin-assets.js";
+import { builtinAssetUrl } from "../../builtin-assets.js";
 
 export const WALLPAPER_YUNTAI = builtinAssetUrl("meirenzhi", "yuntai");
 export const WALLPAPER_MUPEILING = builtinAssetUrl("meirenzhi", "mupeiling");

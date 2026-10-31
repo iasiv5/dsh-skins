@@ -8,6 +8,6 @@
  * Provenance: migrated byte-for-byte from the 1.5.21 inline string —
  *   bytes  70110   sha256  5b4509ce32e5f7b90a1e8456ed1f8aee257c1b629d23b05b6d8d3129b97ce006
  */
-import { builtinAssetUrl } from "../builtin-assets.js";
+import { builtinAssetUrl } from "../../builtin-assets.js";
 
 export const BACKGROUND_ART = builtinAssetUrl("uefi-harness", "art");
