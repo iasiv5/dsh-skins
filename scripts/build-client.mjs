@@ -2,6 +2,13 @@ import { build, context } from "esbuild";
 import { readFile } from "node:fs/promises";
 import process from "node:process";
 
+// Asset cache-busting rev (ADR-0023 Decision 4): injected as the esbuild
+// define key `globalThis.__DSH_SKINS_ASSET_REV__`. The fully-qualified key is
+// required — a bare `__DSH_SKINS_ASSET_REV__` define does NOT substitute
+// `globalThis.X` property reads (verified against esbuild 0.28.2), and the
+// bundle would silently pin every asset URL to the "0" fallback.
+const { version } = JSON.parse(await readFile("package.json", "utf8"));
+
 const clientOptions = {
   entryPoints: ["src/client/index.js"],
   outfile: "lib/client.js",
@@ -12,6 +19,9 @@ const clientOptions = {
   legalComments: "none",
   charset: "utf8",
   sourcemap: false,
+  define: {
+    "globalThis.__DSH_SKINS_ASSET_REV__": JSON.stringify(version),
+  },
 };
 
 const hostOptions = {
