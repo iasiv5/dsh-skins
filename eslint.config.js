@@ -9,6 +9,9 @@
 //           binding (`retry,` after the retry removal) is syntactically valid
 //           (`node --check` passes) and only explodes at module load; this
 //           catches the dangling binding before commit.
+//   scripts/ no-undef — the same dangling-binding class, extended 2026-11-01:
+//           a gate script's English-only button lookup had no lint net; the
+//           repro gates drive a live page, so their bugs surface only at run.
 import globals from "globals";
 
 export default [
@@ -21,9 +24,15 @@ export default [
     rules: { "no-dupe-keys": "error" },
   },
   {
-    files: ["src/**/*.js"],
+    files: ["src/**/*.js", "scripts/**/*.mjs"],
     languageOptions: { ecmaVersion: "latest", sourceType: "module" },
     rules: { "no-undef": "error" },
+  },
+  {
+    // scripts/ run under Node and also ship page.evaluate() callbacks that
+    // run in the browser — both global sets are legitimate there.
+    files: ["scripts/**/*.mjs"],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
   {
     // Client-side sources run in the browser bundle (lib/client.js).

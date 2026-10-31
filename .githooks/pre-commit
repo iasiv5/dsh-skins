@@ -1,0 +1,31 @@
+#!/usr/bin/env sh
+# Fast pre-commit guard (2026-11-01 retro): catch an unbuilt lib/ and a
+# dangling binding before they reach a commit. The full gate stays in
+# `pnpm run check` (CI runs it); this hook is deliberately quick.
+#
+# Why these two checks: lib/ ships with the repo, so a src/ change without a
+# rebuilt lib/ only fails at the lib-sync step of check (after the commit
+# already exists). no-undef catches a dangling binding that node --check
+# misses. Both are cheap; the slow suite is not run here.
+set -e
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "pre-commit: pnpm not found; skipping guard (CI still runs pnpm run check)" >&2
+  exit 0
+fi
+
+pnpm run lint
+pnpm run build
+
+# The real inconsistency: the rebuilt lib/ differs from HEAD (the build output
+# is changing) but lib/ is not part of this commit. Comment-only src/ edits
+# leave lib/ byte-identical (esbuild strips comments), so they pass correctly.
+# Compare against HEAD, not the worktree: a rebuilt lib/ leaves no worktree
+# diff vs its own build, so the comparison must be with what is committed.
+if ! git diff --quiet HEAD -- lib/; then
+  if git diff --cached --quiet -- lib/; then
+    echo "pre-commit: the rebuilt lib/ differs from HEAD but is not staged. Stage lib/ in this commit." >&2
+    git --no-pager diff --stat HEAD -- lib/ >&2
+    exit 1
+  fi
+fi

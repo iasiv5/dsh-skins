@@ -88,7 +88,7 @@ export function createMySkin(jsxRuntime) {
 pnpm install
 pnpm run test      # 构建 + 冒烟测试 + 全部单测（smoke 与 built-host 测的是 lib/ 产物，故每次先重建）
 pnpm run check     # 完整门禁：构建 + 语法检查 + ESLint + 测试 + README 配对 + bundle/上游钩子守卫
-pnpm run lint      # 单用途 ESLint：tests/ 的 no-dupe-keys + src/ 的 no-undef（对象字面量重复键与悬空绑定直接红；源自 2026-10-21 执行期两处缺陷，已并入 check）
+pnpm run lint      # 单用途 ESLint：tests/ 的 no-dupe-keys + src/ 与 scripts/ 的 no-undef（对象字面量重复键与悬空绑定直接红；源自 2026-10-21 执行期两处缺陷，scripts/ 于 2026-11-01 并入）
 pnpm run watch     # 监听 src/，分别重建 lib/client.js 与 lib/index.js
 ```
 
@@ -102,6 +102,8 @@ pnpm run watch     # 监听 src/，分别重建 lib/client.js 与 lib/index.js
 - **repro 门禁真浏览器前提**（ADR-0021，2026-10-29）：`pnpm test` 链里的 `scripts/repro-stale-grid-paint.mjs --gate`（rail 面）与 `scripts/repro-fullscreen-collapse.mjs --gate`（全屏→收起空白面，ADR-0021 amendment 四）需要本机已装配套 chromium——playwright-core 版本与浏览器修订一一对应（1.62.1 → chromium_headless_shell-1234），首次运行前 `npx playwright-core install chromium`（缓存 `~/.cache/ms-playwright`，多版本并存无害）；CI 无活宿主时两步均显式 SKIP exit 0。
 - **右栏三态 headless 驱动配方**（写探针/门禁前先看）：开右栏＝aria `Open right sidebar`；进全屏＝点**视口内可见**的 `button[data-sidebar-right-mode="fullscreen"]`（部分 dockkit chrome 常驻 DOM 却在视口外、开栏后位置漂移，勿按固定坐标盲点）；收起＝aria `Collapse right sidebar`。收起时宿主清 `data-sidebar-right-open` 与 frame 的 `data-rightbar-fullscreen`、保留陈旧 `data-sidebar-right-panel="fullscreen"`——ADR-0021 amendment 四的信号地基。参考实现：`scripts/repro-fullscreen-collapse.mjs`（enterFullscreen/collapseSidebar/openSidebarIfNeeded）；截图解码与亮像素度量一律 `scripts/lib/paint-metrics.mjs`（黄金字节钉于 tests/paint-metrics.test.mjs），勿私有拷贝解码器。
 - 两份 README（中/英）由校验脚本做内容配对；改动任一侧须同步另一侧，详见 `README.i18n.yaml`。
+- **换皮肤后的样式失效（paint-order / sweep）**：当前行为以 `src/client/runtime.js` 的 `refreshSkinStyleTags` 为准，设计理由与历次修订见 `docs/adr/0021-skin-switch-sidebar-paint-order.md` 最新 Amendments 条目；改动此路径前先读该条目。
+- **本地守卫**：`pre-commit` 钩子（`.githooks/pre-commit`，`pnpm install` 的 `prepare` 自动启用）在提交前跑 lint 与构建，并拦截「产物变了但 lib/ 未暂存」的提交；全量门禁仍是 `pnpm run check`。
 - `verify:hooks`（上游钩子守卫）需要 runtime 才能真跑：CI（ci.yml / release.yml）经 `scripts/ci-install-runtime.mjs` 装配 `scripts/runtime-pin.json` 钉版本的伞包 runtime 后以 strict 模式真跑（ADR-0011）——bump 钉版本即 manifest 重推导触发点，红灯就是升级绊网在设计位置响。本地无 runtime 时守卫打印 `upstream-hooks: SKIPPED`（机器可辨 token）后跳过、`check` 照样绿；本地金标准手跑仍可：设 `DSH_RUNTIME_ROOT` 指向 DSH 运行时根——pnpm store 布局或桌面 asar 解包后的 `dsh/` 目录均受支持（后者走结构化匹配，css-modules 精确哈希支路按 ADR-0006 不作要求）；解包不完整（缺锚点包）会失败，换完整解包再跑。
 
 开发模式安装（本地源码直连，客户端改动即改即见）：
