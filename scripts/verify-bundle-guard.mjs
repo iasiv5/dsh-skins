@@ -24,7 +24,8 @@
  *      the factory skin's default art stays inline (ADR-0023 Decision 2).
  */
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 const CLIENT = "lib/client.js";
 const MANIFEST = "assets/manifest.json";
@@ -103,11 +104,35 @@ if (!seen.has("uefi-harness:art")) {
   problems.push("manifest: uefi-harness:art entry missing (golden pin has nothing to guard)");
 }
 
+// Reverse drift check (ADR-0023 review R-1): the forward pass above is
+// entry-driven — an asset file on disk WITHOUT a manifest entry would never
+// be inspected (dropped from delivery, silently unguarded). Walk the assets
+// tree and require every b_*.webp to be registered; factory-skin files are
+// reported with the inline-rule reason.
+const BUILTIN_FILE_PATTERN = /^b_([a-z0-9][a-z0-9-]*)_([a-z0-9][a-z0-9-]*)\.webp$/;
+const registeredFiles = new Set([...seen].map((id) => {
+  const [skinId, assetKey] = id.split(":");
+  return `b_${skinId}_${assetKey}.webp`;
+}));
+const walkAssets = (dir) => {
+  for (const dirent of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, dirent.name);
+    if (dirent.isDirectory()) walkAssets(full);
+    else if (BUILTIN_FILE_PATTERN.test(dirent.name)) {
+      const factory = dirent.name.startsWith("b_openbmc_");
+      if (!registeredFiles.has(dirent.name)) {
+        problems.push(`assets: ${dirent.name} is not registered in ${MANIFEST}${factory ? " (factory-skin art must stay inline, ADR-0023 Decision 2)" : ""}`);
+      }
+    }
+  }
+};
+walkAssets(ASSETS_DIR);
+
 if (problems.length > 0) {
   for (const problem of problems) console.error(`bundle-guard: ${problem}`);
   process.exit(1);
 }
 console.log(
   `✓ bundle guard OK: lib/client.js ${clientBytes} ≤ ${MAX_CLIENT_BYTES} (longest line ${longest}); `
-  + `manifest ${seen.size} entries, meirenzhi Σ ${mrzTotal} ≤ ${MAX_MEIRENZHI_TOTAL_BYTES}, uefi pin verified`,
+  + `manifest ${seen.size} entries, meirenzhi Σ ${mrzTotal} ≤ ${MAX_MEIRENZHI_TOTAL_BYTES}, uefi pin verified, assets tree fully registered`,
 );
