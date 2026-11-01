@@ -244,3 +244,35 @@ test("hint library entries with unsafe ids, extensions or mime types are dropped
   gate.resolve(snapshotBody());
   await booting;
 });
+
+test("a refused write removes the previous hint when removal still works, so no stale hint survives", async () => {
+  const data = new Map([[HINT_KEY, hintJson({ meirenzhi: { wallpaper: YINYUE } })]]);
+  const storage = {
+    getItem: (key) => (data.has(key) ? data.get(key) : null),
+    setItem() { throw new Error("QuotaExceededError"); },
+    removeItem: (key) => { data.delete(key); },
+  };
+  const client = createConfigClient({
+    fetchImpl: makeFetch(() => snapshotBody({ skins: { meirenzhi: { wallpaper: YUNTAI } } })),
+    timeoutMs: 50,
+    storage,
+  });
+  await client.boot();
+  assert.equal(data.has(HINT_KEY), false);
+  assert.deepEqual(client.effectiveOverrides("meirenzhi"), { wallpaper: YUNTAI });
+});
+
+test("a storage that refuses every write still boots and serves the server snapshot", async () => {
+  const storage = {
+    getItem: () => null,
+    setItem() { throw new Error("denied"); },
+    removeItem() { throw new Error("denied"); },
+  };
+  const client = createConfigClient({
+    fetchImpl: makeFetch(() => snapshotBody({ skins: { meirenzhi: { wallpaper: YINYUE } } })),
+    timeoutMs: 50,
+    storage,
+  });
+  await client.boot();
+  assert.deepEqual(client.effectiveOverrides("meirenzhi"), { wallpaper: YINYUE });
+});

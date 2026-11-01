@@ -201,9 +201,12 @@ export function createConfigClient(options = {}) {
 
   /**
    * Cache the just-synced normal snapshot for the next cold load: the skin
-   * overrides plus only the library entries they reference. Best-effort. If it
-   * still does not fit under the cap, the previous hint is REMOVED — a stale
-   * hint must never outlive the snapshot it summarised.
+   * overrides plus only the library entries they reference. Best-effort, and a
+   * stale hint must not survive: when the new hint cannot be written (over the
+   * cap, or the write is refused) the previous hint is removed instead. Only if
+   * the removal is refused too is the old hint left in place; storage is then
+   * not writable at all, and the first mount may briefly show the old overrides
+   * until the server snapshot lands.
    */
   function persistFirstPaintHint() {
     if (storage === null || storage === undefined) return;
@@ -211,10 +214,17 @@ export function createConfigClient(options = {}) {
       const referenced = referencedAssetIds(snapshot.skins);
       const library = (snapshot.library ?? []).filter((entry) => referenced.has(entry.id));
       const payload = JSON.stringify({ v: 1, skins: snapshot.skins ?? {}, library });
-      if (payload.length <= FIRST_PAINT_HINT_MAX_CHARS) storage.setItem(FIRST_PAINT_HINT_KEY, payload);
-      else storage.removeItem(FIRST_PAINT_HINT_KEY);
+      if (payload.length <= FIRST_PAINT_HINT_MAX_CHARS) {
+        storage.setItem(FIRST_PAINT_HINT_KEY, payload);
+        return;
+      }
     } catch {
-      // Quota or a denied storage: the hint is an optimisation, never a dependency.
+      // Refused write (quota or a denied storage): fall through to removal.
+    }
+    try {
+      storage.removeItem(FIRST_PAINT_HINT_KEY);
+    } catch {
+      // Not even removal works; the hint is an optimisation, never a dependency.
     }
   }
 
