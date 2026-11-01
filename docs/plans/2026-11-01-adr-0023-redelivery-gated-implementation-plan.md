@@ -113,3 +113,10 @@ supersedes: docs/plans/2026-10-31-builtin-assets-external-delivery-implementatio
 - 区间终点树与 `fc2bc2a` 的差异清单已逐项解释；
 - T6 真机清单全过；
 - 停在发版前，交付摘要就绪。
+
+## 执行记录（2026-11-02）
+
+- T1–T5 全部完成：Beat 1 门禁四件套、15 提交回放（04ebd75 被逐-commit 重建纪律吸收、19489c3 折入 16f9a2b/e213a26）、ADR-0023 两 Amendment + ADR-0024、readme 配对补登记（db05a2d 漏登顺带修复）、verify:delivery 二拍激活（7 打包资产 200 + immutable + etag + 缺席键负对照）。区间终点树与 fc2bc2a 对账：全部差异可归因于回滚后提交（bb63036 sweep 修复、retro 双语化）与 Beat 1 增量，lib/index.js 逐字节一致。
+- T6 机器可判面全绿：活宿主 `GET /dsh-skins/assets/b_meirenzhi_yuntai.webp` = 200 + image/webp(283,460B) + immutable + etag + nosniff + CORP；缺席键 404；三 repro 门禁对真壁纸链路 PASS（6/6 hops、双 cycle、阅读底实色）。**活体验证抓到真缺口一处**：hot-deploy 只拷 lib/ 不拷 assets/ → b_ 全 404（1.5.22 部署态故障形态复现），已修脚本并补拷（二次重启愈）。
+- 版本 bump 1.5.25（npm view E404 确认未占用；README 零版本引用，配对哈希不变）。
+- 待主人：① 真浏览器目检清单（三皮切换、meirenzhi 内置精选全链路、通透度 0→100→回厂、霜面底/阅读底、冷缓存 fail-open、切肤零闪烁）；② 人工审核代码；③ 拍板后方可 tag/publish 1.5.25。desktop 真机目检按 Amendment 延后至下次 Windows 会话。
