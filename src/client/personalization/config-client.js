@@ -49,6 +49,50 @@ function cloneSkins(skins) {
   return skins === undefined || skins === null ? {} : structuredClone(skins);
 }
 
+// First-paint hint: a versioned, size-capped client-side cache of the last
+// synced skin overrides and library metadata. A cold load mounts from it so
+// the user's own wallpaper is the first thing painted, instead of the catalog
+// default followed by a hot-update (design §7.1). The server snapshot stays
+// authoritative: the hint only fills in before the first snapshot lands, and
+// anything unexpected in it is ignored.
+const FIRST_PAINT_HINT_KEY = "dsh-skins:first-paint-hint";
+const FIRST_PAINT_HINT_MAX_CHARS = 262_144;
+
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function defaultStorage() {
+  try {
+    return typeof localStorage !== "undefined" ? localStorage : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseFirstPaintHint(raw) {
+  if (typeof raw !== "string" || raw.length > FIRST_PAINT_HINT_MAX_CHARS) return null;
+  let data;
+  try { data = JSON.parse(raw); } catch { return null; }
+  if (!isPlainObject(data) || data.v !== 1) return null;
+  if (!isPlainObject(data.skins) || !Array.isArray(data.library)) return null;
+  const skins = {};
+  for (const [skinId, overrides] of Object.entries(data.skins)) {
+    if (isPlainObject(overrides)) skins[skinId] = overrides;
+  }
+  const library = data.library.filter((entry) => isPlainObject(entry) && typeof entry.id === "string");
+  return { skins, library };
+}
+
+function readFirstPaintHint(storage) {
+  if (storage === null || storage === undefined) return null;
+  try {
+    return parseFirstPaintHint(storage.getItem(FIRST_PAINT_HINT_KEY));
+  } catch {
+    return null;
+  }
+}
+
 export function createConfigClient(options = {}) {
   const fetchImpl = options.fetchImpl ?? (typeof fetch === "function" ? fetch : null);
   const baseUrl = options.baseUrl ?? "/dsh-skins";
@@ -60,6 +104,11 @@ export function createConfigClient(options = {}) {
 
   let status = "loading";
   let snapshot = { skins: {}, library: [], references: {}, revision: 0, mode: "normal" };
+  // Set once a server snapshot has replaced the initial empty one this session.
+  // Until then, reads fall back to the first-paint hint (read once, here).
+  let sessionSynced = false;
+  const storage = options.storage !== undefined ? options.storage : defaultStorage();
+  const firstPaintHint = readFirstPaintHint(storage);
   const previews = new Map(); // `${skinId} ${key}` → value (dirty, unsaved)
   const listeners = new Set();
   let fetchGeneration = 0;
@@ -130,6 +179,17 @@ export function createConfigClient(options = {}) {
 
   // -- reads -----------------------------------------------------------------
 
+  /** Cache the just-synced normal snapshot for the next cold load. Best-effort. */
+  function persistFirstPaintHint() {
+    if (storage === null || storage === undefined) return;
+    try {
+      const payload = JSON.stringify({ v: 1, skins: snapshot.skins ?? {}, library: snapshot.library ?? [] });
+      if (payload.length <= FIRST_PAINT_HINT_MAX_CHARS) storage.setItem(FIRST_PAINT_HINT_KEY, payload);
+    } catch {
+      // Quota or a denied storage: the hint is an optimisation, never a dependency.
+    }
+  }
+
   async function refetch() {
     if (disposed) return publicState();
     // Stale-response guards (design §7.1): only the newest fetch may land,
@@ -160,17 +220,21 @@ export function createConfigClient(options = {}) {
       }
       if (body?.mode === "unsupported") {
         snapshot = { ...body, references: {} };
+        sessionSynced = true;
         setStatus("unsupported-readonly");
         emit(); // same-status swaps must still notify (field report: stale library grid)
         return publicState();
       }
       if (body?.mode === "recovery") {
         snapshot = { ...body };
+        sessionSynced = true;
         setStatus("synced"); // read-only until confirmed; panel offers recovery
         emit();
         return publicState();
       }
       snapshot = { ...body };
+      sessionSynced = true;
+      persistFirstPaintHint();
       setStatus("synced");
       // setStatus only emits on a status TRANSITION — an already-synced
       // refetch would otherwise swap the snapshot silently and starve every
@@ -479,7 +543,8 @@ export function createConfigClient(options = {}) {
   }
 
   function effectiveOverrides(skinId) {
-    const merged = cloneSkins(snapshot.skins[skinId] ?? {});
+    const base = sessionSynced ? snapshot.skins[skinId] : firstPaintHint?.skins[skinId];
+    const merged = cloneSkins(base ?? {});
     for (const [composite, value] of previews) {
       const [owner, key] = composite.split(" ");
       if (owner !== skinId) continue;
@@ -487,6 +552,12 @@ export function createConfigClient(options = {}) {
       else merged[key] = value;
     }
     return merged;
+  }
+
+  /** Library entry for an asset id: the synced library, or the hint's copy before the first sync. */
+  function findLibraryEntry(id) {
+    const library = sessionSynced ? (snapshot.library ?? []) : (firstPaintHint?.library ?? []);
+    return library.find((entry) => entry.id === id) ?? null;
   }
 
   // -- asset operations (library management for the panel) -------------------
@@ -741,6 +812,7 @@ export function createConfigClient(options = {}) {
     preview,
     previewReset,
     effectiveOverrides,
+    findLibraryEntry,
     uploadImage,
     deleteImage,
     clearLibrary,

@@ -43,12 +43,12 @@ window.__ModuleLoader__.load({
           const asset = skinById.get(ref.skinId)?.builtinAssets?.[ref.assetKey];
           return asset ? { url: asset.url, mime: asset.mime } : null;
         }
-        const meta = configClient.getState().library.find((entry) => entry.id === ref.id);
+        const meta = configClient.findLibraryEntry(ref.id);
         return meta
           ? { url: configClient.assetUrl(meta), mime: meta.mime }
           : null;
       };
-      const metaProvider = (id) => configClient.getState().library.find((entry) => entry.id === id) ?? null;
+      const metaProvider = (id) => configClient.findLibraryEntry(id);
       runtime.setPersonalization({
         getOverrides: (skinId) => configClient.effectiveOverrides(skinId),
         assetResolver,
