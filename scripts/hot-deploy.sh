@@ -34,6 +34,16 @@ fi
 echo "== 覆盖部署 =="
 cp lib/client.js lib/index.js "$PROFILE_LIB/"
 
+# ADR-0023 资产出仓后，宿主路由启动期急切读 <pkg>/assets/manifest.json——热部署
+# 若只带 lib/ 不带 assets/，b_ 路由 fail-open 静默 404（2026-11-02 活体实录：
+# 首次验证全 404，补拷 assets + 二次重启才愈）。assets 存在即整目录同步。
+if [ -d assets ]; then
+  rm -rf "$(dirname "$PROFILE_LIB")/assets"
+  cp -a assets "$(dirname "$PROFILE_LIB")/assets"
+  cmp assets/manifest.json "$(dirname "$PROFILE_LIB")/assets/manifest.json"
+  echo "assets/ 已同步（$(find assets -type f | wc -l) 个文件）"
+fi
+
 echo "== sha 校验 =="
 cmp lib/client.js "$PROFILE_LIB/client.js"
 cmp lib/index.js "$PROFILE_LIB/index.js"
