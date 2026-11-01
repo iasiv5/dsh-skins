@@ -35,6 +35,7 @@
   },
   "files": [
     "lib",
+    "assets",
     "cordis.patch.yml",
     "locale",
     "README.md",
