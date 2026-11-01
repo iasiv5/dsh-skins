@@ -157,6 +157,8 @@ supersedes: docs/plans/2026-10-31-builtin-assets-external-delivery-implementatio
 | `tests/gate-ui-locale.test.mjs` | 3344d87 |
 | `tests/runtime-effects.test.mjs` | bb63036 |
 
+注：本表不含本文件自身的最后修改提交 `c505332`（自引用，无法在文件内自洽记录）。
+
 分类：① 回滚（2d3f60d）及回滚后的修复与 retro：bb63036（flash-free sweep）、0f789b4/5b78705（版本）、c5ac89c（pre-commit、no-undef、导航）、3344d87（双语门禁与 ui-locale）、db05a2d（README rc.5）；② Beat 1 本次新增：bb373c6、0302590、483c511、ci.yml、developers.md 段；③ 回放合流点：6cf0482、6bbd68b、02713ca、26c3479、0d76d0c、5d09873、5fa121a；④ 评审后修复：e524882、af44c61（hot-deploy）、5ed96c6（readme 配对）、aa40420（ADR 增补）、409dfde（计划执行记录）。
 
 ### 回放过程中的两处事后修正（已在对应提交内说明）
@@ -179,4 +181,5 @@ supersedes: docs/plans/2026-10-31-builtin-assets-external-delivery-implementatio
   - 打包的 7 个 `b_` 资产，活体字节逐一与候选文件相等（7/7 MATCH）。
   - 冷缓存负对照（中止全部 `b_` 请求）：页面正常渲染，侧栏、标题、输入框完整可见（粗粒度视觉判读），`::after` 纱层仍为 linear-gradient；浏览器仅记录两条 ERR_FAILED 资源错误，无 pageerror。
   - 观察项（建议，不阻断）：矩阵运行的第 3 个上下文中出现过一次默认壁纸 `b_meirenzhi_yuntai.webp` 的 200 请求；随后 5 次重复流程未复现，最终渲染均为 yinyue；根因待定。
-- 待完成：通透度 0→100→回厂（需写配置，快照后逐字段还原并核对）；repro 门禁在候选上复跑；截图归档到 `01_docs`，脱敏的验证记录入库。
+- 续（已完成）：通透度 0→100→35 随动（壁纸区域亮度标准差 46.2 / 19.9 / 2.95，单调；配置测后逐项还原，revision 907→910）；repro 门禁在 c505332 复跑三项全部 PASS；切换期间逐帧完整性 117 帧、违例 0；截图与原始日志归档到工作区私有目录；脱敏验证记录入库：`docs/verification/2026-11-02-adr-0023-linux-web-verification.md`。
+- 续（未完成）：冷加载默认壁纸闪现的裁决（接受并注明，或先修复）待定稿；该项由主人决定。
