@@ -3,7 +3,7 @@
 - 日期：2026-11-02
 - 版本：`@iasiv5/dsh-skins` 1.5.25（未发布；发版须主人拍板）
 - 产品树基线：`c505332`（产品树 src / lib / assets / locale / package.json 与 `409dfde` 零差异；其后的提交只改动 `scripts/hot-deploy.sh` 与 `docs/`）
-- 验证环境：本机 Linux DSH Web 实例（loopback 访问），宿主 release 0.2.1-rc.5
+- 验证环境：本机 Linux DSH Web 实例（loopback 访问），宿主 release 0.2.1-rc.5（来源：页面启动数据的 release 字段）
 - 验收机裁量：依 ADR-0023 Amendment（2026-11-01，验收机裁量）。desktop 真机目检延后至下次 Windows 会话；本记录仅覆盖 Linux Web 机真机项
 - 私有证据（截图、原始日志、工作区相关信息）保存于工作区 `01_docs` 下的 `dsh-skins-verification/`，不入库
 
@@ -31,7 +31,7 @@
 
 - 事实：stored 为 meirenzhi 的冷加载，挂载先按默认壁纸 `yuntai` 进行，配置快照同步后热更新为用户覆盖 `yinyue`。
 - 来源：design §7.1 既有机制（「先按默认挂载，同步后热更新」）。db05a2d 已存在该注释与机制；`src/client/personalization/config-client.js` 在 db05a2d..HEAD 之间零改动，`src/client/index.js` 仅一行用户图库资产 URL 构造变化。
-- 本机测量（候选，无网络拦截，每臂 n=5，交错，fresh context，同宿主同配置）：默认壁纸可见时长中位数 578 ms（区间 486–625）；配置同步到热更新的间隔中位数 543 ms（区间 455–592）。
+- 本机测量（候选，无网络拦截，每臂 n=5，交错，fresh context，同宿主同配置；rAF 采样 `body::before` 的取值，非绘制时刻）：默认壁纸样式生效至用户壁纸样式生效的间隔中位数 578 ms（区间 486–625）；首次配置响应到用户壁纸样式生效的间隔中位数 543 ms（区间 455–592）。
 - 限制：与 pre-ADR 的比较不能得出结论。拦截式对照臂自身带有拦截开销，且替换客户端会改变页面环境；跨会话差异约 200 ms，低于该量级的差异不可靠。因此本记录不给出 ADR-0023 的增量数字。
 - 决定项（主人）：(1) 接受本次发版范围内的该既有行为，并在发布说明中注明（推荐）；或 (2) 发版前修复，候选方案为「缓存上次生效的壁纸引用用于首挂载」或「配置同步前不挂载壁纸层」。
 
