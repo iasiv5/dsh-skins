@@ -49,7 +49,8 @@ date: 2026-10-31
 
 ## Amendments
 
-- 无（首版）。
+- **2026-11-01 · 误归因定谳与回滚作废（重落地）**：v1.5.22 发布当晚的紧急回滚（2d3f60d）系误归因——Desktop「起不来」为 dsh-desktop 上游缺陷（dsh-auth cookie 按含端口 authority 哈希命名 × 每次启动换随机端口 × 30 天 Max-Age → 第 71 条越过 16KB 请求头 → 431 崩溃循环；workspace 仓 know-how 044 定谳。当时在手反证：当晚 4 次 `pnpm add …@1.5.22` 因 minimumReleaseAge **从未装成**、23:05 卸载插件后崩溃未愈）；web「换肤失效」最可能为部署机 client 经 HMR 先行而 host 未重启触发 fail-open 静默退化——设计的降级模式被观测，非本交付缺陷（被回滚代码全链 fail-open、包资产三重证据完整，git 考古 2026-11-01）。回滚说明写于取证之前，其归因不再作事实依据（纪律见 ADR-0024）。本 ADR 与实施计划文档曾被该回滚连带删除，现随重落地恢复；重落地门禁：`verify:delivery` 真启动门禁（pack→boot→b_ 200/fail-open 负对照）+ ci.yml `every-commit-buildable` + rev 断言。
+- **2026-11-01 · 验收机裁量**：Decision 10 的「desktop 本机实机」本轮重落地改为「Linux web 机真机验证（活宿主 + 真浏览器全清单）+ desktop 结构性实证（`dsh-app://` 转发层 asar 取证，见上文通道事实节）」；desktop 真机目检延后至下次 Windows 会话（包跨形态同一，无需重构建）。裁量理由：事故定谳证明 desktop 崩溃与插件无关；残余风险由 ADR-0024 回滚取证纪律兜底。
 
 ## 附录：grill 共识（Q1–Q14，2026-10-31 会话存档）
 
