@@ -14,7 +14,7 @@
  * 3,740,682); baseline 770,785 → 776,360, slack restored.
  * Wired into `pnpm run check` as the last step (after build, so lib is fresh).
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const WALLPAPERS = "src/client/skins/meirenzhi/wallpapers.js";
 const CLIENT = "lib/client.js";
@@ -50,6 +50,19 @@ const b64 = Math.floor((total * 4 + 2) / 3);
 const limit = BASELINE_CLIENT_BYTES + b64 + SLACK_BYTES;
 if (clientBytes > limit) {
   problems.push(`lib/client.js ${clientBytes} exceeds ${limit} (baseline ${BASELINE_CLIENT_BYTES} + base64 of ${total} webp bytes + ${SLACK_BYTES} slack)`);
+}
+
+// ADR-0023 asset-rev gate (verify:delivery 1.5.22 post-mortem follow-up):
+// once the builtin-asset manifest ships, the client bundle must carry the
+// cache-busting `?v=<version>` literal produced by the build-time define and
+// zero unresolved __DSH_SKINS_ASSET_REV__ residue. Gated on manifest presence
+// so the pre-replay baseline stays green; verify:delivery re-asserts both on
+// the PACKED artifact (the one npm actually ships).
+if (existsSync("assets/manifest.json")) {
+  const version = JSON.parse(readFileSync("package.json", "utf8")).version;
+  const clientText = readFileSync(CLIENT, "utf8");
+  if (!clientText.includes(`?v=${version}`)) problems.push(`lib/client.js lacks the ?v=${version} asset-rev literal`);
+  if (clientText.includes("__DSH_SKINS_ASSET_REV__")) problems.push("lib/client.js carries unresolved __DSH_SKINS_ASSET_REV__");
 }
 
 if (problems.length > 0) {

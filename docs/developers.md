@@ -104,6 +104,7 @@ pnpm run watch     # 监听 src/，分别重建 lib/client.js 与 lib/index.js
 - 两份 README（中/英）由校验脚本做内容配对；改动任一侧须同步另一侧，详见 `README.i18n.yaml`。
 - **换皮肤后的样式失效（paint-order / sweep）**：当前行为以 `src/client/runtime.js` 的 `refreshSkinStyleTags` 为准，设计理由与历次修订见 `docs/adr/0021-skin-switch-sidebar-paint-order.md` 最新 Amendments 条目；改动此路径前先读该条目。
 - **本地守卫**：`pre-commit` 钩子（`.githooks/pre-commit`，`pnpm install` 的 `prepare` 自动启用）在提交前跑 lint 与构建，并拦截「产物变了但 lib/ 未暂存」的提交；全量门禁仍是 `pnpm run check`。
+- **交付门禁**（2026-11-01，1.5.22 事故后置）：`verify:delivery`（`pnpm run check` 链内、release publish 前强制）把 `pnpm pack` 产物装进临时环境、按真实宿主合同（`inject(["webServer"])`/`effect`/`register` 原样，事实钉自 dsh-host-webserver 0.2.1-rc.5）启动，经真 `node:http` listener 请求 `/dsh-skins/config` 与全部打包资产——旧 release 链「Minimal host load test」只 import 验形状、从不调用 `apply(ctx)`，包级失败全绿上发（1.5.22 实录）。包内含 `assets/manifest.json` 时自动加验：逐资产 200 + immutable + etag、缺席 `b_` 键可辨非 200 且宿主不倒、`lib/client.js` 带 `?v=<版本>` 字面量（verify-bundle-guard 对工作区 lib 另有同款断言，双保险）；无 manifest 的基线打印 `SKIPPED` token 照绿。配套 ci.yml 的 `every-commit-buildable` job：push 区间内每个 commit 快照各自构建并对账 lib/——GitHub push 事件只跑批尾，中间态不可构建快照（16f9a2b..19489c3^ 实录）从此必红。
 - `verify:hooks`（上游钩子守卫）需要 runtime 才能真跑：CI（ci.yml / release.yml）经 `scripts/ci-install-runtime.mjs` 装配 `scripts/runtime-pin.json` 钉版本的伞包 runtime 后以 strict 模式真跑（ADR-0011）——bump 钉版本即 manifest 重推导触发点，红灯就是升级绊网在设计位置响。本地无 runtime 时守卫打印 `upstream-hooks: SKIPPED`（机器可辨 token）后跳过、`check` 照样绿；本地金标准手跑仍可：设 `DSH_RUNTIME_ROOT` 指向 DSH 运行时根——pnpm store 布局或桌面 asar 解包后的 `dsh/` 目录均受支持（后者走结构化匹配，css-modules 精确哈希支路按 ADR-0006 不作要求）；解包不完整（缺锚点包）会失败，换完整解包再跑。
 
 开发模式安装（本地源码直连，客户端改动即改即见）：
@@ -120,6 +121,8 @@ dsh plugin --profile web add link:<本仓库路径>
 4. **workflow 全绿 ≠ 已上架**：npm 对 provenance 发布有 staged 暂存窗口（scoped 包实测可达约 1 小时），期间 per-version 文档 404、`dist-tags` 停在旧版。用 `npm view <pkg>@<version> --registry=https://registry.npmjs.org/` 每 2 分钟轮询到 200 为止；窗口内重推同一 tag 必撞 `409 Cannot publish over previously staged version`，且 workflow 失败护栏会删除远端 tag；
 5. 三键核验齐全再宣布发版成功：per-version 文档 200、`dist-tags.latest` 推进、packument `time` 字段推进。
 6. 开发期间凡触碰 `src/` 的 checkpoint 必须一并提交重建后的 `lib/`（本仓库 lib 随源码入库；只改测试/文档的 checkpoint 无需构建）——中途快照 src/lib 不自洽，会让旧 commit 不经 build 的直接运行用上旧 lib（2026-10-20 实现评审 R2 裁定）。
+
+**重启声明纪律**（2026-11-01 调查定谳）：插件协议**无**「需重启」声明字段（四仓 `dsh` 字段穷举核验）——要不要重启由宿主运行时计算（web 组成含 dsh-hmr 可热重载插件宿主模块，desktop 无 hmr 一律 restart-required），无法事前声明。故凡版本 diff 触及宿主面（`lib/index.js`、`cordis.patch.yml` 或依赖树），发版说明必须注明「**安装后重启一次再验证**」；纯 `lib/client.js` 变更经客户端 HMR 免重启（know-how 037）。
 
 ## 控制台调试 API
 

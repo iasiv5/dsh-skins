@@ -79,8 +79,9 @@
     "test": "pnpm run build && node smoke-test.cjs && node scripts/repro-stale-grid-paint.mjs --gate && node scripts/repro-fullscreen-collapse.mjs --gate && node scripts/repro-plugin-panel-readability.mjs --gate && node --test tests/*.test.mjs",
     "verify:readme": "node scripts/verify-readme-pairing.mjs",
     "verify:bundle": "node scripts/verify-bundle-guard.mjs",
+    "verify:delivery": "node scripts/verify-delivery.mjs",
     "verify:hooks": "node scripts/verify-upstream-hooks.mjs",
-    "check": "pnpm run check:lockfile && pnpm run build && node --check lib/client.js && node --check lib/index.js && pnpm run lint && pnpm run test && pnpm run verify:readme && pnpm run verify:bundle && pnpm run verify:hooks && git diff --exit-code -- lib/index.js lib/client.js",
+    "check": "pnpm run check:lockfile && pnpm run build && node --check lib/client.js && node --check lib/index.js && pnpm run lint && pnpm run test && pnpm run verify:readme && pnpm run verify:bundle && pnpm run verify:hooks && pnpm run verify:delivery && git diff --exit-code -- lib/index.js lib/client.js",
     "lint": "eslint ."
   },
   "devDependencies": {

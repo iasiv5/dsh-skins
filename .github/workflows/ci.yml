@@ -30,3 +30,46 @@ jobs:
         run: git diff --exit-code -- lib/index.js lib/client.js
       - name: Verify install artifact
         run: mkdir -p .artifacts && pnpm pack --pack-destination .artifacts
+
+  # The check job above IS a clean-clone build of the pushed head — but GitHub
+  # only runs push workflows for the batch's LAST commit, so a multi-commit
+  # push can carry unbuildable intermediate snapshots (2026-10-31 incident:
+  # 16f9a2b..19489c3^ committed src referencing an unstaged helper file while
+  # every workspace-based gate stayed green). This job builds EVERY commit in
+  # the push range from its own tree, enforcing the developers.md checkpoint
+  # discipline (src and rebuilt lib always land together) mechanically.
+  every-commit-buildable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build every pushed commit from its own tree
+        run: |
+          set -eu
+          BEFORE="${{ github.event.before }}"
+          HEAD_SHA="$(git rev-parse HEAD)"
+          if [ -n "$BEFORE" ] && git cat-file -e "$BEFORE" 2>/dev/null; then
+            SHAS="$(git rev-list --reverse "$BEFORE..$HEAD_SHA")"
+          else
+            echo "push event has no resolvable base (new branch or force-push); building head only"
+            SHAS="$HEAD_SHA"
+          fi
+          for sha in $SHAS; do
+            echo "::group::build $sha $(git log -1 --format=%s "$sha")"
+            git checkout --force --detach "$sha"
+            pnpm run build
+            git diff --exit-code -- lib/index.js lib/client.js || {
+              echo "::error::commit $sha: committed lib/ differs from what its own src builds"
+              exit 1
+            }
+            echo "::endgroup::"
+          done
