@@ -181,7 +181,7 @@ URL 也能切皮肤：`/?skin=official`、`/?skin=openbmc`、`/?skin=uefi-harnes
 更新职责已移交 dsh-m 市场与 DSH CLI（ADR-0008）；皮肤切换器只负责换肤与个性化。
 
 **支持哪些 DSH Web 版本？**
-已使用 DSH Web `0.2.0-rc.2`、`0.2.1-rc.3` 与 `0.2.1-rc.4` 验证（1.5.21 全量门禁在 rc.4 上跑绿）；同系列 rc 版本理论上兼容，未经验证的版本不作承诺。最低支持 DSH `0.2.0-rc.1`：更旧的 DSH 版本会被 peer 依赖门槛挡住，无法升级到 1.5.8+。
+已使用 DSH Web `0.2.0-rc.2`、`0.2.1-rc.3` 与 `0.2.1-rc.4` 验证（1.5.21 全量门禁在 rc.4 上跑绿）；`0.2.1-rc.5` 为同系列契约面等价重发布（宿主 web-app patch 相对 rc.4 零 diff），rc.4 的核验结论按等价口径覆盖 rc.5。同系列后续 rc 版本理论上兼容，未经验证的版本不作承诺。最低支持 DSH `0.2.0-rc.1`：更旧的 DSH 版本会被 peer 依赖门槛挡住，无法升级到 1.5.8+。
 
 **支持 Desktop profile 吗？**
 支持。DSH Desktop 应用与 Web profile 各自独立安装、互不影响；桌面形态（实色外壳 + 会话区壁纸）见「Desktop profile 上的形态」。已使用 DSH Desktop `0.2.1-rc.5` 验证。

@@ -181,7 +181,7 @@ Pick "DeepSeek Harness (Official)" in the skin switcher, or open `/?skin=officia
 Update duty has moved to the dsh-m marketplace and the DSH CLI (ADR-0008); the skin switcher only handles skins and personalization.
 
 **Which DSH Web versions are supported?**
-Verified with DSH Web `0.2.0-rc.2`, `0.2.1-rc.3` and `0.2.1-rc.4` (the 1.5.21 gate suite ran green on rc.4). Later rc builds of the same series are expected to work, but unverified versions carry no promise. Requires DSH `0.2.0-rc.1` or later; older DSH versions are blocked from upgrading to 1.5.8+ by the peer dependency floor.
+Verified with DSH Web `0.2.0-rc.2`, `0.2.1-rc.3` and `0.2.1-rc.4` (the 1.5.21 gate suite ran green on rc.4). `0.2.1-rc.5` is a contract-surface equivalent re-release of the same series (host web-app patch is zero-diff against rc.4), so the rc.4 conclusions carry over to rc.5. Later rc builds of the same series are expected to work, but unverified versions carry no promise. Requires DSH `0.2.0-rc.1` or later; older DSH versions are blocked from upgrading to 1.5.8+ by the peer dependency floor.
 
 **Is the Desktop profile supported?**
 Yes. The DSH Desktop app and the Web profile are installed independently and do not affect each other; the desktop form (solid chrome + wallpaper in the conversation area) is described under "The Desktop profile". Verified with DSH Desktop `0.2.1-rc.5`.
