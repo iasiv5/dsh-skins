@@ -50,7 +50,7 @@
  * (GNU tar on Linux CI, bsdtar shipped with Windows 10+/macOS).
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -201,17 +201,9 @@ try {
 	// Stage 2: only when the package ships the builtin-asset manifest.
 	const manifestPath = join(packageDir, "assets", "manifest.json");
 	if (existsSync(manifestPath)) {
-		const assetFiles = [];
-		const walk = (dir) => {
-			for (const entry of readdirSync(dir)) {
-				const full = join(dir, entry);
-				if (statSync(full).isDirectory()) walk(full);
-				else if (entry !== "manifest.json") assetFiles.push(full);
-			}
-		};
-		walk(join(packageDir, "assets"));
-		if (assetFiles.length === 0) problem("assets/manifest.json shipped but the assets dir holds no files");
-		JSON.parse(readFileSync(manifestPath, "utf8")); // must at least be valid JSON (trusted metadata)
+		const manifest = JSON.parse(readFileSync(manifestPath, "utf8")); // trusted metadata must parse
+		const entries = manifest.entries ?? [];
+		if (!Array.isArray(entries) || entries.length === 0) problem("assets/manifest.json ships no entries");
 
 		const clientText = readFileSync(join(packageDir, "lib", "client.js"), "utf8");
 		// Minified shape: the define substitutes `rev = "<version>"` feeding the
@@ -221,9 +213,14 @@ try {
 		if (!clientText.includes("?v=")) problem("lib/client.js lacks the ?v= cache-busting template");
 		if (clientText.includes("__DSH_SKINS_ASSET_REV__")) problem("lib/client.js carries unresolved __DSH_SKINS_ASSET_REV__");
 
-		for (const file of assetFiles) {
-			const key = file.slice(packageDir.length);
-			const assetResponse = await get(`/dsh-skins/assets${key}?v=${version}`);
+		// Route key is the SINGLE-SEGMENT b_ basename (store.serveAsset matches
+		// /dsh-skins/assets/<one segment>), not the packaged relative path.
+		for (const entry of entries) {
+			const ext = (entry.file ?? "").split(".").pop() ?? "webp";
+			const key = `b_${entry.skinId}_${entry.assetKey}.${ext}`;
+			const onDisk = join(packageDir, "assets", entry.file ?? "");
+			if (!existsSync(onDisk)) problem(`asset ${key}: manifest file assets/${entry.file} missing from the package`);
+			const assetResponse = await get(`/dsh-skins/assets/${key}?v=${version}`);
 			if (assetResponse.status !== 200) {
 				problem(`asset ${key}: expected 200, got ${assetResponse.status}`);
 				continue;
@@ -240,7 +237,7 @@ try {
 		if (miss.status === 200) problem("negative control: unknown b_ key unexpectedly served 200");
 		const stillAlive = await get("/dsh-skins/config");
 		if (stillAlive.status !== 200) problem(`negative control: host degraded after b_ miss (config → ${stillAlive.status})`);
-		console.log(`verify:delivery: builtin-asset assertions ran over ${assetFiles.length} packaged file(s)`);
+		console.log(`verify:delivery: builtin-asset assertions ran over ${entries.length} packaged file(s)`);
 	} else {
 		console.log("verify:delivery: builtin-asset assertions SKIPPED (no assets/manifest.json in package — pre-ADR-0023-replay baseline)");
 	}
