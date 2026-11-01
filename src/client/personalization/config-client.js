@@ -1,3 +1,5 @@
+import { ASSET_ID_PATTERN } from "../../shared/personalization/catalog.js";
+
 /**
  * Config client — the browser-side state machine for personalization
  * (design §7.1, write-through auto-save per ADR-0003). Four states:
@@ -57,6 +59,7 @@ function cloneSkins(skins) {
 // anything unexpected in it is ignored.
 const FIRST_PAINT_HINT_KEY = "dsh-skins:first-paint-hint";
 const FIRST_PAINT_HINT_MAX_CHARS = 262_144;
+const FIRST_PAINT_EXTENSION = /^[a-z0-9]+$/; // the URL segment assetUrl() interpolates
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -80,8 +83,25 @@ function parseFirstPaintHint(raw) {
   for (const [skinId, overrides] of Object.entries(data.skins)) {
     if (isPlainObject(overrides)) skins[skinId] = overrides;
   }
-  const library = data.library.filter((entry) => isPlainObject(entry) && typeof entry.id === "string");
+  const library = data.library.filter((entry) => (
+    isPlainObject(entry)
+    && typeof entry.id === "string" && ASSET_ID_PATTERN.test(entry.id)
+    && typeof entry.mime === "string"
+    && typeof entry.extension === "string" && FIRST_PAINT_EXTENSION.test(entry.extension)
+  ));
   return { skins, library };
+}
+
+/** User-library asset ids referenced by the skins' overrides (plain `u_` ids; see resolveImageRef). */
+function referencedAssetIds(skins) {
+  const ids = new Set();
+  for (const overrides of Object.values(skins ?? {})) {
+    if (!isPlainObject(overrides)) continue;
+    for (const value of Object.values(overrides)) {
+      if (typeof value === "string" && ASSET_ID_PATTERN.test(value)) ids.add(value);
+    }
+  }
+  return ids;
 }
 
 function readFirstPaintHint(storage) {
@@ -179,12 +199,20 @@ export function createConfigClient(options = {}) {
 
   // -- reads -----------------------------------------------------------------
 
-  /** Cache the just-synced normal snapshot for the next cold load. Best-effort. */
+  /**
+   * Cache the just-synced normal snapshot for the next cold load: the skin
+   * overrides plus only the library entries they reference. Best-effort. If it
+   * still does not fit under the cap, the previous hint is REMOVED — a stale
+   * hint must never outlive the snapshot it summarised.
+   */
   function persistFirstPaintHint() {
     if (storage === null || storage === undefined) return;
     try {
-      const payload = JSON.stringify({ v: 1, skins: snapshot.skins ?? {}, library: snapshot.library ?? [] });
+      const referenced = referencedAssetIds(snapshot.skins);
+      const library = (snapshot.library ?? []).filter((entry) => referenced.has(entry.id));
+      const payload = JSON.stringify({ v: 1, skins: snapshot.skins ?? {}, library });
       if (payload.length <= FIRST_PAINT_HINT_MAX_CHARS) storage.setItem(FIRST_PAINT_HINT_KEY, payload);
+      else storage.removeItem(FIRST_PAINT_HINT_KEY);
     } catch {
       // Quota or a denied storage: the hint is an optimisation, never a dependency.
     }

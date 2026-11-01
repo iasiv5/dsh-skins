@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createConfigClient } from "../src/client/personalization/config-client.js";
 
-// First-paint hint (cold-load wallpaper flash fix): the last synced snapshot's
-// skin overrides and library metadata, cached client-side so the first mount
-// after a cold load uses what the user actually chose instead of the catalog
-// default. The server snapshot stays authoritative once it lands.
+// First-paint hint (cold-load wallpaper flash fix): the last synced skin
+// overrides plus the library entries those overrides reference, cached
+// client-side so the first mount after a cold load uses what the user actually
+// chose instead of the catalog default. The server snapshot stays
+// authoritative once it lands; the hint never outlives the snapshot it
+// summarised (an oversized snapshot removes it rather than keeping it stale).
 const HINT_KEY = "dsh-skins:first-paint-hint";
 const YINYUE = "builtin:meirenzhi:yinyue";
 const YUNTAI = "builtin:meirenzhi:yuntai";
@@ -42,6 +44,7 @@ function memoryStorage(initial = {}) {
   return {
     getItem: (key) => (data.has(key) ? data.get(key) : null),
     setItem: (key, value) => { data.set(key, String(value)); },
+    removeItem: (key) => { data.delete(key); },
     raw: (key) => data.get(key) ?? null,
   };
 }
@@ -168,6 +171,7 @@ test("a storage that throws never breaks boot", async () => {
   const storage = {
     getItem() { throw new Error("denied"); },
     setItem() { throw new Error("quota"); },
+    removeItem() { throw new Error("denied"); },
   };
   const client = createConfigClient({
     fetchImpl: makeFetch(() => snapshotBody({ skins: { meirenzhi: { wallpaper: YINYUE } } })),
@@ -176,4 +180,67 @@ test("a storage that throws never breaks boot", async () => {
   });
   await client.boot();
   assert.deepEqual(client.effectiveOverrides("meirenzhi"), { wallpaper: YINYUE });
+});
+
+test("a large library persists only the entries the overrides reference, keeping the hint under the cap", async () => {
+  const library = Array.from({ length: 2000 }, (_, i) => ({
+    id: `u_${i.toString(16).padStart(32, "0")}`,
+    extension: "webp",
+    mime: "image/webp",
+    byteLength: 1000,
+    sha256: "0".repeat(64),
+    displayName: `wallpaper-${i}-${"x".repeat(160)}.webp`,
+    width: 2560,
+    height: 1440,
+  }));
+  const chosen = library[7].id;
+  const storage = memoryStorage();
+  const client = createConfigClient({
+    fetchImpl: makeFetch(() => snapshotBody({ skins: { meirenzhi: { wallpaper: chosen } }, library })),
+    timeoutMs: 50,
+    storage,
+  });
+  await client.boot();
+  const written = JSON.parse(storage.raw(HINT_KEY));
+  assert.deepEqual(written.library.map((entry) => entry.id), [chosen]);
+  assert.equal(client.findLibraryEntry(chosen)?.id, chosen);
+});
+
+test("when the hint cannot fit under the cap it is removed, so no stale hint outlives its snapshot", async () => {
+  const storage = memoryStorage({ [HINT_KEY]: hintJson({ meirenzhi: { wallpaper: YINYUE } }) });
+  const client = createConfigClient({
+    fetchImpl: makeFetch(() => snapshotBody({ skins: { meirenzhi: { wallpaper: YUNTAI, slogan: "x".repeat(300_000) } } })),
+    timeoutMs: 50,
+    storage,
+  });
+  await client.boot();
+  assert.equal(storage.raw(HINT_KEY), null);
+});
+
+test("hint library entries with unsafe ids, extensions or mime types are dropped", async () => {
+  const good = {
+    id: USER_ASSET,
+    extension: "webp",
+    mime: "image/webp",
+    byteLength: 1,
+    sha256: "f".repeat(64),
+    displayName: "ok.webp",
+    width: 1,
+    height: 1,
+  };
+  const badExtension = { ...good, id: `u_${"c".repeat(32)}`, extension: "../../x" };
+  const badId = { ...good, id: "../../etc" };
+  const badMime = { ...good, id: `u_${"d".repeat(32)}`, mime: 7 };
+  const storage = memoryStorage({
+    [HINT_KEY]: hintJson({ meirenzhi: { wallpaper: USER_ASSET } }, [good, badExtension, badId, badMime]),
+  });
+  const gate = deferred();
+  const client = createConfigClient({ fetchImpl: makeFetch(() => gate.promise), timeoutMs: 5000, storage });
+  const booting = client.boot();
+  assert.deepEqual(client.findLibraryEntry(USER_ASSET), good);
+  assert.equal(client.findLibraryEntry(badExtension.id), null);
+  assert.equal(client.findLibraryEntry(badId.id), null);
+  assert.equal(client.findLibraryEntry(badMime.id), null);
+  gate.resolve(snapshotBody());
+  await booting;
 });
