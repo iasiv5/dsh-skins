@@ -111,7 +111,7 @@ supersedes: docs/plans/2026-10-31-builtin-assets-external-delivery-implementatio
 
 - `pnpm run check` 全绿（含 verify:delivery 二拍、every-commit-buildable 待 push 后在 CI 侧生效）；
 - 区间终点树与 `fc2bc2a` 的差异清单已逐项解释；
-- T6 真机清单全过；
+- T6 浏览器清单：执行状态以下方「执行记录（评审 R2 后补充）」为准；未全部完成前不得宣称全过；
 - 停在发版前，交付摘要就绪。
 
 ## 执行记录（2026-11-02）
@@ -120,3 +120,63 @@ supersedes: docs/plans/2026-10-31-builtin-assets-external-delivery-implementatio
 - T6 机器可判面全绿：活宿主 `GET /dsh-skins/assets/b_meirenzhi_yuntai.webp` = 200 + image/webp(283,460B) + immutable + etag + nosniff + CORP；缺席键 404；三 repro 门禁对真壁纸链路 PASS（6/6 hops、双 cycle、阅读底实色）。**活体验证抓到真缺口一处**：hot-deploy 只拷 lib/ 不拷 assets/ → b_ 全 404（1.5.22 部署态故障形态复现），已修脚本并补拷（二次重启愈）。
 - 版本 bump 1.5.25（npm view E404 确认未占用；README 零版本引用，配对哈希不变）。
 - 待主人：① 真浏览器目检清单（三皮切换、meirenzhi 内置精选全链路、通透度 0→100→回厂、霜面底/阅读底、冷缓存 fail-open、切肤零闪烁）；② 人工审核代码；③ 拍板后方可 tag/publish 1.5.25。desktop 真机目检按 Amendment 延后至下次 Windows 会话。
+
+## 执行记录（评审 R2 后补充，2026-11-02）
+
+### T3 对账的基准更正（评审 S-3）
+
+- 原 T3 文本的期望「`fc2bc2a..HEAD` 仅 package.json 版本行与 developers.md 增量差异」基准有误：fc2bc2a 是回滚 2d3f60d **之前**的尖端；回滚及其后的提交（5b78705、bb63036、0f789b4、c5ac89c、3344d87、db05a2d）天然位于 fc2bc2a..HEAD 之间，回放不应也不会抹掉它们。
+- 正确的对账分两段：(i) ADR-0023 产品内容——`assets/`、`src/host/`、`src/client/skins/`、`src/shared/`、`src/index.js`、`src/client/index.js`、`src/client/builtin-assets.js`、`smoke-test.cjs`、`tests/builtin-assets.test.mjs`——在 fc2bc2a..HEAD 之间**逐字节零差异**（核验命令：`git diff --stat fc2bc2a HEAD -- <上述路径>`，无输出）；(ii) 其余差异逐文件归因如下。
+
+### 逐文件归因（fc2bc2a..HEAD，共 24 个文件；提交按新→旧排列）
+
+| 文件 | fc2bc2a 之后引入差异的提交 |
+|---|---|
+| `.githooks/pre-commit` | c5ac89c |
+| `.github/workflows/ci.yml` | bb373c6 |
+| `README.en.md` | db05a2d |
+| `README.i18n.yaml` | 5ed96c6 |
+| `README.md` | db05a2d |
+| `docs/adr/0021-skin-switch-sidebar-paint-order.md` | bb63036 |
+| `docs/adr/0023-builtin-assets-external-delivery.md` | aa40420 83dbd9e 2d3f60d |
+| `docs/adr/0024-rollback-forensics-discipline.md` | aa40420 |
+| `docs/developers.md` | 26c3479 bb373c6 3344d87 c5ac89c 2d3f60d |
+| `docs/plans/2026-11-01-adr-0023-redelivery-gated-implementation-plan.md` | 409dfde e4a15b1 |
+| `eslint.config.js` | c5ac89c |
+| `lib/client.js` | 7a0966e 6bbd68b 0d76d0c 5d09873 5fa121a bb63036 2d3f60d |
+| `package.json` | 7a0966e 26c3479 bb373c6 c5ac89c 0f789b4 5b78705 2d3f60d |
+| `scripts/capture-previews.mjs` | 3344d87 |
+| `scripts/hot-deploy.sh` | af44c61 e524882 |
+| `scripts/lib/ui-locale.mjs` | 3344d87 |
+| `scripts/repro-fullscreen-collapse.mjs` | 6cf0482 3344d87 bb63036 2d3f60d |
+| `scripts/repro-plugin-panel-readability.mjs` | 3344d87 |
+| `scripts/repro-stale-grid-paint.mjs` | 6cf0482 3344d87 2d3f60d |
+| `scripts/verify-bundle-guard.mjs` | 483c511 02713ca bb373c6 2d3f60d |
+| `scripts/verify-delivery.mjs` | 0302590 02713ca bb373c6 |
+| `src/client/runtime.js` | 6bbd68b bb63036 2d3f60d |
+| `tests/gate-ui-locale.test.mjs` | 3344d87 |
+| `tests/runtime-effects.test.mjs` | bb63036 |
+
+分类：① 回滚（2d3f60d）及回滚后的修复与 retro：bb63036（flash-free sweep）、0f789b4/5b78705（版本）、c5ac89c（pre-commit、no-undef、导航）、3344d87（双语门禁与 ui-locale）、db05a2d（README rc.5）；② Beat 1 本次新增：bb373c6、0302590、483c511、ci.yml、developers.md 段；③ 回放合流点：6cf0482、6bbd68b、02713ca、26c3479、0d76d0c、5d09873、5fa121a；④ 评审后修复：e524882、af44c61（hot-deploy）、5ed96c6（readme 配对）、aa40420（ADR 增补）、409dfde（计划执行记录）。
+
+### 回放过程中的两处事后修正（已在对应提交内说明）
+
+- 02713ca 折入了 verify-delivery.mjs 的 rev 断言形状修正：最初按「`?v=<版本>` 字面量」编写，实测产物为 define 形 `rev = "<版本>"`，`?v=<版本>` 连续字面量并不存在。
+- lib 段前移（评审 R1-C-1）：cf410f9 缺 lib 段，已改写为 8879bc4（lib/index.js +51/−12 并入该提交）；后续提交因 lib 段前移，range-diff 仅 #4、#5 补丁不同。改写前的链保留在分支 `backup/pre-lib-fix-2568ef0`。
+
+### 评审小结的处理结论
+
+- S-1（verify:delivery 清单缺席时打印 SKIPPED 并返回 0）：计划外建议，未实施——计划 T1 规格明确把「无 manifest 的基线 → SKIPPED 绿」定为设计内行为。
+- S-2（hot-deploy 覆盖 assets 前无备份）：已修复（af44c61）。红灯复演：旧脚本备份仅含 client.js、index.js，之前的 assets 无法恢复；新脚本备份为 lib/ 与 assets/（profile 原本无 assets 时写 ASSETS_ABSENT 标记），rm 前校验 profile 根含 package.json。往返验证：临时 profile A（原有 assets）与 B（原本无 assets）各自「部署 → 执行打印的回滚指令 → 逐字节比对部署前快照」全部一致（脚本与日志位于仓库外的 exec-logs/hd-roundtrip）。
+- S-3：见本节上文的归因表。
+- D-1（T6 浏览器清单）：执行中（见下）。
+
+### T6 浏览器清单：执行状态
+
+- 已完成（只读，fresh 上下文，无配置写入）：
+  - 三皮切换（openbmc / uefi-harness / meirenzhi）：无 pageerror，切换器存在，作用域属性就位（uefi 的属性名为 `data-dsh-uefi-harness`）。
+  - openbmc 背景为内联 data URL（ADR-0023 Decision 2，无 b_ 请求）；uefi 的 `b_uefi-harness_art.webp` 为 200 + immutable + etag；meirenzhi 用户所选 `b_meirenzhi_yinyue.webp` 为 200 + immutable + etag。
+  - 打包的 7 个 `b_` 资产，活体字节逐一与候选文件相等（7/7 MATCH）。
+  - 冷缓存负对照（中止全部 `b_` 请求）：页面正常渲染，侧栏、标题、输入框完整可见（粗粒度视觉判读），`::after` 纱层仍为 linear-gradient；浏览器仅记录两条 ERR_FAILED 资源错误，无 pageerror。
+  - 观察项（建议，不阻断）：矩阵运行的第 3 个上下文中出现过一次默认壁纸 `b_meirenzhi_yuntai.webp` 的 200 请求；随后 5 次重复流程未复现，最终渲染均为 yinyue；根因待定。
+- 待完成：通透度 0→100→回厂（需写配置，快照后逐字段还原并核对）；repro 门禁在候选上复跑；截图归档到 `01_docs`，脱敏的验证记录入库。
