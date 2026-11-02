@@ -79,6 +79,6 @@
 | verify-release 两式 | 通过 | 无 tag 形式与 `v1.5.25` 形式均退出码 0 |
 | pack 内容 | 通过 | 19 项：assets（8）、lib（2）、locale（2）、README 三件、cordis.patch.yml、icon.svg、LICENSE、package.json；无测试或私有文档混入 |
 | 脱敏终审 | 通过 | 推送区间新增行对本机绝对路径、公网 IP/域名、反代路径前缀、真实用户资产 id、凭据样式、模型名称全部零命中；两处新增行的本机路径已改为仓库相对/无路径表述后复扫确认 |
-| CI 实际运行 | 留待推送后 | check 与 every-commit 在远端的首跑（本地模拟已通过） |
-| npm staged 轮询与三键核验 | 留待发布后 | workflow 全绿 ≠ 已上架；per-version 文档 200、dist-tags.latest 推进、packument time 推进三键齐全才算成功（know-how 018，staged 窗口可达约 1 小时，窗口内不重推 tag） |
+| CI 实际运行 | 通过 | push 后首跑全绿：check 1m07s、every-commit-buildable 34s（run 41386084434） |
+| npm staged 轮询与三键核验 | 通过 | Release workflow 1m10s 全绿（run 41386235415）；staged 窗口约 3 分钟后三键齐全（per-version 200、dist-tags.latest=1.5.25、packument time 2026-11-02T04:06:39Z）；GitHub Release v1.5.25 带 tarball；已下载发布 tarball 与本地 tag 逐字节比对（client/index/manifest 全 MATCH） |
 | desktop 真机目检 | 延后 | 按 Amendment，下次 Windows 会话补做 |
