@@ -67,3 +67,18 @@
 - 配置存储的每次提交（安装、规范化、批量写、上传、删除、恢复确认与清理）追加一行 JSON 到 `audit.jsonl`，字段值只记引用与标量，显示名不写入；单测 5 条（其中 4 条实现前红灯、1 条守护用例）；全部单测 420/420。
 - 状态：已生效。经主人批准，于 2026-11-02 11:30（本机时间）由分离式定时器重启宿主（`deepseek-harness.service`），重启后健康检查 200，存储模式 normal，修订号与内容不变。
 - 活体验证（经主人批准的通透度往返测试，美人志 0 → 100 → 35，35 即出厂值）：产生 3 次提交，修订号 926 → 929，审计日志恰好 3 条（来源 operations，字段 `panelOpacity` 的差异分别为 `null → 0`、`0 → 100`、`100 → null`，最后一次为 delete）；提交前后的配置内容逐项相同。审计条目不含图库显示名。
+
+## 发版前检查（2026-11-02 准备阶段，基线 c5f774a）
+
+| 项 | 结果 | 要点 |
+|---|---|---|
+| 版本占用 | 通过 | `npm view @iasiv5/dsh-skins@1.5.25` 为 404（准备阶段复验）；本地无 v1.5.25 tag |
+| 发布链路核对 | 通过 | Release workflow 由 `v*` tag 触发：verify-release → 全门禁 → lib 对账 → pack → 产物宿主加载测试 → npm OIDC 可信发布（无需本地凭据）→ GitHub Release；含 staged 重推安全守卫与失败自动删 tag |
+| 全量门禁（最终提交） | 通过 | 全新副本于 c5f774a 执行 `pnpm run check` 退出码 0（420/420、repro 三门禁 PASS、delivery 7 资产、bundle 守卫、README 配对、lib 同步）；另于 339496f 亦为 0 |
+| 逐提交可构建性（CI every-commit 的本地模拟） | 通过 | db05a2d..c5f774a 共 36 个提交，逐个检出、构建、lib 对账，36/36 通过 |
+| verify-release 两式 | 通过 | 无 tag 形式与 `v1.5.25` 形式均退出码 0 |
+| pack 内容 | 通过 | 19 项：assets（8）、lib（2）、locale（2）、README 三件、cordis.patch.yml、icon.svg、LICENSE、package.json；无测试或私有文档混入 |
+| 脱敏终审 | 通过 | 推送区间新增行对本机绝对路径、公网 IP/域名、反代路径前缀、真实用户资产 id、凭据样式、模型名称全部零命中；两处新增行的本机路径已改为仓库相对/无路径表述后复扫确认 |
+| CI 实际运行 | 留待推送后 | check 与 every-commit 在远端的首跑（本地模拟已通过） |
+| npm staged 轮询与三键核验 | 留待发布后 | workflow 全绿 ≠ 已上架；per-version 文档 200、dist-tags.latest 推进、packument time 推进三键齐全才算成功（know-how 018，staged 窗口可达约 1 小时，窗口内不重推 tag） |
+| desktop 真机目检 | 延后 | 按 Amendment，下次 Windows 会话补做 |
