@@ -5,7 +5,7 @@
  * Usage:
  *   node scripts/build-meirenzhi-wallpapers.mjs [--src <dir>] [--out <file>]
  * Defaults:
- *   --src /home/ubuntu/tmp/凡人修仙传
+ *   --src ./原始素材/凡人修仙传（相对仓库根；本机路径不入库）
  *   --out src/client/skins/meirenzhi/wallpapers.js
  *
  * 素材契约（方案 B，产品负责人 2026-09-01 裁决）：固定 scale=2560:-2 +
@@ -61,7 +61,7 @@ function execTool(bin, args, opts) {
   return execFileSync(bin, args, opts);
 }
 
-const srcDir = resolve(option("--src", "/home/ubuntu/tmp/凡人修仙传"));
+const srcDir = resolve(option("--src", "./原始素材/凡人修仙传"));
 const outPath = resolve(option("--out", "src/client/skins/meirenzhi/wallpapers.js"));
 const assetsDir = resolve(option("--assets", "assets"));
 const ENCODE_WIDTH = 2560;
