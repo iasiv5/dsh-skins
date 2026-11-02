@@ -3,6 +3,7 @@
 # 严格 fail-fast：build → 全量测试（裸退出码，验证命令禁入吞码管道）→ 备份
 # profile（lib/ 与 assets/）→ 覆盖 → sha 校验，任一步失败即停、不碰 profile。
 # client-only 变更浏览器刷新即生效；禁在 agent 会话内重启服务（know-how 037）。
+# 宿主包（lib/index.js）变化需重启 DSH Web 才生效：本脚本检测并提示，从不重启。
 # 须在无沙箱写限制的会话执行（esbuild 子进程 + profile 写）。
 # 环境变量：DSH_SKINS_PROFILE（profile 根目录，默认 web profile）、DSH_SKINS_HOTFIX_BACKUP_DIR。
 # 备份布局（2026-11-02 起）：<备份目录>/lib/ 与 <备份目录>/assets/；profile 原本无 assets 时
@@ -42,6 +43,9 @@ if [ "$PROFILE_VERSION" != "$REPO_VERSION" ]; then
   echo "!! 提示：profile 版本 $PROFILE_VERSION ≠ 仓库版本 $REPO_VERSION（热部署跨版本属正常，但发版前记得 bump）"
 fi
 
+HOST_CHANGED=0
+if ! cmp -s lib/index.js "$PROFILE_LIB/index.js"; then HOST_CHANGED=1; fi
+
 echo "== 覆盖部署 =="
 cp lib/client.js lib/index.js "$PROFILE_LIB/"
 
@@ -60,7 +64,13 @@ cmp lib/client.js "$PROFILE_LIB/client.js"
 cmp lib/index.js "$PROFILE_LIB/index.js"
 sha256sum lib/client.js "$PROFILE_LIB/client.js"
 
-echo "✓ 已部署（profile=$PROFILE_VERSION repo=$REPO_VERSION）。浏览器刷新生效；禁重启服务。"
+echo "✓ 已部署（profile=$PROFILE_VERSION repo=$REPO_VERSION）。客户端变更：浏览器刷新即生效（HMR）。"
+if [ "$HOST_CHANGED" = 1 ]; then
+  echo "!! 宿主包 lib/index.js 已变更：必须重启 DSH Web（deepseek-harness.service）才会生效。"
+  echo "   本脚本不重启；会话内禁止直接重启（know-how 037），需经你批准后走分离式 systemd-run。"
+else
+  echo "宿主包 lib/index.js 未变化：无需重启。"
+fi
 echo "  回滚（lib）:    cp -a \"$BACKUP_DIR/lib/.\" \"$PROFILE_LIB/\""
 if [ -d "$BACKUP_DIR/assets" ]; then
   echo "  回滚（assets）: rm -rf -- \"$PROFILE_ASSETS\" && cp -a \"$BACKUP_DIR/assets\" \"$PROFILE_ASSETS\""

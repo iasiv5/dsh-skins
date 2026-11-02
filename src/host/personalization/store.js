@@ -5,6 +5,8 @@
  *
  * On-disk layout:
  *   state.json              the ONE mutable state file (atomic temp+rename)
+ *   audit.jsonl             best-effort audit of every commit: one JSON line each,
+ *                           rotated to audit.jsonl.1 past 1 MiB (no display names)
  *   assets/u_<id>.<ext>     immutable content-addressed-by-id blobs
  *   quarantine/             unrecognized files moved ONLY after recovery is
  *                           confirmed by the user (branch A, design §5.3)
@@ -24,6 +26,7 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import {
+  appendFileSync,
   closeSync,
   copyFileSync,
   existsSync,
@@ -65,9 +68,20 @@ const QUARANTINE_DIR = "quarantine";
 const DISK_SAFETY_RESERVE = 64 * 1024 * 1024;
 const CORRUPT_BACKUP_LIMIT = 3;
 const ID_ATTEMPTS = 5;
+const AUDIT_FILE = "audit.jsonl";
+const AUDIT_MAX_BYTES = 1_048_576; // rotate to audit.jsonl.1 once the log passes 1 MiB
+
+/** Audit-safe view of one override value: refs and scalars verbatim; free text and objects only by size. */
+function summarizeAuditValue(value) {
+  if (value === undefined) return null;
+  if (value === null || typeof value === "number" || typeof value === "boolean") return value;
+  if (typeof value === "string") return resolveImageRef(value) !== null ? value : { string: value.length };
+  return { object: Object.keys(value).length };
+}
 
 function defaultFs() {
   return {
+    appendFileSync,
     existsSync,
     mkdirSync,
     readFileSync,
@@ -164,6 +178,10 @@ export function createPersonalizationStore(options = {}) {
   const stateFile = join(dataDir, STATE_FILE);
   const assetsDir = join(dataDir, ASSETS_DIR);
   const quarantineDir = join(dataDir, QUARANTINE_DIR);
+  const auditFile = join(dataDir, AUDIT_FILE);
+  const auditMaxBytes = Number.isInteger(options.auditMaxBytes) && options.auditMaxBytes > 0
+    ? options.auditMaxBytes
+    : AUDIT_MAX_BYTES;
 
   let state = null;
   let mode = "normal"; // normal | recovery | unsupported
@@ -205,9 +223,55 @@ export function createPersonalizationStore(options = {}) {
     return join(assetsDir, `${id}.${extension}`);
   }
 
-  function commitState(next) {
+  function commitState(next, { source, previous = state, ops } = {}) {
     atomicWriteText(stateFile, `${JSON.stringify(next, null, 2)}\n`, fs);
     state = next;
+    recordAudit(previous, next, source ?? "unknown", ops);
+  }
+
+  /**
+   * Best-effort audit of one committed write. Written AFTER the state file, so
+   * the log only ever describes committed state; a refused append never fails
+   * or blocks the commit.
+   */
+  function recordAudit(previous, next, source, ops) {
+    try {
+      const skins = [];
+      const skinIds = new Set([...Object.keys(previous?.skins ?? {}), ...Object.keys(next.skins ?? {})]);
+      for (const skinId of skinIds) {
+        const before = previous?.skins?.[skinId] ?? {};
+        const after = next.skins?.[skinId] ?? {};
+        for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
+          if (JSON.stringify(before[key]) === JSON.stringify(after[key])) continue;
+          skins.push({ skin: skinId, key, from: summarizeAuditValue(before[key]), to: summarizeAuditValue(after[key]) });
+        }
+      }
+      const libraryBefore = new Set(Object.keys(previous?.library ?? {}));
+      const libraryAfter = new Set(Object.keys(next.library ?? {}));
+      const entry = {
+        ts: new Date(now()).toISOString(),
+        profile,
+        source,
+        revision: next.revision,
+        prevRevision: previous?.revision ?? null,
+        ...(ops === undefined ? {} : { ops }),
+        skins,
+        libraryAdded: [...libraryAfter].filter((id) => !libraryBefore.has(id)),
+        libraryRemoved: [...libraryBefore].filter((id) => !libraryAfter.has(id)),
+      };
+      rotateAuditIfNeeded();
+      fs.appendFileSync(auditFile, `${JSON.stringify(entry)}\n`);
+    } catch {
+      // Best-effort: a refused audit append must never fail or block a commit.
+    }
+  }
+
+  function rotateAuditIfNeeded() {
+    try {
+      if (fs.statSync(auditFile).size >= auditMaxBytes) fs.renameSync(auditFile, `${auditFile}.1`);
+    } catch {
+      // No log yet, or nothing to rotate.
+    }
   }
 
   /** Serialized mutation queue: every visible state change runs through it. */
@@ -282,7 +346,7 @@ export function createPersonalizationStore(options = {}) {
 
     if (read.kind === "missing" && assetFiles.length === 0) {
       // True first install (design §5.3 branch A precondition).
-      commitState(emptyState());
+      commitState(emptyState(), { source: "install", previous: null });
       mode = "normal";
       gcNow();
       return;
@@ -328,6 +392,7 @@ export function createPersonalizationStore(options = {}) {
    * damaged by an older build's normalization.
    */
   function normalizeState() {
+    const previous = structuredClone(state); // normalization mutates `state` in place: keep the pre-image for the audit
     const provider = metaProviderFactory(state.library);
     let removed = false;
     for (const skinId of Object.keys(state.skins)) {
@@ -362,7 +427,7 @@ export function createPersonalizationStore(options = {}) {
     }
     if (removed) {
       state.revision += 1;
-      commitState(state);
+      commitState(state, { source: "normalize", previous });
     }
   }
 
@@ -565,7 +630,7 @@ export function createPersonalizationStore(options = {}) {
         }
       }
       draft.revision += 1;
-      commitState(draft);
+      commitState(draft, { source: "operations", ops: [...new Set(operations.map((operation) => operation?.op))] });
       for (const meta of removedAssets) {
         try { fs.unlinkSync(blobFileFor(meta.id, meta.extension)); } catch {}
       }
@@ -668,7 +733,7 @@ export function createPersonalizationStore(options = {}) {
       draft.library[id] = asset;
       draft.revision += 1;
       try {
-        commitState(draft);
+        commitState(draft, { source: "upload" });
       } catch (error) {
         // State commit failed: the blob is orphaned (GC reclaims it later);
         // surface the error without leaving a visible-but-dangling reference.
@@ -696,7 +761,7 @@ export function createPersonalizationStore(options = {}) {
       const affectedSkins = [];
       const meta = applyGalleryDelete(draft, id, affectedSkins);
       draft.revision += 1;
-      commitState(draft); // state first: a crash here only orphans the blob
+      commitState(draft, { source: "delete" }); // state first: a crash here only orphans the blob
       try { fs.unlinkSync(blobFileFor(meta.id, meta.extension)); } catch {}
       gcNow();
       return { revision: draft.revision, affectedSkins };
@@ -748,7 +813,7 @@ export function createPersonalizationStore(options = {}) {
       draft.library = recovery.candidateLibrary;
       draft.revision = 1;
       draft.recoveryCleanup = { quarantine: [...recovery.quarantine] };
-      commitState(draft); // the single atomic commit point
+      commitState(draft, { source: "recovery-confirm" }); // the single atomic commit point
 
       finishRecoveryCleanup(); // phase 2 — idempotent, crash-resumable
       mode = "normal";
@@ -773,7 +838,7 @@ export function createPersonalizationStore(options = {}) {
     }
     const cleaned = structuredClone(state);
     delete cleaned.recoveryCleanup;
-    commitState(cleaned);
+    commitState(cleaned, { source: "recovery-cleanup" });
   }
 
   function pruneCorruptBackups() {
