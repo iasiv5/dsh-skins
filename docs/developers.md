@@ -125,8 +125,11 @@ dsh plugin --profile web add link:<本仓库路径>
 4. **workflow 全绿 ≠ 已上架**：npm 对 provenance 发布有 staged 暂存窗口（scoped 包实测可达约 1 小时），期间 per-version 文档 404、`dist-tags` 停在旧版。用 `npm view <pkg>@<version> --registry=https://registry.npmjs.org/` 每 2 分钟轮询到 200 为止；窗口内重推同一 tag 必撞 `409 Cannot publish over previously staged version`，且 workflow 失败护栏会删除远端 tag；
 5. 三键核验齐全再宣布发版成功：per-version 文档 200、`dist-tags.latest` 推进、packument `time` 字段推进。
 6. 开发期间凡触碰 `src/` 的 checkpoint 必须一并提交重建后的 `lib/`（本仓库 lib 随源码入库；只改测试/文档的 checkpoint 无需构建）——中途快照 src/lib 不自洽，会让旧 commit 不经 build 的直接运行用上旧 lib（2026-10-20 实现评审 R2 裁定）。
+7. 改动过 `scripts/hot-deploy.sh` 的版本，发版前跑 `pnpm run verify:hot-deploy`（临时 profile 往返：部署 → 执行打印的回滚指令 → 逐字节比对，覆盖「profile 原有/原本无 assets」两场景；2026-11-02 评审 S-2 收编）。
 
 **重启声明纪律**（2026-11-01 调查定谳）：插件协议**无**「需重启」声明字段（四仓 `dsh` 字段穷举核验）——要不要重启由宿主运行时计算（web 组成含 dsh-hmr 可热重载插件宿主模块，desktop 无 hmr 一律 restart-required），无法事前声明。故凡版本 diff 触及宿主面（`lib/index.js`、`cordis.patch.yml` 或依赖树），发版说明必须注明「**安装后重启一次再验证**」；纯 `lib/client.js` 变更经客户端 HMR 免重启（know-how 037）。
+
+**计划与验证记录**（2026-11-02 retro）：计划文档里的完成态表述（「全过」「已验证」）只在对应验证落盘后写入；未完成的项保留「未完成」状态，验证记录与计划执行记录同步更新（2026-11-02 实录：T6「全过」表述超前于事实，评审两轮各抓到一处）。
 
 ## 控制台调试 API
 
