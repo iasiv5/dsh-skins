@@ -26,7 +26,7 @@ supersedes: docs/plans/2026-10-31-builtin-assets-external-delivery-implementatio
 - 回放方式：`git cherry-pick` 保留逐提交粒度（Q8）；**每个回放 commit 必须可独立构建**（对齐 developers.md checkpoint 纪律与 every-commit-buildable 门禁）——区间内 16f9a2b..19489c3^ 的坏 import 快照不得原样复刻，深度修正在所在 commit 内折入修复。
 - GLOSSARY.md 零改动（ADR-0023 原裁决：交付通道是工程决策非领域语言）。
 - lib/ 随源码入库：凡回放 commit 触碰 src/，必须以解决冲突后的 src 重新 `pnpm run build` 并提交产物，禁用任一侧的旧 lib。
-- 验证命令均在仓库根（`/home/ubuntu/workspace/dsh-skins`）执行；预计 >90 秒的命令（`pnpm run test`/`pnpm run check`）按 workspace AGENTS.md 后台起跑；验证输出经管道时保留退出码（`set -o pipefail`）。
+- 验证命令均在仓库根执行；预计 >90 秒的命令（`pnpm run test`/`pnpm run check`）按 workspace AGENTS.md 后台起跑；验证输出经管道时保留退出码（`set -o pipefail`）。
 - 无额外平台/依赖约束（esbuild/eslint/playwright-core 均已在 devDependencies 钉版）。
 
 ## 文件结构与职责
@@ -84,7 +84,7 @@ supersedes: docs/plans/2026-10-31-builtin-assets-external-delivery-implementatio
 ### T6 · Beat 3 本机真机验证
 
 - `bash scripts/hot-deploy.sh`（须在无沙箱写限制会话；失败即停不碰 profile）；
-- 真浏览器清单（本机 `http://127.0.0.1:3080`）：三皮切换目检、meirenzhi 内置精选全链路（网络面板 7 个 `b_` 请求 200）、通透度 0→100→回厂随动、霜面底/阅读底、冷缓存首载 fail-open（DevTools 拦截 b_ 请求后底色+纱层照常、UI 不挡）、切肤零闪烁（bb63036 语义回归）；
+- 真浏览器清单（本机回环地址的活体宿主）：三皮切换目检、meirenzhi 内置精选全链路（网络面板 7 个 `b_` 请求 200）、通透度 0→100→回厂随动、霜面底/阅读底、冷缓存首载 fail-open（DevTools 拦截 b_ 请求后底色+纱层照常、UI 不挡）、切肤零闪烁（bb63036 语义回归）；
 - 产出：验证记录（版本号+逐项输出，脱敏）入库；desktop 真机延后项与截图证据按 Q10 分工（模板进公开仓、实测进 `01_docs`）。
 
 ### T7 · Beat 4 守卫终形 + 发版前停机
