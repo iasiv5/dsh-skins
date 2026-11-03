@@ -169,6 +169,33 @@ test("v3.2 .lc-tip readability frost in all three skins (ADR-0007 amendment)", (
   }
 });
 
+test("v3.3 non-modal dialog frost in all three skins (ADR-0007 amendment)", () => {
+  // better-sidebar's AnchoredPopover (Git graph hover card, row context
+  // menus) portals a bare role="dialog" wrapper (no aria-modal, no class)
+  // straight to body; its .card paints --dsw-alias-bg-layer-1, which openbmc
+  // and uefi override to translucent riding values with no blur behind the
+  // portal — commit rows bled through the hover card (owner screenshot
+  // 2026-11-03). The same sweep caught its FloatingWindow shell, the chat
+  // stat panel and the conversation ContextMeter popover: every live
+  // non-modal role="dialog" is a portaled/fixed floater, none in-flow. The
+  // hook joins the v1 family recipe (86% + blur14); the lightbox keeps its
+  // :not belt (it carries aria-modal anyway — v1.5.1 同构 belt, not load-
+  // bearing). Official skins are unaffected: the host token is opaque there.
+  for (const { id, css } of skins) {
+    const lightCount = css.split('[role="dialog"]:not([aria-modal="true"]):not(.dsvm-lightbox)').length - 1;
+    assert.ok(lightCount >= 2, `${id}: non-modal dialog hook missing from light/dark blocks (found ${lightCount})`);
+    assert.ok(
+      /\[role="dialog"\]:not\(\[aria-modal="true"\]\):not\(\.dsvm-lightbox\)[^{]*\{[^{}]*backdrop-filter:blur\(14px\)saturate\(1\.3\)/.test(css),
+      `${id}: frost rule missing for the non-modal dialog hook`,
+    );
+    // the hook must not survive anywhere WITHOUT the lightbox exemption
+    assert.ok(
+      !/\[role="dialog"\]:not\(\[aria-modal="true"\]\)[,{\s]/.test(css),
+      `${id}: unexempted non-modal dialog hook still present`,
+    );
+  }
+});
+
 test("float selector cannot sweep floatTitle/floatBody/floatResize", () => {
   // The structural hook keys on the trailing underscore; the guard enforces
   // the live inventory, this pins the reasoning.
