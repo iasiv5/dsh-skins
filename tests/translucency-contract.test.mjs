@@ -280,12 +280,11 @@ test("ADR-0017 reverse pin: no riding token declarations in any skin's staticCss
 // ---- ADR-0016 C1: constant tokens live in the declaration table -----------------
 // The golden below is the removed-lines list: every non-riding declaration
 // that used to live hand-written in the openbmc CSS template (③ light/dark
-// constant blocks, ④ font stack, ⑥ bubble light fill, ⑦ scrollbar). At the
+// constant blocks, ⑥ bubble light fill, ⑦ scrollbar). At the
 // factory anchor the projection's tokenOverrides must carry each value
 // verbatim — same computed style through the table channel (meirenzhi-proven).
+// Font-stack entries (④) migrated to tests/font-slots.test.mjs (ADR-0025).
 
-const OPENBMC_FONT_UI = '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif';
-const OPENBMC_FONT_CODE = '"JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace';
 const OPENBMC_CONSTANT_TOKENS = {
   "--dsw-alias-brand-primary": { light: "#0083b0", dark: "#3ec1e8" },
   "--dsw-alias-brand-primary-invert": { light: "#ffffff", dark: "#06222e" },
@@ -304,8 +303,6 @@ const OPENBMC_CONSTANT_TOKENS = {
   "--dsw-alias-interactive-bg-hover-accent": { light: "rgba(140, 206, 63, 0.14)", dark: "rgba(165, 212, 64, 0.16)" },
   "--dsw-specific-bubble": { light: "rgba(0, 138, 191, 0.10)", dark: "rgba(20, 41, 60, 0.90)" },
   "--dsw-specific-bubble-highlight": { light: "rgba(0, 138, 191, 0.18)", dark: "rgba(29, 61, 85, 0.90)" },
-  "--dsw-font-family": { light: OPENBMC_FONT_UI, dark: OPENBMC_FONT_UI },
-  "--ds-font-family-code": { light: OPENBMC_FONT_CODE, dark: OPENBMC_FONT_CODE },
   "--dsh-scrollbar-thumb": { light: "var(--dsw-alias-scrollbar-bg-l2)", dark: "var(--dsw-alias-scrollbar-bg-l2)" },
   "--dsh-scrollbar-thumb-hover": { light: "var(--dsw-alias-scrollbar-hover-l2)", dark: "var(--dsw-alias-scrollbar-hover-l2)" },
 };
@@ -320,7 +317,7 @@ test("openbmc C1: constant tokens live in the declaration table, values verbatim
 });
 
 // ---- ADR-0016 C1 (uefi): removed-lines golden -------------------------------
-const UEFI_FONT_UI = '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif';
+// Font-stack entry migrated to tests/font-slots.test.mjs (ADR-0025).
 const UEFI_CONSTANT_TOKENS = {
   "--dsw-alias-brand-primary": { light: "#6553d8", dark: "#a99cff" },
   "--dsw-alias-brand-primary-invert": { light: "#ffffff", dark: "#1b143a" },
@@ -338,7 +335,6 @@ const UEFI_CONSTANT_TOKENS = {
   "--dsw-alias-interactive-bg-active": { light: "rgba(101, 83, 216, 0.15)", dark: "rgba(169, 156, 255, 0.18)" },
   "--dsw-specific-bubble": { light: "rgba(101, 83, 216, 0.11)", dark: "rgba(60, 48, 108, 0.90)" },
   "--dsw-specific-bubble-highlight": { light: "rgba(101, 83, 216, 0.18)", dark: "rgba(78, 63, 138, 0.92)" },
-  "--dsw-font-family": { light: UEFI_FONT_UI, dark: UEFI_FONT_UI },
 };
 
 test("uefi C1: constant tokens live in the declaration table, values verbatim (ADR-0016)", () => {

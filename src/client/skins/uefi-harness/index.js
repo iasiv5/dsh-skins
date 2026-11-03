@@ -81,11 +81,9 @@ const SPEC = {
     "--dsw-alias-interactive-bg-active": { light: "rgba(101, 83, 216, 0.15)", dark: "rgba(169, 156, 255, 0.18)" },
     "--dsw-specific-bubble": { light: "rgba(101, 83, 216, 0.11)", dark: "rgba(60, 48, 108, 0.90)" },
     "--dsw-specific-bubble-highlight": { light: "rgba(101, 83, 216, 0.18)", dark: "rgba(78, 63, 138, 0.92)" },
-    "--dsw-font-family": {
-      light: '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif',
-      dark: '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif',
-    },
   },
+  // 字体槽位（ADR-0025）：宿主跟随。
+  fonts: { text: null, code: null },
   scrim: {
     kind: "baked-gradient",
     stops: {

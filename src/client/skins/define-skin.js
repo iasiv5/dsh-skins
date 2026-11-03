@@ -3,12 +3,15 @@
  *
  * 规格三层（ADR-0019 Decision 2）：
  *   直传  id/label/description/titleBrand/favicon{href,mime}/anchor/bodyAttribute/
- *         riding/constantTokens(可 null)/scrim(overlay|baked-gradient 原样)/blur/
+ *         riding/constantTokens(可 null)/fonts{必填：text|code 槽 → null|字符串|
+ *         {light,dark}，ADR-0025}/scrim(overlay|baked-gradient 原样)/blur/
  *         glassVar/desktopBlur{dark}/wallpaper{kind,placeholder?}/builtinAssets/
  *         decoration/streaming/可选 badge/tints/Mark/Name；
  *   派生  SCOPE←bodyAttribute（camelCase→data-kebab，与投影核 glassRule 同律）；
  *         scrim.artLayer＋builtinAssets.art←backgroundArt{mime,url}；
  *         wallpaper.sentinel＝`builtin:<id>:art`（仅 legacy-baked 且有 backgroundArt）；
+ *         constantTokens.font 系←fonts（ADR-0025：发射目标恒为宿主 default 层
+ *         token，永不直打 alias——层级守卫 tests/font-slots.test.mjs 钉死）；
  *   默认  desktopBlur.rate＝55。
  *
  * cssSegments（Decision 3，2026-10-25 计划评审 P1 主人裁定 a）：有序段清单，
@@ -29,9 +32,25 @@ import { createProjection } from "./translucency.js";
 import { badgeCss, decorationCss, streamingCss, rootClear } from "./decoration.js";
 import { frostFamilyCss } from "./frost-family.js";
 
+/** 字体槽位 → 宿主 default 层 token 的唯一映射（ADR-0025）：皮肤槽位发射
+ * 目标恒为 default 层，永不直打 alias（--dsw-font-family / --ds-font-family-code
+ * 由 tests/font-slots.test.mjs 层级守卫禁入）。 */
+export const FONT_TOKENS = {
+  text: "--dsh-font-family-text-default",
+  code: "--dsh-font-family-code-default",
+};
+
+// 逐字拷贝自 runtime 0.2.1-rc.5 @deepseek-ai/dsh-client-ui-theme lib/client.js
+// base_css_default 的 :root 块（--dsh-font-family-text-default / -code-default）；
+// 漂移由 scripts/verify-upstream-hooks.mjs 字面量锚点（第 8 组）盯住（ADR-0025）。
+// 用途：未来皮肤品牌字体前置复合 `'"X", ' + HOST_DEFAULT_TEXT`——default 层
+// 殿后语义使宿主后续演进自动成为回退尾。
+export const HOST_DEFAULT_TEXT = '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif';
+export const HOST_DEFAULT_CODE = '"SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Liberation Mono", Menlo, Courier, "PingFang SC", "Microsoft YaHei"';
+
 const REQUIRED = [
   "id", "label", "description", "titleBrand", "favicon", "anchor", "bodyAttribute",
-  "riding", "scrim", "blur", "glassVar", "desktopBlur", "wallpaper", "tints",
+  "riding", "fonts", "scrim", "blur", "glassVar", "desktopBlur", "wallpaper", "tints",
   "cssSegments", "Mark", "Name",
 ];
 const OPTIONAL = ["constantTokens", "builtinAssets", "backgroundArt", "decoration", "streaming", "badge"];
@@ -88,6 +107,33 @@ function buildWallpaper(spec) {
   return wallpaper;
 }
 
+/** 字体槽位值三态校验与派生（ADR-0025）：null=宿主跟随（不发射）；字符串=
+ * 明暗同栈 fan-out；{light,dark}=逐字。未知槽/空串/畸形对象一律 throw。 */
+function deriveFonts(fonts) {
+  if (fonts === null || typeof fonts !== "object" || Array.isArray(fonts)) {
+    throw new Error("fonts must be an object keyed by font slot");
+  }
+  const derived = {};
+  for (const [slot, value] of Object.entries(fonts)) {
+    if (!Object.hasOwn(FONT_TOKENS, slot)) throw new Error(`Unknown font slot: ${slot}`);
+    const bad = `font slot "${slot}": value must be null, a non-empty string, or { light, dark }`;
+    if (value === null) continue;
+    if (typeof value === "string") {
+      if (value === "") throw new Error(bad);
+      derived[FONT_TOKENS[slot]] = { light: value, dark: value };
+      continue;
+    }
+    const keys = typeof value === "object" && !Array.isArray(value) ? Object.keys(value) : [];
+    if (keys.length !== 2 || !keys.includes("light") || !keys.includes("dark")
+      || typeof value.light !== "string" || value.light === ""
+      || typeof value.dark !== "string" || value.dark === "") {
+      throw new Error(bad);
+    }
+    derived[FONT_TOKENS[slot]] = { light: value.light, dark: value.dark };
+  }
+  return derived;
+}
+
 export function defineSkin(spec) {
   for (const key of Object.keys(spec)) {
     if (!KNOWN_KEYS.has(key)) throw new Error(`Unknown spec key: ${key}`);
@@ -107,13 +153,21 @@ export function defineSkin(spec) {
     spec.backgroundArt ? { art: { mime: spec.backgroundArt.mime, url: spec.backgroundArt.url } } : {},
     spec.builtinAssets ?? {},
   );
+  // 字体派生并入常量族（ADR-0025）：spec.constantTokens 原对象不被改写；
+  // 两者皆空保持 null（原语义），{} 归 null 对下游不可见（tokenOverrides 展开
+  // 后同形）。
+  const fontTokens = deriveFonts(spec.fonts);
+  const constantBase = spec.constantTokens ?? {};
+  const constantTokens = Object.keys(fontTokens).length > 0 || Object.keys(constantBase).length > 0
+    ? { ...constantBase, ...fontTokens }
+    : null;
   const table = {
     bodyAttribute: spec.bodyAttribute,
     titleBrand: spec.titleBrand,
     favicon: spec.favicon,
     anchor: spec.anchor,
     riding: spec.riding,
-    constantTokens: spec.constantTokens ?? null,
+    constantTokens,
     scrim: buildScrim(spec),
     blur: spec.blur,
     glassVar: spec.glassVar,

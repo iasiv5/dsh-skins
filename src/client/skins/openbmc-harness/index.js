@@ -127,17 +127,13 @@ const SPEC = {
     "--dsw-alias-interactive-bg-hover-accent": { light: "rgba(140, 206, 63, 0.14)", dark: "rgba(165, 212, 64, 0.16)" },
     "--dsw-specific-bubble": { light: "rgba(0, 138, 191, 0.10)", dark: "rgba(20, 41, 60, 0.90)" },
     "--dsw-specific-bubble-highlight": { light: "rgba(0, 138, 191, 0.18)", dark: "rgba(29, 61, 85, 0.90)" },
-    "--dsw-font-family": {
-      light: '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif',
-      dark: '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif',
-    },
-    "--ds-font-family-code": {
-      light: '"JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace',
-      dark: '"JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace',
-    },
     "--dsh-scrollbar-thumb": { light: "var(--dsw-alias-scrollbar-bg-l2)", dark: "var(--dsw-alias-scrollbar-bg-l2)" },
     "--dsh-scrollbar-thumb-hover": { light: "var(--dsw-alias-scrollbar-hover-l2)", dark: "var(--dsw-alias-scrollbar-hover-l2)" },
   },
+  // 字体槽位（ADR-0025）：宿主跟随。JetBrains Mono 历史代码栈封存于
+  // docs/adr/0025-font-slots-and-host-tracking.md「JBM 封存」，一行
+  // code: '<封存栈>' 即复活。
+  fonts: { text: null, code: null },
   scrim: {
     kind: "baked-gradient",
     stops: {

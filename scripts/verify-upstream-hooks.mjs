@@ -50,6 +50,10 @@
  *                   page-wide inventory that fails when any OTHER package
  *                   ships a *_frame / *_sidebarCol class selector (a new
  *                   false-positive surface for the ADR-0009 selectors)
+ *   8. font defaults the :root default stacks for text/code still match
+ *                   HOST_DEFAULT_TEXT/CODE verbatim (ADR-0025: skins emit the
+ *                   default layer, not the alias; a drift means re-copy the
+ *                   constants from the runtime theme package)
  *
  * Runtime resolution: $DSH_RUNTIME_ROOT, else ~/.local/share/dsh-runtime.
  * Two layouts are understood: the pnpm store (`node_modules/.pnpm/
@@ -80,6 +84,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { BUBBLE_HOOKS } from "../src/client/skins/decoration.js";
+import { HOST_DEFAULT_CODE, HOST_DEFAULT_TEXT } from "../src/client/skins/define-skin.js";
 
 const YELLOW = process.stderr.isTTY ? "\x1b[33m" : "";
 const RED = process.stderr.isTTY ? "\x1b[31m" : "";
@@ -262,6 +267,34 @@ for (const [pkg, anchors, label] of SERVICE_API_ANCHORS) {
 	for (const anchor of anchors) {
 		if (!source.includes(anchor)) {
 			problems.push(`service API drift: ${label} — "${anchor}" no longer found in ${pkg}; the skins call site will fail at runtime`);
+		}
+	}
+}
+
+// 8. font default stacks (ADR-0025): skins emit the default-layer tokens
+// (--dsh-font-family-{text,code}-default), never the resolved aliases — an
+// alias override sits ABOVE the host's user-font-preference hook chain
+// (--dsh-font-family-text/code) and silently kills user font settings.
+// Needle = bare token-name prefix, NOT ":root{…": in rc.5's base_css_default
+// the code-default declaration is preceded by ";" (review probe R-5).
+// HOST_DEFAULT_* hold raw stacks while base_css_default is a JS string
+// literal with backslash-escaped quotes → escape before byte comparison.
+const escCssLiteral = (value) => value.replaceAll('"', '\\"');
+const FONT_DEFAULT_ANCHORS = [
+	["dsh-client-ui-theme", [
+		`--dsh-font-family-text-default:${escCssLiteral(HOST_DEFAULT_TEXT)}`,
+		`--dsh-font-family-code-default:${escCssLiteral(HOST_DEFAULT_CODE)}`,
+	], "font default stacks (ADR-0025)"],
+];
+for (const [pkg, anchors, label] of FONT_DEFAULT_ANCHORS) {
+	const source = readAll(pkg);
+	if (source === "") {
+		problems.push(`${pkg} is not installed under the runtime — the font-default anchor for ${label} cannot be evaluated`);
+		continue;
+	}
+	for (const anchor of anchors) {
+		if (!source.includes(anchor)) {
+			problems.push(`font default stack drift: ${label} — host default stack changed; re-copy HOST_DEFAULT_* from the runtime theme package (ADR-0025)`);
 		}
 	}
 }

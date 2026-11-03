@@ -6,10 +6,11 @@
  * 「架构快照」。末节为跨皮一致性钉（产物评审 Q3 主人裁量落地）：各皮
  * cssSegments 裸串段内嵌的作用域字面量须与 bodyAttribute 派生值一致——
  * 测试侧独立重推 kebab（对齐 translucency-contract 的独立基线风格）。
+ * 字体槽位派生钉组（ADR-0025）：default 层发射、三态值、fail-closed 校验。
  */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { defineSkin } from "../src/client/skins/define-skin.js";
+import { defineSkin, FONT_TOKENS } from "../src/client/skins/define-skin.js";
 import { createOpenBmcHarness } from "../src/client/skins/openbmc-harness/index.js";
 import { createUefiHarness } from "../src/client/skins/uefi-harness/index.js";
 import { createMeirenzhiSkin } from "../src/client/skins/meirenzhi/index.js";
@@ -28,6 +29,7 @@ function minSpec(overrides = {}) {
       "--dsw-alias-bg-base": { light: ["250, 249, 246", 35], dark: ["18, 18, 26", 35] },
     },
     constantTokens: null,
+    fonts: { text: null, code: null },
     scrim: { kind: "overlay", coefficient: 30, light: "252, 250, 246", dark: "16, 16, 26" },
     blur: { max: 12 },
     glassVar: "--dsh-test-glass-blur",
@@ -48,6 +50,52 @@ function minSpec(overrides = {}) {
   };
 }
 
+// ===== 字体槽位派生（ADR-0025）：default 层发射、三态值、fail-closed 校验 =====
+
+const project35 = (skin) => skin.project({ panelOpacity: 35, slogan: { zh: "t", en: "t" } }, null);
+const fontKeysOf = (fx) => Object.keys(fx.tokenOverrides).filter((key) => /font/i.test(key));
+
+test("fonts: null slots emit no font tokens (host-tracking)", () => {
+  const fx = project35(defineSkin(minSpec()));
+  assert.deepEqual(fontKeysOf(fx), [], "null slots = host-tracking, zero emission");
+});
+
+test("fonts: string value fans out to { light, dark } at the default-layer token", () => {
+  const fx = project35(defineSkin(minSpec({ fonts: { text: '"LXGW WenKai", sans-serif', code: null } })));
+  assert.deepEqual(fx.tokenOverrides[FONT_TOKENS.text], { light: '"LXGW WenKai", sans-serif', dark: '"LXGW WenKai", sans-serif' });
+});
+
+test("fonts: { light, dark } object is emitted verbatim", () => {
+  const fx = project35(defineSkin(minSpec({ fonts: { text: null, code: { light: "Mono A", dark: "Mono B" } } })));
+  assert.deepEqual(fx.tokenOverrides[FONT_TOKENS.code], { light: "Mono A", dark: "Mono B" });
+});
+
+test("fonts: derivation merges with constantTokens; the spec's own object is not mutated", () => {
+  const constantTokens = { "--dsw-alias-brand-primary": { light: "#111111", dark: "#222222" } };
+  const spec = minSpec({ constantTokens, fonts: { text: '"X", sans-serif', code: null } });
+  const fx = project35(defineSkin(spec));
+  assert.deepEqual(fx.tokenOverrides[FONT_TOKENS.text], { light: '"X", sans-serif', dark: '"X", sans-serif' });
+  assert.deepEqual(fx.tokenOverrides["--dsw-alias-brand-primary"], { light: "#111111", dark: "#222222" });
+  assert.deepEqual(Object.keys(constantTokens), ["--dsw-alias-brand-primary"], "spec.constantTokens untouched");
+});
+
+test("fonts: fail-closed matrix (ADR-0025 deriveFonts contract)", () => {
+  const valueCases = [
+    [{ text: "" }, /value must be null/],
+    [{ brand: null }, /Unknown font slot/],
+    [{ text: { light: "a" } }, /value must be null/],
+    [{ text: { light: "a", dark: "b", extra: "c" } }, /value must be null/],
+    [{ text: 42 }, /value must be null/],
+    [{ text: ["a"] }, /value must be null/],
+  ];
+  for (const [fonts, pattern] of valueCases) {
+    assert.throws(() => defineSkin(minSpec({ fonts })), pattern, `case ${JSON.stringify(fonts)}`);
+  }
+  assert.throws(() => defineSkin(minSpec({ fonts: null })), /must be an object/);
+  assert.throws(() => defineSkin(minSpec({ fonts: "text" })), /must be an object/);
+  assert.throws(() => defineSkin(minSpec({ fonts: ["text"] })), /must be an object/);
+});
+
 test("unknown top-level spec key throws (fail-closed)", () => {
   assert.throws(() => defineSkin(minSpec({ stray: 1 })), /Unknown spec key/);
 });
@@ -56,7 +104,7 @@ test("missing required spec fields throw", () => {
   // 产物评审 Q5-①：REQUIRED 全键逐个参数化（数组漂移即有钉可拦）。
   const required = [
     "id", "label", "description", "titleBrand", "favicon", "anchor", "bodyAttribute",
-    "riding", "scrim", "blur", "glassVar", "desktopBlur", "wallpaper", "tints",
+    "riding", "fonts", "scrim", "blur", "glassVar", "desktopBlur", "wallpaper", "tints",
     "cssSegments", "Mark", "Name",
   ];
   for (const key of required) {

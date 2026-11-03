@@ -77,6 +77,8 @@ const SPEC = {
     "--dsw-specific-bubble": { light: "rgba(184, 67, 63, 0.10)", dark: "rgba(24, 24, 34, 0.90)" },
     "--dsw-specific-bubble-highlight": { light: "rgba(184, 67, 63, 0.18)", dark: "rgba(40, 40, 56, 0.92)" },
   },
+  // 字体槽位（ADR-0025）：宿主跟随。
+  fonts: { text: null, code: null },
   scrim: { kind: "overlay", coefficient: 30, light: "252, 250, 246", dark: "16, 16, 26" },
   blur: { max: 12 },
   glassVar: "--dsh-mrz-glass-blur",

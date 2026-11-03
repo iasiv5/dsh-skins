@@ -50,6 +50,7 @@ export function createMySkin(jsxRuntime) {
     bodyAttribute: "dshMySkin", // 工厂派生作用域 body[data-dsh-my-skin]（camelCase → data-kebab）
     riding: { "--dsw-alias-bg-base": { light: ["R, G, B", 35], dark: ["R, G, B", 35] } }, // 值 = 出厂锚点处烘焙读数，全走 tokenOverrides（ADR-0017 单通道）
     constantTokens: null, // 或 { token: { light, dark } } 常量族（meirenzhi 同款）
+    fonts: { text: null, code: null }, // 必填（ADR-0025）：字体槽位，发射目标恒为宿主 default 层 token。null=宿主跟随（三皮出厂态）；字符串=明暗同栈；{ light, dark }=分档。品牌默认字体写法：text: '"LXGW WenKai", ' + HOST_DEFAULT_TEXT（define-skin.js 导出，前置复合——宿主默认栈自动殿后）。禁入 alias 层（--dsw-font-family / --ds-font-family-code，层级守卫拦截）：直写会压制宿主用户字体偏好
     scrim: { kind: "overlay", coefficient: 30, light: "R, G, B", dark: "R, G, B" }, // 或 baked-gradient 分支 { kind, stops: { light: [[rgb,α]×2], dark: […] } }；artLayer 由 backgroundArt 派生
     blur: { max: 12 },
     glassVar: "--dsh-my-skin-glass-blur",
@@ -81,6 +82,12 @@ export function createMySkin(jsxRuntime) {
 6. 保留 ID `official` 与兼容别名 `default`，不要用于扩展皮肤。
 
 `label` 与 `description` 接受语言中立的字符串（如品牌名）或 `{ zh, en }` 映射，解析顺序为当前语言 → en → zh。皮肤卡片与 `__DSH_SKINS__.list()` 始终返回解析后的字符串，中英词典由 `tests/dicts.test.mjs` 强制键与占位符双向对齐。
+
+### 字体槽位（ADR-0025）
+
+- **槽位只有两类**：`text`（正文——界面与一切内容区文字，含 markdown 标题、绘画区、侧栏）与 `code`（代码块与行内 code）。每张皮肤必须对每个槽位显式表态，`null`（宿主跟随）也是表态。
+- **级联次序恒定**：宿主用户字体偏好（设置 UI，text/code/terminal 三角色）前置 → 皮肤 `fonts` 表态殿后 → 宿主默认栈兜底。皮肤只能提供「默认」，**不得直写 alias**（`--dsw-font-family` / `--ds-font-family-code`）——那会压制用户偏好，层级守卫（`tests/font-slots.test.mjs`）拦截。
+- **槽位枚举 fail-closed**：v1 只有 `text / code`；未知槽名、空串、畸形值一律 throw。brand / terminal / 区域级槽位为预留（分析见 ADR-0025），宿主未来开钩子再扩枚举。
 
 标签页品牌段由声明表的 `titleBrand` 驱动（经投影结果的 `effects.titleBrand` 生效，ADR-0013），接受与 `label` 相同的字符串或 `{ zh, en }` 形式。官方 `DocumentTitle` 投影器会把标签页维护为「会话名 — DeepSeek Harness」，皮肤挂载期间只替换其中的品牌段、保留会话名；选择官方外观或插件卸载时换回官方品牌。
 
