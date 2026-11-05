@@ -156,7 +156,11 @@ const SHELL_CSS = [
   // paid, and — combined with the fixed 360px list column — clipped the
   // gear column at the pop's own edge on phones (field report 2026-10-14:
   // 手机上齿轮被截半 + 横向滚动条).
-  '.dsh-skins-pop{position:fixed;z-index:60;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;width:min(390px,calc(100vw - 32px));max-height:calc(100vh - 24px);padding:14px;border:1px solid var(--dsw-alias-border-l2);border-radius:14px;background:var(--dsw-alias-bg-elevated,var(--dsw-alias-bg-overlay));background:color-mix(in srgb,var(--dsw-alias-bg-base,#1f1f1f) 86%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);color:var(--dsw-alias-label-primary);box-shadow:var(--dsw-shadow-lv3,0 8px 24px rgba(0,0,0,.14));overflow-y:auto;transition:width .2s ease-out}',
+  // 窄屏抽屉层叠（2026-11-05 修复）：弹层经 portal 挂在 body 下，与官方侧栏
+  // 抽屉同层竞争。dsh-client-ui-layout 在视口 <768px 时抽屉遮罩为 z-70、侧栏
+  // 列为 z-71；旧值 z-60 让弹层整块压在抽屉之下（只余遮罩模糊后的轮廓，点不到）。
+  // z-80 高于抽屉、低于宿主 z-100 起的各层（ADR-0021 的 z 全集）。
+  '.dsh-skins-pop{position:fixed;z-index:80;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;width:min(390px,calc(100vw - 32px));max-height:calc(100vh - 24px);padding:14px;border:1px solid var(--dsw-alias-border-l2);border-radius:14px;background:var(--dsw-alias-bg-elevated,var(--dsw-alias-bg-overlay));background:color-mix(in srgb,var(--dsw-alias-bg-base,#1f1f1f) 86%,transparent);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);color:var(--dsw-alias-label-primary);box-shadow:var(--dsw-shadow-lv3,0 8px 24px rgba(0,0,0,.14));overflow-y:auto;transition:width .2s ease-out}',
   // Slim themed scrollbars for the shell's own scroll region (list-only
   // popover): thin + token-colored thumb, WebKit and Firefox both covered.
   '.dsh-skins-pop{scrollbar-width:thin;scrollbar-color:var(--dsw-alias-border-l2) transparent}',

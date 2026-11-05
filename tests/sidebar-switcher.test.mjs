@@ -574,3 +574,18 @@ test("⑭ shell takeover sentinel: a negative-priority sidebar.workspaces occupa
   const hEmpty = makeHarness(900, 1400, []);
   assert.equal(hEmpty.seesShellTakeover(), false, "empty ledger (stub contexts) → the row stays");
 });
+
+test("⑮ popover clears the official narrow-drawer layers: z-index above the drawer mask (z-70) and sidebar column (z-71), below the host's z-100 layers", async () => {
+  // dsh-client-ui-layout (viewport < 768px): drawer mask z-70, sidebar column
+  // z-71. The popover is portalled to <body>, so a z-60 value painted the
+  // picker UNDER the open drawer — the trigger worked but the picker was an
+  // unclickable blurred ghost (narrow-screen regression, 2026-11-05).
+  const h = makeHarness();
+  await h.openShell();
+  const match = /\.dsh-skins-pop\{position:fixed;z-index:(\d+);/.exec(h.cssText());
+  assert.ok(match, "the popover rule declares position:fixed with an explicit z-index");
+  const z = Number(match[1]);
+  assert.ok(z > 71, `popover z-index ${z} must clear the drawer sidebar column (z-71) — a lower value hides the picker behind the drawer on narrow screens`);
+  assert.ok(z < 100, `popover z-index ${z} must stay below the host's z-100 layers (ADR-0021 z scale)`);
+});
+
