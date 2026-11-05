@@ -8,6 +8,29 @@
 // missing. The fix pins the sidebar column one explicit stacking step up
 // (style tag `dsh-skins/<id>.paintorder.css`, symbol "paintorder").
 //
+// Viewport contract (DSH 0.2.2-rc.1 layout bands, measured on the live host):
+// the gate measures the COLLAPSED RAIL — a 56px sidebar column at x≈0. The rail
+// exists at 768–1023px only: below 768px the sidebar is a drawer whose collapsed
+// state is hidden (no rail to measure), and at >=1024px the sidebar is expanded
+// by default. The default viewport is therefore 800x800. A drawer-layout viewport
+// is rejected with INVALID (exit 3) instead of a click timeout.
+//
+// Side effect (read before running against a live host): when the page is not
+// already dark, ensureDarkSignature clicks the switcher's Dark card, which is
+// written as the host-persisted theme preference of the anonymous workspace.
+// A run on a light host therefore flips the live theme to dark; a dark host is
+// left untouched (the early return below).
+//
+// Discrimination status (2026-11-05, DSH 0.2.2-rc.1, 800x800): NOT established.
+// Controls measured identically to the fixed build: the pre-paint-order build
+// (parent of 11883f7; also with --collapse-expand) and the build with the
+// paint-order rule neutralized. Hiding the rail with opacity:0 also PASSes —
+// the metric counts bright pixels and a hidden rail RAISES the count
+// (2107 -> 10462), while the baseline health check still passes. A PASS here is
+// therefore NOT evidence that the rail is painted or that the paint-order fix
+// holds. Treat this gate as a geometry smoke test until its measurement is
+// redesigned (follow-up task).
+//
 // Modes:
 //   (default)          fingerprint + cold-baseline sanity + switch flow + verdict
 //   --fingerprint-only served-bundle symbol probe only (hot-deploy effect check)
@@ -15,12 +38,12 @@
 //   --gate             for the `test` pipeline: if --url is unreachable, print
 //                      an explicit SKIP line and exit 0 (CI has no live host)
 //
-// Exit codes: 0 PASS / SKIP · 1 FAIL · 2 REVIEW · 3 INVALID (baseline/bundle)
+// Exit codes: 0 PASS / SKIP · 1 FAIL · 2 REVIEW · 3 INVALID (baseline/bundle/drawer layout)
 // Artifacts: repro-rail.png next to the script's CWD.
 //
 // Usage:
 //   node scripts/repro-stale-grid-paint.mjs [--url http://127.0.0.1:3080]
-//        [--viewport 422x800] [--skin-id openbmc-harness] [--collapse-expand]
+//        [--viewport 800x800] [--skin-id openbmc-harness] [--collapse-expand]
 //        [--no-fingerprint] [--fingerprint-only] [--gate]
 
 import fs from "node:fs";
@@ -41,7 +64,7 @@ const has = (name) => args.includes(name);
 const URL_DEFAULT = "http://127.0.0.1:3080";
 const baseUrl = argOf("--url") ?? URL_DEFAULT;
 const viewport = (() => {
-  const raw = argOf("--viewport") ?? "422x800";
+  const raw = argOf("--viewport") ?? "800x800";
   const [w, h] = raw.split("x").map(Number);
   if (!Number.isFinite(w) || !Number.isFinite(h) || w < 200 || h < 200) {
     throw new Error(`bad --viewport: ${raw}`);
@@ -248,6 +271,15 @@ try {
   if (fingerprintOnly) {
     console.log("PASS: fingerprint-only mode");
     process.exit(0);
+  }
+
+  // Drawer-layout guard (DSH 0.2.2-rc.1): below 768px the sidebar is a drawer
+  // and its collapsed state is hidden, so there is no rail to measure. Fail fast
+  // with the reason instead of a 30s click timeout inside ensureDarkSignature.
+  const drawerLayout = await page.evaluate(() => document.querySelector("[data-sidebar-drawer]") !== null);
+  if (drawerLayout) {
+    console.error(`INVALID: viewport ${viewport.width}x${viewport.height} is in the drawer layout (<768px) — the collapsed sidebar is hidden, so no rail exists to measure. Use a rail-visible width (768–1023px; default 800x800).`);
+    process.exit(3);
   }
 
   // Cold baseline for the TARGET skin: persist the choice, reload, verify the
