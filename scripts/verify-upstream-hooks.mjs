@@ -17,19 +17,31 @@
  * (the ADR-0011 Q3 "keep in sync" comment discipline is retired by
  * construction). Overlay selectors live in src/client/skins/frost-family.js
  * (ADR-0012):
- *   1. exact-hash   BUBBLE_HOOKS.chat.exact still exists in dsh-client-ui-chat
- *                   (union branch 1; ADR-0006)
- *   2. structural   the chat module still has exactly one *_bubble class
- *                   (the user bubble) and the chat container class
- *                   (BUBBLE_HOOKS.chat.container; union branch 2 preconditions)
+ *   1. exact-hash   BUBBLE_HOOKS.chat.exact alive in dsh-client-ui-chat when
+ *                   non-null (union branch 1; ADR-0006). null = retired: since
+ *                   0.2.2-rc.1 the user bubble lives in the shared
+ *                   dsh-web-frontend UserMessageBubble primitive whose
+ *                   css-modules hash churns per build — chat is then
+ *                   structural-only and a dead hash only WARNs
+ *   2. structural   the chat structural premise (HARD): the module owns
+ *                   exactly one *_bubble class (classic shape) OR references
+ *                   the UserMessageBubble primitive with no local bubble class
+ *                   (0.2.2-rc.1+ shape), and the container class
+ *                   (BUBBLE_HOOKS.chat.container) still exists
  *   2b. goal        the goal-panel bubble hook: BUBBLE_HOOKS.goal.exact hash
  *                   and a *_stack container class (ADR-0006 v1.0.4 amendment)
- *   3. whitelist    the page-wide *_bubble inventory across every installed
- *                   @deepseek-ai package stays ⊆ {BUBBLE_HOOKS.chat.exact,
- *                   BUBBLE_HOOKS.goal.exact, ROF66W_bubble (reviewed upstream
- *                   reply bubble, see below)}; a new _bubble class is a new
- *                   false-positive surface for [class*="_bubble"] and forces
- *                   a re-review instead of silently widening the selector
+ *   3. whitelist    the page-wide *_bubble inventory (lib/*.js PLUS the
+ *                   dsh-web-frontend dist assets, web strict mode) stays
+ *                   within: the manifest hashes, the reviewed ROF66W_bubble /
+ *                   ROF66W_bubbleWidth reply-bubble pair, the chat module's
+ *                   own premise-checked tokens, and frontend dist tokens
+ *                   role-classified from the dist CSS (position:fixed =
+ *                   portal tooltip, geometrically unable to match the
+ *                   userStack child selector; non-fixed = the message-bubble
+ *                   family, at least one must exist or the structural branch
+ *                   would match nothing — HARD). A new unclassified _bubble
+ *                   class forces a re-review instead of silently widening
+ *                   the selector
  *   4. dark hook    body[data-ds-dark-theme] is still shipped by the theme
  *                   package (every dark variant rule keys off it)
  *   5. service API  the client/host service methods this plugin consumes are
@@ -131,7 +143,10 @@ if (existsSync(pnpmDir)) {
 }
 
 const readAll = (pkg) => (packages.get(pkg) ?? []).map((f) => readFileSync(f, "utf8")).join("\n");
-const BUBBLE_TOKEN = /[A-Za-z0-9]+_bubble[A-Za-z0-9]*/g;
+// Underscore-led css-modules names (_bubble_<hash>_<n>) are first-class in the
+// frontend dist; the lookbehind keeps the runtime-internal "__bubble" marker
+// (a string-concat tag, not a DOM class) out of the inventory.
+const BUBBLE_TOKEN = /(?<!_)[A-Za-z0-9]*_bubble[A-Za-z0-9_]*/g;
 const problems = [];
 
 // Judging mode. The ADR-0006 exact hashes were derived from the WEB runtime
@@ -146,17 +161,22 @@ const directAsarLayout = !existsSync(pnpmDir);
 
 // --- manifest checks -------------------------------------------------------
 const chat = readAll("dsh-client-ui-chat");
+const chatBubbles = [...new Set(chat.match(BUBBLE_TOKEN) ?? [])];
+const warn = (message) => console.error(`${YELLOW}upstream-hooks: WARN ${message}${RESET}`);
 if (chat === "") {
 	problems.push("dsh-client-ui-chat is not installed under the runtime — the DOM-hook manifest cannot be evaluated (layout change?)");
 } else {
-	// 1. exact-hash branch (strict/web mode only)
-	const chatBubbles = [...new Set(chat.match(BUBBLE_TOKEN) ?? [])];
+	// 1. exact-hash branch (strict/web mode only). chat.exact === null means
+	//    retired — see the manifest header; the structural premise below is
+	//    then chat's only hook and stays HARD (ADR-0006 2026-11-05 amendment).
 	if (!directAsarLayout) {
-		if (!chat.includes(BUBBLE_HOOKS.chat.exact)) {
-			problems.push(`exact-hash branch dead: "${BUBBLE_HOOKS.chat.exact}" no longer in dsh-client-ui-chat — re-derive the hash and update BUBBLE_HOOKS in src/client/skins/decoration.js (ADR-0006/0016)`);
+		if (BUBBLE_HOOKS.chat.exact !== null && !chat.includes(BUBBLE_HOOKS.chat.exact)) {
+			warn(`exact-hash branch dead: "${BUBBLE_HOOKS.chat.exact}" no longer in dsh-client-ui-chat — the structural branch carries the decoration; re-derive or retire the hash in BUBBLE_HOOKS (ADR-0006/0016)`);
 		}
-		if (chatBubbles.length !== 1 || chatBubbles[0] !== BUBBLE_HOOKS.chat.exact) {
-			problems.push(`chat module *_bubble inventory is [${chatBubbles.join(", ")}], expected exactly [${BUBBLE_HOOKS.chat.exact}] — the structural branch's "the only _bubble under ${BUBBLE_HOOKS.chat.container} is the user bubble" premise needs re-review (ADR-0006)`);
+		const classicShape = chatBubbles.length === 1;
+		const primitiveShape = chatBubbles.length === 0 && chat.includes("UserMessageBubble");
+		if (!classicShape && !primitiveShape) {
+			problems.push(`chat structural premise broken: module *_bubble inventory is [${chatBubbles.join(", ")}] and no UserMessageBubble primitive reference — neither the classic single-bubble shape nor the 0.2.2-rc.1 primitive shape holds; re-derive the ADR-0006 structural hook`);
 		}
 	} else {
 		// structural mode (desktop asar): the fallback branch must stand alone.
@@ -191,14 +211,24 @@ if (goal === "") {
 	}
 }
 
-// 3. page-wide *_bubble whitelist
+// 3. page-wide *_bubble whitelist + frontend-dist role model (web strict)
 // ROF66W_bubble (0.2.0-rc.2 audit): user-questions QuestionReplyView reply
 // bubble — themed via --dsw-specific-bubble, its container local name is
-// `_row`, so the chat structural sweep can never match it.
-// Structural mode (desktop asar) swaps the fixed whitelist for the runtime's
-// OWN observed chat/goal/reply families: extra families are still a
-// structural-premise break, "vanished" pins are a web-runtime notion only.
-const BUBBLE_WHITELIST = new Set([BUBBLE_HOOKS.chat.exact, BUBBLE_HOOKS.goal.exact, "ROF66W_bubble"]);
+// `_row`, so the chat structural sweep can never match it. ROF66W_bubbleWidth
+// (0.2.2-rc.1 audit) is the same view's width modifier.
+// The chat module's OWN bubble tokens are premise-checked above (exactly-one
+// classic shape or the primitive shape) and are not re-judged here — the
+// module cannot grow a second bubble without that premise going red first.
+// The dsh-web-frontend dist owns the shared primitives; its css-modules
+// hashes churn per build, so dist tokens are classified by ROLE from the
+// dist CSS: position:fixed bubbles are tooltips (portal-mounted — they can
+// never be a [class*="userStack"] child); non-fixed ones are the message-
+// bubble family and at least one must exist or the structural branch would
+// match nothing (HARD). Structural mode (desktop asar) keeps the runtime's
+// OWN observed chat/goal/reply families and skips the dist role model.
+const BUBBLE_WHITELIST = new Set(
+	[BUBBLE_HOOKS.chat.exact, BUBBLE_HOOKS.goal.exact, "ROF66W_bubble", "ROF66W_bubbleWidth"].filter(Boolean),
+);
 const foundBubbles = new Map(); // token -> Set<pkg>
 for (const [pkg, files] of packages) {
 	for (const file of files) {
@@ -206,6 +236,32 @@ for (const [pkg, files] of packages) {
 			if (!foundBubbles.has(token)) foundBubbles.set(token, new Set());
 			foundBubbles.get(token).add(pkg);
 		}
+	}
+}
+const frontendMessageBubbles = [];
+const frontendTooltipBubbles = [];
+if (!directAsarLayout) {
+	const distDir = (() => {
+		if (existsSync(pnpmDir)) {
+			const entry = readdirSync(pnpmDir).find((e) => e.startsWith("@deepseek-ai+dsh-web-frontend@"));
+			return entry ? join(pnpmDir, entry, "node_modules/@deepseek-ai/dsh-web-frontend/dist/assets") : null;
+		}
+		const direct = join(directDir, "dsh-web-frontend/dist/assets");
+		return existsSync(direct) ? direct : null;
+	})();
+	if (distDir) {
+		const distTokens = [];
+		for (const file of readdirSync(distDir).filter((f) => f.endsWith(".js"))) {
+			for (const token of readFileSync(join(distDir, file), "utf8").match(BUBBLE_TOKEN) ?? []) {
+				if (!foundBubbles.has(token)) foundBubbles.set(token, new Set());
+				foundBubbles.get(token).add("dsh-web-frontend(dist)");
+				if (!distTokens.includes(token)) distTokens.push(token);
+			}
+		}
+		const distCss = readdirSync(distDir).filter((f) => f.endsWith(".css"))
+			.map((f) => readFileSync(join(distDir, f), "utf8")).join("\n");
+		const isTooltip = (token) => new RegExp(`\\.${escapeRegExp(token)}\\{[^}]*position:fixed`).test(distCss);
+		for (const token of distTokens) (isTooltip(token) ? frontendTooltipBubbles : frontendMessageBubbles).push(token);
 	}
 }
 if (directAsarLayout) {
@@ -224,15 +280,25 @@ if (directAsarLayout) {
 		}
 	}
 } else {
+	const chatModuleTokens = new Set(chatBubbles);
 	for (const [token, pkgs] of foundBubbles) {
-		if (!BUBBLE_WHITELIST.has(token)) {
-			problems.push(`new *_bubble class ${token} in ${[...pkgs].join(", ")} — new false-positive surface for [class*="_bubble"], re-review the ADR-0006 selectors`);
-		}
+		if (BUBBLE_WHITELIST.has(token)) continue;
+		if (frontendTooltipBubbles.includes(token)) continue; // role-reviewed: portal tooltip, never a userStack child
+		if (frontendMessageBubbles.includes(token)) continue; // role-reviewed: the message-bubble family — the structural branch's live matcher (presence is HARD-checked below)
+		if (chatModuleTokens.has(token)) continue; // the chat module's own hook — premise-checked above
+		problems.push(`new *_bubble class ${token} in ${[...pkgs].join(", ")} — new false-positive surface for [class*="_bubble"], re-review the ADR-0006 selectors`);
 	}
 	for (const token of BUBBLE_WHITELIST) {
 		if (!foundBubbles.has(token)) {
-			problems.push(`whitelisted bubble class ${token} vanished from the runtime — update BUBBLE_WHITELIST (ADR-0006 manifest)`);
+			warn(`whitelisted bubble class ${token} vanished from the runtime — update the ADR-0006 manifest`);
 		}
+	}
+	// The structural branch must have a live matcher (HARD): the chat module's
+	// classic single bubble or a frontend message-family class.
+	const classicHookAlive = chatBubbles.length === 1;
+	const primitiveHookAlive = frontendMessageBubbles.length > 0;
+	if (!classicHookAlive && !primitiveHookAlive) {
+		problems.push("no user-bubble hook alive: the chat module has no single *_bubble class and the frontend dist ships no non-tooltip one — the structural branch would match nothing (ADR-0006)");
 	}
 }
 
@@ -498,9 +564,17 @@ if (problems.length > 0) {
 	process.exit(1);
 }
 const bubbles = [...foundBubbles.keys()].sort().join(", ");
+const chatHookSummary = directAsarLayout
+	? `single-bubble inventories + ${BUBBLE_HOOKS.chat.container} alive`
+	: BUBBLE_HOOKS.chat.exact === null
+		? `chat structural-only (${BUBBLE_HOOKS.chat.container} > ${BUBBLE_HOOKS.bubbleLocal}; exact hash retired 0.2.2-rc.1 — frontend primitives)`
+		: `${BUBBLE_HOOKS.chat.exact} alive; chat *_bubble = [${chatBubbles.join(", ")}]`;
+const frontendRoleSummary = frontendTooltipBubbles.length + frontendMessageBubbles.length > 0
+	? `; frontend dist bubble roles: tooltip=[${frontendTooltipBubbles.join("|") || "none"}] message=[${frontendMessageBubbles.join("|") || "none"}]`
+	: "";
 const bubbleSummary = directAsarLayout
-	? `desktop structural mode: single-bubble inventories + ${BUBBLE_HOOKS.chat.container}/${BUBBLE_HOOKS.goal.container} containers alive; page *_bubble = {${bubbles}}`
-	: `${BUBBLE_HOOKS.chat.exact} alive; chat *_bubble = [${BUBBLE_HOOKS.chat.exact}]; ${BUBBLE_HOOKS.chat.container} alive; goal ${BUBBLE_HOOKS.goal.exact} + ${BUBBLE_HOOKS.goal.container} alive; page *_bubble = {${bubbles}}`;
+	? `desktop structural mode: ${chatHookSummary} + ${BUBBLE_HOOKS.goal.container} containers alive; page *_bubble = {${bubbles}}`
+	: `${chatHookSummary}; goal ${BUBBLE_HOOKS.goal.exact} + ${BUBBLE_HOOKS.goal.container} alive${frontendRoleSummary}; page *_bubble = {${bubbles}}`;
 const modeSummary = directAsarLayout ? "structural-mode (desktop asar layout)" : "strict-mode (pnpm store layout)";
 const overlaySummary = frontendChecked
 	? "overlay hooks alive (_float_/_dialog_/_pane_/_float* whitelist/mask+menu tokens + slots module map)"

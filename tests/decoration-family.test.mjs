@@ -13,10 +13,10 @@ const MRZ_PALETTE = { light: "184, 67, 63", dark: "229, 138, 128" };
 test("decorationCss: meirenzhi palette reproduces the shipped golden bytes (canonical)", () => {
   const css = decorationCss(MRZ_SCOPE, MRZ_PALETTE);
   assert.ok(css.includes(
-    `${MRZ_SCOPE} :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]){border:1px solid rgba(184, 67, 63, 0.38);box-shadow:0 1px 4px rgba(184, 67, 63, 0.10)}`,
+    `${MRZ_SCOPE} [class*="userStack"] > [class*="_bubble"]{border:1px solid rgba(184, 67, 63, 0.38);box-shadow:0 1px 4px rgba(184, 67, 63, 0.10)}`,
   ), "chat light golden");
   assert.ok(css.includes(
-    `${MRZ_SCOPE}[data-ds-dark-theme] :is([class*="Sixlwa_bubble"], [class*="userStack"] > [class*="_bubble"]){border-color:rgba(229, 138, 128, 0.38);box-shadow:0 1px 6px rgba(229, 138, 128, 0.10)}`,
+    `${MRZ_SCOPE}[data-ds-dark-theme] [class*="userStack"] > [class*="_bubble"]{border-color:rgba(229, 138, 128, 0.38);box-shadow:0 1px 6px rgba(229, 138, 128, 0.10)}`,
   ), "chat dark golden");
   assert.ok(css.includes(
     `${MRZ_SCOPE} :is([class*="oRe1gG_bubble"], [class*="_stack"] > [class*="_bubble"]){border:1px solid rgba(184, 67, 63, 0.38);box-shadow:0 1px 4px rgba(184, 67, 63, 0.10)}`,
@@ -53,7 +53,8 @@ test("decorationCss: palette injection reaches border and both shadow stages", (
 });
 
 test("BUBBLE_HOOKS: the single source of the pinned hashes (guard + skins consume this)", () => {
-  assert.equal(BUBBLE_HOOKS.chat.exact, "Sixlwa_bubble");
+  assert.equal(BUBBLE_HOOKS.chat.exact, null,
+    "chat exact retired 0.2.2-rc.1: the user bubble moved to frontend primitives whose hash churns per build — structural-only (ADR-0006 amendment)");
   assert.equal(BUBBLE_HOOKS.chat.container, "userStack");
   assert.equal(BUBBLE_HOOKS.goal.exact, "oRe1gG_bubble");
   assert.equal(BUBBLE_HOOKS.goal.container, "_stack");

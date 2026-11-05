@@ -1,4 +1,4 @@
 {
-  "version": "0.2.1-rc.2",
-  "note": "CI verification target for scripts/verify-upstream-hooks.mjs (ADR-0011). scripts/ci-install-runtime.mjs installs the umbrella @deepseek-ai/dsh-web-app at this EXACT version — its dependency tree transitively pins the whole synchronized @deepseek-ai/dsh-* family. Bumping this pin is the manifest re-derivation moment: strict-mode exact hashes may need re-derivation, and the pin-bump PR's CI red is the designed upgrade tripwire. Never point this at a mutable dist-tag."
+  "version": "0.2.2-rc.1",
+  "note": "2026-11-05 bumped 0.2.1-rc.2 → 0.2.2-rc.1 (ADR-0011 re-derivation moment: the chat bubble moved to frontend primitives, the hook went structural-only, the guard gained the frontend-dist role model). CI verification target for scripts/verify-upstream-hooks.mjs (ADR-0011). scripts/ci-install-runtime.mjs installs the umbrella @deepseek-ai/dsh-web-app at this EXACT version — its dependency tree transitively pins the whole synchronized @deepseek-ai/dsh-* family. Bumping this pin is the manifest re-derivation moment: strict-mode exact hashes may need re-derivation, and the pin-bump PR's CI red is the designed upgrade tripwire. Never point this at a mutable dist-tag."
 }

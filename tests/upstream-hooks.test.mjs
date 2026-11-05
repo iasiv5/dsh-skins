@@ -14,21 +14,22 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { BUBBLE_HOOKS } from "../src/client/skins/decoration.js";
+import { BUBBLE_HOOKS, BUBBLE_SELECTORS } from "../src/client/skins/decoration.js";
 import { createOpenBmcHarness } from "../src/client/skins/openbmc-harness/index.js";
 import { createUefiHarness } from "../src/client/skins/uefi-harness/index.js";
 import { createMeirenzhiSkin } from "../src/client/skins/meirenzhi/index.js";
 import { jsx } from "./fake-react.mjs";
 
 const client = readFileSync("lib/client.js", "utf8");
-const UNION = `:is([class*="${BUBBLE_HOOKS.chat.exact}"], [class*="${BUBBLE_HOOKS.chat.container}"] > [class*="${BUBBLE_HOOKS.bubbleLocal}"])`;
-const GOAL_UNION = `:is([class*="${BUBBLE_HOOKS.goal.exact}"], [class*="${BUBBLE_HOOKS.goal.container}"] > [class*="${BUBBLE_HOOKS.bubbleLocal}"])`;
+const UNION = BUBBLE_SELECTORS.chat;
+const GOAL_UNION = BUBBLE_SELECTORS.goal;
 
 test("bubble decoration: both unions ship twice per skin (light + dark) — wiring truth, runtime-evaluated", () => {
 	// 2 rules per skin × 3 skins, per surface (chat user bubble + goal-panel
-	// bubble, v1.0.4) — the exact-hash and structural branches always ship
-	// together; a skin missing a union (or forgetting to call decorationCss)
-	// is a fix regression. (v1.4.0 removed the tgcf skin: 8 → 6 occurrences.)
+	// bubble, v1.0.4) — a skin missing a union (or forgetting to call
+	// decorationCss) is a fix regression. (v1.4.0 removed the tgcf skin:
+	// 8 → 6 occurrences. v1.5.29: the chat surface ships structural-only —
+	// the exact hash retired with 0.2.2-rc.1's UserMessageBubble move.)
 	const skins = [
 		["openbmc", createOpenBmcHarness({ jsx }), 55],
 		["uefi-harness", createUefiHarness({ jsx }), 55],
@@ -74,6 +75,7 @@ test("shell-frame alignment ships exactly once, marker-gated, structural local n
 
 test("bubble decoration: the dead rc.2 hash gdEzaW must never return", () => {
 	assert.ok(!client.includes("gdEzaW"), "gdEzaW is the 0.1.1-rc.2 hash that rc.1 rebuilt away — pinning it again re-arms the ADR-0006 failure mode");
+	assert.ok(!UNION.includes("Sixlwa"), "the retired chat hash must not linger in the shipped selector (v1.5.29 structural-only)");
 });
 
 test("fullscreen frost base hooks ship in the built client (ADR-0020)", () => {

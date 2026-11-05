@@ -153,6 +153,6 @@ __DSH_SKINS__.themePreference();       // 浏览器保存的配色偏好；可�
 
 以下边界属于实现细节，从 README 的使用者视角移到这里：
 
-- OpenBMC 用户气泡描边使用版本相关类 `.Sixlwa_bubble`；该类变化只影响描边，token 配色不受影响。哈希与结构钩子的唯一来源在 `src/client/skins/decoration.js` 的 `BUBBLE_HOOKS`（ADR-0016）：上游重建导致哈希漂移时，重推导只改该对象一处，守卫 `verify-upstream-hooks.mjs` 与 lib 钉测试同源消费、全链路自动同步。
+- 用户气泡描边自 1.5.29 起为结构主导挂接（chat 的精确哈希随宿主 0.2.2-rc.1 迁往 frontend 共享原语而退役，`BUBBLE_HOOKS.chat.exact = null`；goal 的 `oRe1gG_bubble` 仍在）。哈希漂移只影响描边，token 配色不受影响。哈希与结构钩子的唯一来源在 `src/client/skins/decoration.js` 的 `BUBBLE_HOOKS`（ADR-0016）：上游重建导致哈希漂移时，重推导只改该对象一处，守卫 `verify-upstream-hooks.mjs` 与 lib 钉测试同源消费、全链路自动同步。
 - 标签页品牌段替换依赖官方 `DocumentTitle` 投影器的固定文案「DeepSeek Harness」与「 — 」分隔符；投影器实现变化时只影响标签页品牌段，其余界面不受影响。
 - 品牌标语经当前 DSH locale 字典接口替换，皮肤卸载时恢复；升级 DSH locale 实现后需要复核。

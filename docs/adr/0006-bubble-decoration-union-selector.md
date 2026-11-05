@@ -20,4 +20,21 @@ date: 2026-09-05
 
 ## Amendments
 
+- **2026-11-05（v1.5.29：chat 钩子退化为结构主导；守卫角色模型；CI pin 升 0.2.2-rc.1）**：
+  DSH 0.2.2-rc.1 把用户气泡从 chat 模块的 css-modules 哈希类迁往
+  dsh-web-frontend 的共享原语 UserMessageBubble（类名 `_bubble_<hash>_<n>`，
+  逐构建漂移：web 线上消息气泡为 `_bubble_1sgyj_1`、工具提示为
+  `_bubble_44yfq_1`，0.2.1-rc.2 的工具提示则是 `_bubble_12mhf_1`）——chat
+  的精确哈希分支从此不可 pin。裁决：`BUBBLE_HOOKS.chat.exact = null`，chat
+  挂接退化为结构分支 `[class*="userStack"] > [class*="_bubble"]`（新旧两代
+  宿主结构下该气泡均为 userStack 直接子节点，装饰效果经离线复现 harness
+  验证与旧并集一致）；goal 的 `oRe1gG_bubble` 仍在 goal 模块内，并集保留。
+  守卫同步重造（ADR-0011 pin 升 0.2.2-rc.1，即本 ADR-0011 定义的重推导
+  时刻）：token 正则补下划线开头形态、frontend dist 纳入清单、dist
+  `_bubble` 按角色分类（position:fixed＝工具提示，portal 挂载不可能成为
+  userStack 子节点；非 fixed＝消息气泡族，必须存在否则结构分支空转＝硬
+  失败）、chat 模块自有令牌交由结构前提硬检查（恰一经典形 / UserMessageBubble
+  原语形）、精确哈希死亡与白名单消失降为警告、成功摘要如实反映判定形态。
+  教训句：**共享原语时代，哈希是逐构建噪声——挂接与守卫必须锚定结构
+  不变量与角色，而非构建产物哈希。**
 - **2026-09-05（v1.0.4）**：主人目测 goal 面板气泡无描边观感不佳，推翻首版「goal 维持不描边」的附带结论，扩描边至目标气泡——四皮肤各增 `:is([class*="oRe1gG_bubble"], [class*="_stack"] > [class*="_bubble"])` 明暗两条（RGBA 与用户气泡同族；实测 goal DOM 为 stack > bubble 直接嵌套，`_stack` 子串与 chat 的 `_userStack` 不冲突），守卫清单同步登记 goal 精确哈希与 `_stack` 结构前提。同版将五条 dsh-client peer 范围扩为 `^0.1.1-rc.2 || ^0.1.2-rc.1`（semver 预发布元组规则实证：单边 `^0.1.1-rc.2` 拒绝 `0.1.2-rc.1`，纯声明修正，loader 行为不变）。

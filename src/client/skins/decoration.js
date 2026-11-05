@@ -19,15 +19,28 @@
  * rule-byte-canonical 验收）。
  */
 
-/** 气泡钩子唯一事实对象：哈希漂移重推导（bump runtime-pin 后）只改这里。 */
+/** 气泡钩子唯一事实对象：哈希漂移重推导（bump runtime-pin 后）只改这里。
+ * chat 的 exact 于 2026-11-05（v1.5.29，ADR-0006 amendment）退役为 null：
+ * 0.2.2-rc.1 起用户气泡迁往 dsh-web-frontend 的共享原语 UserMessageBubble，
+ * 其 css-modules 哈希（_bubble_<hash>_<n>）逐构建漂移、不可 pin——结构分支
+ * （userStack 直接子节点）成为 chat 的唯一挂接；goal 的哈希仍在 goal 模块
+ * 内，并集保留。 */
 export const BUBBLE_HOOKS = {
-  chat: { exact: "Sixlwa_bubble", container: "userStack" },
+  chat: { exact: null, container: "userStack" },
   goal: { exact: "oRe1gG_bubble", container: "_stack" },
   bubbleLocal: "_bubble",
 };
 
 const unionSelector = (hook) =>
-  `:is([class*="${hook.exact}"], [class*="${hook.container}"] > [class*="${BUBBLE_HOOKS.bubbleLocal}"])`;
+  hook.exact === null
+    ? `[class*="${hook.container}"] > [class*="${BUBBLE_HOOKS.bubbleLocal}"]`
+    : `:is([class*="${hook.exact}"], [class*="${hook.container}"] > [class*="${BUBBLE_HOOKS.bubbleLocal}"])`;
+
+/** 装饰选择器唯一事实（decorationCss、守卫与测试同源消费）。 */
+export const BUBBLE_SELECTORS = {
+  chat: unionSelector(BUBBLE_HOOKS.chat),
+  goal: unionSelector(BUBBLE_HOOKS.goal),
+};
 
 /**
  * 用户+目标气泡描边 4 规则（明暗 × 两表面）。
@@ -36,8 +49,8 @@ const unionSelector = (hook) =>
  * （三皮全等，非皮肤自由度）。
  */
 export function decorationCss(scope, palette) {
-  const chat = unionSelector(BUBBLE_HOOKS.chat);
-  const goal = unionSelector(BUBBLE_HOOKS.goal);
+  const chat = BUBBLE_SELECTORS.chat;
+  const goal = BUBBLE_SELECTORS.goal;
   return [
     `${scope} ${chat}{border:1px solid rgba(${palette.light}, 0.38);box-shadow:0 1px 4px rgba(${palette.light}, 0.10)}`,
     `${scope}[data-ds-dark-theme] ${chat}{border-color:rgba(${palette.dark}, 0.38);box-shadow:0 1px 6px rgba(${palette.dark}, 0.10)}`,
