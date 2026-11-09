@@ -47,7 +47,15 @@ HOST_CHANGED=0
 if ! cmp -s lib/index.js "$PROFILE_LIB/index.js"; then HOST_CHANGED=1; fi
 
 echo "== 覆盖部署 =="
-cp lib/client.js lib/index.js "$PROFILE_LIB/"
+# 2026-11-09（know-how 050）：profile 文件常与 pnpm content-addressable store 硬链接
+# （blob 名=旧内容哈希），原地 cp 会沿链接改写 store blob 内容——一律 temp+mv 原子替换断链。
+for f in lib/client.js lib/index.js; do
+  base=$(basename "$f")
+  tmp="$PROFILE_LIB/.hotdeploy-$base.$$"
+  cp "$f" "$tmp"
+  chmod --reference="$PROFILE_LIB/$base" "$tmp"
+  mv -f "$tmp" "$PROFILE_LIB/$base"
+done
 
 # ADR-0023 资产出仓后，宿主路由启动期急切读 <pkg>/assets/manifest.json——热部署
 # 若只带 lib/ 不带 assets/，b_ 路由 fail-open 静默 404（2026-11-02 活体实录：
