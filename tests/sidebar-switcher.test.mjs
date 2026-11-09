@@ -5,6 +5,9 @@
  */
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { installSidebarSwitcher, sweepShellHeight } from "../src/client/sidebar-switcher.js";
 import { PANEL_CSS } from "../src/client/personalization/panel.js";
 import { createFakeReact, jsx, flatten } from "./fake-react.mjs";
@@ -589,3 +592,26 @@ test("⑮ popover clears the official narrow-drawer layers: z-index above the dr
   assert.ok(z < 100, `popover z-index ${z} must stay below the host's z-100 layers (ADR-0021 z scale)`);
 });
 
+
+test("⑯ switcher entry rides the host's horizontal scale (content start 20px, dsh-m #55 aligned)", () => {
+  // dsh-m issue #55 fixed the same drift: the old full-bleed trick
+  // (width:calc(100% + 4px) + margin:4px -2px + padding 10/8) puts content at
+  // 8-2+8=14px while host rows sit at 8+3+9=20px — with dsh-m aligned, the
+  // skin switcher was the last row 6px out of line (owner screenshot 2026-11-09).
+  // Source anchor (needle-count semantics; single-line needles only — CRLF).
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../src/client/sidebar-switcher.js"), "utf8");
+  const count = (needle) => src.split(needle).length - 1;
+  assert.equal(count("width:calc(100% + 4px)"), 0, "full-bleed width trick retired");
+  assert.equal(count("margin:4px -2px"), 0, "-2px negative margin retired");
+  assert.equal(count("padding:0 10px 0 8px"), 0, "asymmetric 10/8 padding retired (now 9/9)");
+  assert.equal(
+    count("width:100%;height:42px;margin:4px 0;padding:0 9px;border:0;border-inline:var(--dsh-sidebar-paint-inset,3px) solid transparent;border-radius:var(--dsw-radius-md,12px)"),
+    1,
+    "wide-mode rule uses the host-canonical form (transparent paint-inset border + 9/9 padding; same recipe as dsh-m .dshm-entry)",
+  );
+  assert.equal(
+    count(".dsh-skins-switcher-wrap.rail .dsh-skins-switcher-btn{width:36px;height:36px;margin:8px 0 10px;padding:0;justify-content:center;border-radius:50%;gap:0}"),
+    1,
+    "rail rule untouched (36×36 circle, wrap centers — already aligned)",
+  );
+});

@@ -140,7 +140,10 @@ const SHELL_CSS = [
   '[data-slot="sidebar.footer.action"]>*{flex:none;min-width:0}',
   '.dsh-skins-switcher-wrap{width:100%}',
   '.dsh-skins-switcher-wrap.rail{display:flex;justify-content:center}',
-  '.dsh-skins-switcher-btn{box-sizing:border-box;display:flex;align-items:center;gap:8px;width:calc(100% + 4px);height:42px;margin:4px -2px;padding:0 10px 0 8px;border:0;border-radius:12px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:14px;line-height:22px;cursor:pointer;overflow:hidden}',
+  // 2026-11-09（对齐 dsh-m issue #55）：弃 width+4px/margin -2px/10-8 不对称 padding 的全宽外溢
+  // trick，改宿主规范形——border-inline 透明边吃 paint-inset + padding 9/9，内容起点 8+3+9=20px
+  // 与官方面板行/设置行/dsh-m 入口同刻度（原 14px，dsh-m 对齐后本条成为唯一 6px 出列者，主人截图实证）
+  '.dsh-skins-switcher-btn{box-sizing:border-box;display:flex;align-items:center;gap:8px;width:100%;height:42px;margin:4px 0;padding:0 9px;border:0;border-inline:var(--dsh-sidebar-paint-inset,3px) solid transparent;border-radius:var(--dsw-radius-md,12px);background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:14px;line-height:22px;cursor:pointer;overflow:hidden}',
   '.dsh-skins-switcher-wrap.rail .dsh-skins-switcher-btn{width:36px;height:36px;margin:8px 0 10px;padding:0;justify-content:center;border-radius:50%;gap:0}',
   '.dsh-skins-switcher-btn:hover{background:var(--dsw-alias-interactive-bg-hover)}',
   '.dsh-skins-switcher-btn.on,.dsh-skins-switcher-btn[aria-expanded=true]{background:var(--dsw-specific-sidebar-nav-item-active)}',
