@@ -127,7 +127,7 @@ dsh plugin --profile web add link:<本仓库路径>
 ## 发版
 
 1. `package.json` bump 版本——bump 前先 `npm view <pkg>@<目标版本> --registry=https://registry.npmjs.org/` 确认目标版本未被占用（npm 版本不可重发，撞车只能在发布最末端才发现）；双语 README 如有改动，跑 `node scripts/verify-readme-pairing.mjs --write` 重登记配对哈希；
-2. 全门禁 `pnpm run check`——上游钩子守卫由 CI 装配钉版本 runtime 真跑（ADR-0011），本地无需再设 `DSH_RUNTIME_ROOT`；check 末位的 lib-sync 步骤（`git diff --exit-code -- lib/`）保证已提交产物与 src 同步（与 ci.yml/release.yml 的同名守卫一致，2026-10-20 retro 裁定）；
+2. 全门禁 `pnpm run check`——上游钩子守卫由 CI 装配钉版本 runtime 真跑（ADR-0011），本地无需再设 `DSH_RUNTIME_ROOT`；check 末位的 lib-sync 步骤（`git diff --exit-code -- lib/`）保证已提交产物与 src 同步（与 ci.yml/release.yml 的同名守卫一致，2026-10-20 retro 裁定）。**顺序注意（2026-11-09 实录）**：bump 后首跑 check，构建会把 `?v=<新版本>` 注入 `lib/client.js`，lib-sync 必报 lib 漂移——这是机械必然而非回归；先提交「bump + 重建的 lib/」再复跑 check 取绿证，然后才打 tag；
 3. 提交源码与重新生成的 `lib/` 产物，打 `vX.Y.Z` tag 并推送；Release workflow 经 npm OIDC Trusted Publishing 发布；
 4. **workflow 全绿 ≠ 已上架**：npm 对 provenance 发布有 staged 暂存窗口（scoped 包实测可达约 1 小时），期间 per-version 文档 404、`dist-tags` 停在旧版。用 `npm view <pkg>@<version> --registry=https://registry.npmjs.org/` 每 2 分钟轮询到 200 为止；窗口内重推同一 tag 必撞 `409 Cannot publish over previously staged version`，且 workflow 失败护栏会删除远端 tag；
 5. 三键核验齐全再宣布发版成功：per-version 文档 200、`dist-tags.latest` 推进、packument `time` 字段推进。
