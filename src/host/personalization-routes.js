@@ -163,11 +163,36 @@ function decodeDisplayName(request) {
   }
 }
 
+/** 官方信任检查的守卫式委派（dsh-m 0.9.0 同款）：connection 在位 → 官方判定；缺席 → undefined（回落 isTrustedRequest）；抛错 → fail-closed 403。 */
+export function createOfficialRejection(ctx) {
+  return (request) => {
+    let connection, reject;
+    try {
+      connection = ctx?.get?.("connection");
+      reject = connection?.requestRejection;
+    } catch {
+      return undefined; // 服务缺席（cordis Local 对未注入名的 get 会抛）→ 回落 isTrustedRequest 栅栏
+    }
+    if (typeof reject !== "function") return undefined;
+    try {
+      return reject.call(connection, { headers: request.headers }) ?? undefined;
+    } catch {
+      return 403; // 围栏本身故障 → fail-closed
+    }
+  };
+}
+
 export function mountPersonalizationRoutes(host, options) {
-  const { store, assetsBasePath = "/dsh-skins/assets", trustedHosts = [], serveBuiltinAsset } = options;
+  const { store, assetsBasePath = "/dsh-skins/assets", trustedHosts = [], rejection, serveBuiltinAsset } = options;
   const disposers = [];
 
   const fence = (request, response) => {
+    // 官方信任检查守卫式委派（dsh-m 0.9.0 同款）：connection 在位 → 官方判定优先
+    // （缺席 → undefined 回落下方 isTrustedRequest 栅栏；抛错 → fail-closed 403）。
+    if (rejection !== undefined && rejection(request) !== undefined) {
+      sendJson(response, 403, { error: "trusted DSH Web request required" });
+      return false;
+    }
     if (isTrustedRequest(request, typeof trustedHosts === "function" ? trustedHosts() : trustedHosts)) return true;
     sendJson(response, 403, { error: "trusted DSH Web request required" });
     return false;

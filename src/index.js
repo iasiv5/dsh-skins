@@ -3,7 +3,7 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, renameSync,
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPersonalizationStore } from "./host/personalization/store.js";
-import { mountPersonalizationRoutes } from "./host/personalization-routes.js";
+import { createOfficialRejection, mountPersonalizationRoutes } from "./host/personalization-routes.js";
 import { createBuiltinAssetServer } from "./host/builtin-assets.js";
 import { resolveTrustedHosts } from "./host/trusted-hosts.js";
 
@@ -80,6 +80,7 @@ export function apply(ctx) {
       return mountPersonalizationRoutes(hostContext, {
         store: personalization,
         trustedHosts: () => resolveTrustedHosts(ctx),
+        rejection: createOfficialRejection(ctx),
         serveBuiltinAsset,
       });
     }, "dsh-skins: personalization routes");
