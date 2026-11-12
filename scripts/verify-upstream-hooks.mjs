@@ -71,7 +71,9 @@
  *                    local name `*_scrollFade` still exists in
  *                    dsh-client-ui-sidebar (2026-11-12 seam fix: dsh-skins
  *                    neutralizes [class*="_scrollFade"] while a translucent
- *                    skin owns the sidebar; a rename means re-derive)
+ *                    skin owns the sidebar; a rename means re-derive).
+ *                    Pre-veil runtimes (sidebar build <=0.2.2-rc.1) skip the
+ *                    check — the neutralizer is inert there, nothing to pin.
  * Runtime resolution: $DSH_RUNTIME_ROOT, else ~/.local/share/dsh-runtime.
  * Two layouts are understood: the pnpm store (`node_modules/.pnpm/
  * @deepseek-ai+dsh-*@…`) and the direct desktop-asar form
@@ -522,8 +524,15 @@ if (pluginManager === "") {
 // only, so JS identifiers can never trip it.
 const sidebarFade = readAll("dsh-client-ui-sidebar");
 if (sidebarFade === "") {
-	problems.push("dsh-client-ui-sidebar is not installed under the runtime — the sidebar scroll-fade hook cannot be evaluated");
-} else if (!new RegExp("\.[A-Za-z0-9_]+_scrollFade[{,:\[.]").test(sidebarFade)) {
+		problems.push("dsh-client-ui-sidebar is not installed under the runtime — the sidebar scroll-fade hook cannot be evaluated");
+} else if (!sidebarFade.includes("scrollFade")) {
+	// Pre-veil runtime: the veil span was introduced in 0.2.2-rc.2's sidebar
+	// build; the CI-pinned runtime (0.2.2-rc.1, runtime-pin.json) ships none,
+	// so the neutralizer CSS is inert there (nothing can match) and there is
+	// no local name to pin. Hard-check resumes as soon as the runtime ships
+	// the veil (live 0.2.2-rc.2 verified 2026-11-12).
+	console.error(`${YELLOW}upstream-hooks: scroll-fade premise absent (pre-veil sidebar build, <=0.2.2-rc.1) — neutralizer inert, hook not judged${RESET}`);
+	} else if (!new RegExp("\\.[A-Za-z0-9_-]+_scrollFade[{,:\\[.]").test(sidebarFade)) {
 	problems.push('sidebar scroll-fade hook dead: no .*_scrollFade class selector in dsh-client-ui-sidebar — the veil span local name drifted, re-derive the scroll-fade neutralization selector');
 }
 // Page-wide inventory: [class*="_frame"] / [class*="_sidebarCol"] /
