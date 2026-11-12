@@ -82,3 +82,12 @@ test("fullscreen frost base hooks ship in the built client (ADR-0020)", () => {
 	assert.ok(client.includes("[data-rightbar-fullscreen]"), "fullscreen-state marker ships");
 	assert.ok(client.includes('[class*="_rightbarCol"]'), "rightbar column structural hook ships");
 });
+
+test("sidebar scroll-fade: built lib ships the veil neutralizer; the guard pins the structural hook", () => {
+	assert.ok(
+		client.includes('[class*="_scrollFade"]{background-image:none!important}'),
+		"lib/client.js must ship the sidebar fade neutralizer rule",
+	);
+	const guard = readFileSync("scripts/verify-upstream-hooks.mjs", "utf8");
+	assert.ok(guard.includes("_scrollFade"), "verify-upstream-hooks.mjs must pin the sidebar fade hook");
+});

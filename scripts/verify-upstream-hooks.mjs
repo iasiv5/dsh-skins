@@ -67,6 +67,11 @@
  *                   default layer, not the alias; a drift means re-copy the
  *                   constants from the runtime theme package)
  *
+ *   9. sidebar fade  the Web session list's bottom veil span structural
+ *                    local name `*_scrollFade` still exists in
+ *                    dsh-client-ui-sidebar (2026-11-12 seam fix: dsh-skins
+ *                    neutralizes [class*="_scrollFade"] while a translucent
+ *                    skin owns the sidebar; a rename means re-derive)
  * Runtime resolution: $DSH_RUNTIME_ROOT, else ~/.local/share/dsh-runtime.
  * Two layouts are understood: the pnpm store (`node_modules/.pnpm/
  * @deepseek-ai+dsh-*@…`) and the direct desktop-asar form
@@ -343,13 +348,16 @@ for (const [pkg, anchors, label] of SERVICE_API_ANCHORS) {
 // (--dsh-font-family-text/code) and silently kills user font settings.
 // Needle = bare token-name prefix, NOT ":root{…": in rc.5's base_css_default
 // the code-default declaration is preceded by ";" (review probe R-5).
-// HOST_DEFAULT_* hold raw stacks while base_css_default is a JS string
-// literal with backslash-escaped quotes → escape before byte comparison.
+// HOST_DEFAULT_* hold raw stacks; the theme package's base_css_default ships
+// them either as a JS string literal with backslash-escaped quotes (older
+// builds) or as a backtick template literal with raw quotes (0.2.2-rc.2
+// esbuild output-shape change — values byte-identical, 2026-11-12 probe).
+// Accept both byte shapes; only a genuine value drift fails.
 const escCssLiteral = (value) => value.replaceAll('"', '\\"');
 const FONT_DEFAULT_ANCHORS = [
 	["dsh-client-ui-theme", [
-		`--dsh-font-family-text-default:${escCssLiteral(HOST_DEFAULT_TEXT)}`,
-		`--dsh-font-family-code-default:${escCssLiteral(HOST_DEFAULT_CODE)}`,
+		["--dsh-font-family-text-default:", HOST_DEFAULT_TEXT],
+		["--dsh-font-family-code-default:", HOST_DEFAULT_CODE],
 	], "font default stacks (ADR-0025)"],
 ];
 for (const [pkg, anchors, label] of FONT_DEFAULT_ANCHORS) {
@@ -358,8 +366,10 @@ for (const [pkg, anchors, label] of FONT_DEFAULT_ANCHORS) {
 		problems.push(`${pkg} is not installed under the runtime — the font-default anchor for ${label} cannot be evaluated`);
 		continue;
 	}
-	for (const anchor of anchors) {
-		if (!source.includes(anchor)) {
+	for (const [prop, stack] of anchors) {
+		const escaped = `${prop}${escCssLiteral(stack)}`;
+		const raw = `${prop}${stack}`;
+		if (!source.includes(escaped) && !source.includes(raw)) {
 			problems.push(`font default stack drift: ${label} — host default stack changed; re-copy HOST_DEFAULT_* from the runtime theme package (ADR-0025)`);
 		}
 	}
@@ -503,6 +513,19 @@ if (pluginManager === "") {
 } else if (!pluginManager.includes("data-plugin-panel")) {
 	problems.push('reading-base hook dead: "data-plugin-panel" no longer in dsh-client-ui-plugin-manager — the plugin panel route marker drifted, re-derive the ADR-0022 selectors');
 }
+
+// 2026-11-12 sidebar seam fix: the Web session list ends in a 24px
+// `*_scrollFade` veil gradient (transparent →
+// var(--dsw-specific-sidebar-fill)); dsh-skins neutralizes
+// [class*="_scrollFade"] while a translucent skin owns the sidebar. Pin the
+// structural local name against its owning package — class-selector shape
+// only, so JS identifiers can never trip it.
+const sidebarFade = readAll("dsh-client-ui-sidebar");
+if (sidebarFade === "") {
+	problems.push("dsh-client-ui-sidebar is not installed under the runtime — the sidebar scroll-fade hook cannot be evaluated");
+} else if (!new RegExp("\.[A-Za-z0-9_]+_scrollFade[{,:\[.]").test(sidebarFade)) {
+	problems.push('sidebar scroll-fade hook dead: no .*_scrollFade class selector in dsh-client-ui-sidebar — the veil span local name drifted, re-derive the scroll-fade neutralization selector');
+}
 // Page-wide inventory: [class*="_frame"] / [class*="_sidebarCol"] /
 // [class*="_rightbarCol"] must only ever match the AppFrame pair. Any OTHER
 // package shipping one of these class selectors is a new false-positive
@@ -582,4 +605,4 @@ const overlaySummary = frontendChecked
 const sidebarRootSummary = directAsarLayout
 	? "sidebar-root paint alive"
 	: "sidebar-root paint NOT JUDGED (desktop-only premise, ADR-0011 附录 P3)";
-console.log(`✓ upstream-hooks: VERIFIED ${modeSummary} — ${bubbleSummary}; dark attr alive; service-API anchors alive; ${overlaySummary}; shell-frame hooks alive (_frame/_sidebarCol/_rightbarCol/titlebar marker/content-radius/fullscreen marker); ${sidebarRootSummary} (${packages.size} @deepseek-ai packages scanned)`);
+console.log(`✓ upstream-hooks: VERIFIED ${modeSummary} — ${bubbleSummary}; dark attr alive; service-API anchors alive; ${overlaySummary}; shell-frame hooks alive (_frame/_sidebarCol/_rightbarCol/titlebar marker/content-radius/fullscreen marker); sidebar-fade hook alive (_scrollFade); ${sidebarRootSummary} (${packages.size} @deepseek-ai packages scanned)`);

@@ -84,6 +84,27 @@ function sidebarPaintOrderCss(bodyAttribute) {
 }
 
 /**
+ * Build the sidebar scroll-fade neutralization CSS for one skin (2026-11-12,
+ * product-owner screenshot case): the Web session list ends in a 24px
+ * `*_scrollFade` veil span whose gradient fades into
+ * var(--dsw-specific-sidebar-fill) so list content melts into the sidebar
+ * fill. Invisible while the official token is opaque; with a skin riding the
+ * token at partial alpha the veil visibly stacks a second translucent layer
+ * over the wallpaper and cuts off hard at the footer boundary — the "seam"
+ * line from the screenshot (pixel probe: monotone ramp across the veil's 24
+ * rows, hard step back at the footArea edge; official theme: flat). Any
+ * token-colored paint must seam against a translucent fill, so the only
+ * correct skin-mode treatment is to drop the veil: content clips hard at the
+ * scroll boundary exactly like pre-veil host builds. A mask-image
+ * alternative was rejected: a mask turns the scroller into a grouping
+ * element and would clip any position:fixed descendant — the host itself
+ * paints a gradient span instead of masking for the same reason.
+ */
+function buildSidebarFadeCss(bodyAttribute) {
+  return `body[${datasetAttribute(bodyAttribute)}] [class*="_scrollFade"]{background-image:none!important}`;
+}
+
+/**
  * Build the desktop shell alignment CSS for one skin: the three
  * single-paint rules, the opaque shell-fill token override (light and dark),
  * the wallpaper-in-content rules (the center column carries the same
@@ -644,6 +665,17 @@ export function createSkinRuntime({ profile = "web" } = {}) {
         if (readingCss !== "") {
           const readingTag = styleTag(`dsh-skins/${skin.id}.reading.css`, readingCss);
           stops.push(() => readingTag.remove());
+        }
+
+        // Sidebar scroll-fade neutralization (2026-11-12, see
+        // buildSidebarFadeCss): mounted with the skin like every other emitted
+        // tag; gated on the fill ride — a skin that leaves the sidebar fill
+        // token alone keeps the host veil (invisible against an opaque fill
+        // by construction).
+        const sidebarFadeCss = fills === null ? "" : buildSidebarFadeCss(effects.bodyAttribute);
+        if (sidebarFadeCss !== "") {
+          const fadeTag = styleTag(`dsh-skins/${skin.id}.sidebarfade.css`, sidebarFadeCss);
+          stops.push(() => fadeTag.remove());
         }
       }
 

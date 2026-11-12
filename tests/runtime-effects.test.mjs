@@ -462,6 +462,37 @@ test("ADR-0021: a failed same-skin rebuild re-mounts the guard via restorePrevio
   assert.equal(tag.textContent, PAINT_ORDER_CSS);
 });
 
+// ---- sidebar scroll-fade neutralization (2026-11-12 seam fix) ---------------
+
+const SIDEBAR_FADE_CSS = 'body[data-dsh-openbmc-skin] [class*="_scrollFade"]{background-image:none!important}';
+
+test("sidebar scroll-fade: veil neutralizer mounts with the skin byte-exact, scoped to the skin body attr", () => {
+  const dom = installDom();
+  const { runtime } = bootMeirenzhi(dom);
+
+  runtime.select("openbmc");
+  const tag = dom.styleTag("dsh-skins/openbmc.sidebarfade.css");
+  assert.ok(tag, "sidebar-fade tag must mount with the skin");
+  assert.equal(tag.dataset.plugin, "dsh-skins");
+  assert.equal(tag.textContent, SIDEBAR_FADE_CSS);
+});
+
+test("sidebar scroll-fade: official restores the host veil; reskin swaps tags byte-exact", () => {
+  const dom = installDom();
+  const { runtime } = bootMeirenzhi(dom);
+  runtime.select("openbmc");
+  assert.ok(dom.styleTag("dsh-skins/openbmc.sidebarfade.css"));
+
+  runtime.select("official");
+  assert.equal(dom.styleTag("dsh-skins/openbmc.sidebarfade.css"), null, "official must restore the host veil");
+
+  runtime.select("meirenzhi");
+  const tag = dom.styleTag("dsh-skins/meirenzhi.sidebarfade.css");
+  assert.ok(tag, "reskin must remount for the new skin");
+  assert.equal(tag.textContent, SIDEBAR_FADE_CSS.replace("openbmc-skin", "meirenzhi-skin"));
+  assert.equal(dom.styleTag("dsh-skins/openbmc.sidebarfade.css"), null, "old skin tag must go");
+});
+
 // Product promise under test: making openbmc the FIRST registered skin (v1.0.6
 // default switch, meirenzhi before it) only affects users with NO stored choice.
 // Each case boots a FRESH DOM/storage/runtime (apply's official branch never
