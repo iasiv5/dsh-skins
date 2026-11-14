@@ -1,0 +1,298 @@
+{
+  "meta": {
+    "viewport": [
+      1912,
+      948
+    ],
+    "luminance": "wcag-relative",
+    "rounding": 4,
+    "coverFit": "center-crop, integer source offsets (floor)",
+    "percentile": "nearest-rank",
+    "regions": {
+      "web": {
+        "sidebar_strip": {
+          "x0": 0.015,
+          "y0": 0.165,
+          "x1": 0.115,
+          "y1": 0.345
+        },
+        "hero_band": {
+          "x0": 0.48,
+          "y0": 0.36,
+          "x1": 0.68,
+          "y1": 0.41
+        },
+        "composer_area": {
+          "x0": 0.36,
+          "y0": 0.425,
+          "x1": 0.72,
+          "y1": 0.535
+        }
+      },
+      "desktop": {
+        "hero_band": {
+          "x0": 0.175,
+          "y0": 0.36,
+          "x1": 1,
+          "y1": 0.41
+        },
+        "composer_area": {
+          "x0": 0.175,
+          "y0": 0.425,
+          "x1": 1,
+          "y1": 0.535
+        }
+      }
+    }
+  },
+  "wallpapers": {
+    "meirenzhi:mupeiling": {
+      "source": "assets/meirenzhi/b_meirenzhi_mupeiling.webp",
+      "sha256": "461d05d22ddf2b764094f5b7217e91c4c6941b01be34f7557cc2bced909fece8",
+      "bytes": 315928,
+      "width": 2560,
+      "height": 1450,
+      "web": {
+        "sidebar_strip": {
+          "p50": 0.8107,
+          "p95": 0.8456
+        },
+        "hero_band": {
+          "p50": 0.2941,
+          "p95": 0.7763
+        },
+        "composer_area": {
+          "p50": 0.3474,
+          "p95": 0.7797
+        }
+      },
+      "desktop": {
+        "hero_band": {
+          "p50": 0.4757,
+          "p95": 0.8403
+        },
+        "composer_area": {
+          "p50": 0.2921,
+          "p95": 0.8357
+        }
+      }
+    },
+    "meirenzhi:nangongque": {
+      "source": "assets/meirenzhi/b_meirenzhi_nangongque.webp",
+      "sha256": "f856964e66704d8e5f440558e3b224ae5c11a4da5fcdeb8516002c08de8bd45b",
+      "bytes": 495218,
+      "width": 2560,
+      "height": 1450,
+      "web": {
+        "sidebar_strip": {
+          "p50": 0.0344,
+          "p95": 0.1
+        },
+        "hero_band": {
+          "p50": 0.0221,
+          "p95": 0.6185
+        },
+        "composer_area": {
+          "p50": 0.0425,
+          "p95": 0.4826
+        }
+      },
+      "desktop": {
+        "hero_band": {
+          "p50": 0.0525,
+          "p95": 0.4328
+        },
+        "composer_area": {
+          "p50": 0.0559,
+          "p95": 0.3775
+        }
+      }
+    },
+    "meirenzhi:nangongwan": {
+      "source": "assets/meirenzhi/b_meirenzhi_nangongwan.webp",
+      "sha256": "8a0d7c4bd18984e0a4235c88f678794d089f44d4469a8c7ccf051ad34b7ab805",
+      "bytes": 283616,
+      "width": 2560,
+      "height": 1438,
+      "web": {
+        "sidebar_strip": {
+          "p50": 0.102,
+          "p95": 0.2846
+        },
+        "hero_band": {
+          "p50": 0.2032,
+          "p95": 0.6194
+        },
+        "composer_area": {
+          "p50": 0.0973,
+          "p95": 0.3845
+        }
+      },
+      "desktop": {
+        "hero_band": {
+          "p50": 0.1049,
+          "p95": 0.5237
+        },
+        "composer_area": {
+          "p50": 0.0787,
+          "p95": 0.3879
+        }
+      }
+    },
+    "meirenzhi:yinyue": {
+      "source": "assets/meirenzhi/b_meirenzhi_yinyue.webp",
+      "sha256": "d1e3d02014e07fc1b715ab30388ca617fae73fb442a6b177bc68ccc8a50103a0",
+      "bytes": 417198,
+      "width": 2560,
+      "height": 1450,
+      "web": {
+        "sidebar_strip": {
+          "p50": 0.2067,
+          "p95": 0.6506
+        },
+        "hero_band": {
+          "p50": 0.399,
+          "p95": 0.7175
+        },
+        "composer_area": {
+          "p50": 0.3104,
+          "p95": 0.7248
+        }
+      },
+      "desktop": {
+        "hero_band": {
+          "p50": 0.377,
+          "p95": 0.7623
+        },
+        "composer_area": {
+          "p50": 0.2968,
+          "p95": 0.7221
+        }
+      }
+    },
+    "meirenzhi:yuntai": {
+      "source": "assets/meirenzhi/b_meirenzhi_yuntai.webp",
+      "sha256": "7c3a833ca0d0d6c2f6449b750b34faf1700eb1d0beabfbf7d0d5f71584386282",
+      "bytes": 283460,
+      "width": 2560,
+      "height": 1440,
+      "web": {
+        "sidebar_strip": {
+          "p50": 0.5479,
+          "p95": 0.7038
+        },
+        "hero_band": {
+          "p50": 0.2968,
+          "p95": 0.8211
+        },
+        "composer_area": {
+          "p50": 0.1705,
+          "p95": 0.5632
+        }
+      },
+      "desktop": {
+        "hero_band": {
+          "p50": 0.3361,
+          "p95": 0.8324
+        },
+        "composer_area": {
+          "p50": 0.1762,
+          "p95": 0.5679
+        }
+      }
+    },
+    "meirenzhi:ziling": {
+      "source": "assets/meirenzhi/b_meirenzhi_ziling.webp",
+      "sha256": "009425f493e41e6370153251ac7f52c8c83e02ede0f42172ae503a562a6c889e",
+      "bytes": 415498,
+      "width": 2560,
+      "height": 1450,
+      "web": {
+        "sidebar_strip": {
+          "p50": 0.2064,
+          "p95": 0.4601
+        },
+        "hero_band": {
+          "p50": 0.4118,
+          "p95": 0.6539
+        },
+        "composer_area": {
+          "p50": 0.1793,
+          "p95": 0.5675
+        }
+      },
+      "desktop": {
+        "hero_band": {
+          "p50": 0.3011,
+          "p95": 0.6614
+        },
+        "composer_area": {
+          "p50": 0.1909,
+          "p95": 0.5833
+        }
+      }
+    },
+    "openbmc-harness:art": {
+      "source": "src/client/skins/openbmc-harness/background-art.js#BACKGROUND_ART",
+      "sha256": "e96064c5d22c3d979eef34a4be76bf146c6dbfa7af02359de712d4ba2f31d1a4",
+      "bytes": 104554,
+      "width": 1920,
+      "height": 927,
+      "web": {
+        "sidebar_strip": {
+          "p50": 0.0268,
+          "p95": 0.0959
+        },
+        "hero_band": {
+          "p50": 0.0786,
+          "p95": 0.7149
+        },
+        "composer_area": {
+          "p50": 0.2718,
+          "p95": 0.7658
+        }
+      },
+      "desktop": {
+        "hero_band": {
+          "p50": 0.1104,
+          "p95": 0.7056
+        },
+        "composer_area": {
+          "p50": 0.1362,
+          "p95": 0.6728
+        }
+      }
+    },
+    "uefi-harness:art": {
+      "source": "assets/uefi-harness/b_uefi-harness_art.webp",
+      "sha256": "5b4509ce32e5f7b90a1e8456ed1f8aee257c1b629d23b05b6d8d3129b97ce006",
+      "bytes": 70110,
+      "width": 1920,
+      "height": 1384,
+      "web": {
+        "sidebar_strip": {
+          "p50": 0.2724,
+          "p95": 0.4696
+        },
+        "hero_band": {
+          "p50": 0.1141,
+          "p95": 0.2197
+        },
+        "composer_area": {
+          "p50": 0.11,
+          "p95": 0.2076
+        }
+      },
+      "desktop": {
+        "hero_band": {
+          "p50": 0.1206,
+          "p95": 0.4848
+        },
+        "composer_area": {
+          "p50": 0.098,
+          "p95": 0.2669
+        }
+      }
+    }
+  }
+}
