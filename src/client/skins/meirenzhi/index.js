@@ -181,3 +181,6 @@ export function createMeirenzhiSkin(jsxRuntime) {
 
   return defineSkin({ ...SPEC, Mark: MeiRenZhiMark, Name: MeiRenZhiName });
 }
+
+// ADR-0027 Task 3：门禁背景侧唯一现值通道（verify-contrast.mjs import SPEC；运行时零消费，IIFE 产物不受影响）
+export { SPEC };

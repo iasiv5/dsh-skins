@@ -82,8 +82,9 @@
     "verify:bundle": "node scripts/verify-bundle-guard.mjs",
     "verify:delivery": "node scripts/verify-delivery.mjs",
     "verify:hooks": "node scripts/verify-upstream-hooks.mjs",
+    "verify:contrast": "node scripts/verify-contrast.mjs",
     "verify:hot-deploy": "bash scripts/verify-hot-deploy-roundtrip.sh",
-    "check": "pnpm run check:lockfile && pnpm run build && node --check lib/client.js && node --check lib/index.js && pnpm run lint && pnpm run test && pnpm run verify:readme && pnpm run verify:bundle && pnpm run verify:hooks && pnpm run verify:delivery && git diff --exit-code -- lib/index.js lib/client.js",
+    "check": "pnpm run check:lockfile && pnpm run build && node --check lib/client.js && node --check lib/index.js && pnpm run lint && pnpm run test && pnpm run verify:readme && pnpm run verify:bundle && pnpm run verify:hooks && pnpm run verify:contrast && pnpm run verify:delivery && git diff --exit-code -- lib/index.js lib/client.js",
     "lint": "eslint ."
   },
   "devDependencies": {
