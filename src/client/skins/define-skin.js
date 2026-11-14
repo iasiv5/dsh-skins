@@ -63,6 +63,45 @@ const kebabAttr = (bodyAttribute) =>
   bodyAttribute.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 const scopeOf = (bodyAttribute) => `body[data-${kebabAttr(bodyAttribute)}]`;
 
+// 文字地板通道禁令与增量帽（ADR-0027 D1/D2，评审 R1-4/R2-3 收口）：floor 第三元
+// 仅允许被钳两键；sidebar-fill 受 baked+25 增量帽约束，input-major 因「输入框
+// 实体面」裁定豁免。钉进声明校验作单一解释点（帽/通道超界在工厂调用期 throw）。
+const FLOOR_ALLOWED_KEYS = new Set(["--dsw-specific-sidebar-fill", "--dsw-specific-input-major"]);
+const FLOOR_CAP_KEYS = new Set(["--dsw-specific-sidebar-fill"]);
+
+function validateRiding(riding) {
+  if (riding === null || typeof riding !== "object" || Array.isArray(riding)) {
+    throw new Error("riding must be an object keyed by token");
+  }
+  for (const [key, modes] of Object.entries(riding)) {
+    for (const mode of ["light", "dark"]) {
+      const entry = modes?.[mode];
+      if (!Array.isArray(entry) || entry.length < 2 || entry.length > 3) {
+        throw new Error(`riding "${key}" ${mode}: entry must be [rgb, baked] or [rgb, baked, floor]`);
+      }
+      if (typeof entry[0] !== "string" || entry[0].trim() === "") {
+        throw new Error(`riding "${key}" ${mode}: rgb must be a non-empty string`);
+      }
+      const baked = entry[1];
+      if (typeof baked !== "number" || !Number.isInteger(baked) || baked < 0 || baked > 100) {
+        throw new Error(`riding "${key}" ${mode}: baked must be an integer 0-100`);
+      }
+      if (entry.length === 3) {
+        if (!FLOOR_ALLOWED_KEYS.has(key)) {
+          throw new Error(`riding "${key}": floor (third element) is only allowed on --dsw-specific-sidebar-fill / --dsw-specific-input-major (ADR-0027 D1)`);
+        }
+        const floor = entry[2];
+        if (typeof floor !== "number" || !Number.isInteger(floor) || floor < 0 || floor > 100) {
+          throw new Error(`riding "${key}" ${mode}: floor must be an integer 0-100`);
+        }
+        if (FLOOR_CAP_KEYS.has(key) && floor > baked + 25) {
+          throw new Error(`riding "${key}" ${mode}: floor ${floor} exceeds baked+25 cap (${baked + 25}) (ADR-0027 D2)`);
+        }
+      }
+    }
+  }
+}
+
 function needSegmentParam(param, name) {
   if (param === undefined || param === null) {
     throw new Error(`Missing segment param: ${name}`);
@@ -141,6 +180,7 @@ export function defineSkin(spec) {
   for (const key of REQUIRED) {
     if (spec[key] === undefined) throw new Error(`Missing required spec field: ${key}`);
   }
+  validateRiding(spec.riding);
 
   const scope = scopeOf(spec.bodyAttribute);
   if (!Array.isArray(spec.cssSegments)) throw new Error("cssSegments must be an array");

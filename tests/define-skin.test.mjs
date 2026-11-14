@@ -225,3 +225,20 @@ test("all scope literals in each skin's staticCss match the bodyAttribute deriva
     }
   }
 });
+
+// ADR-0027 Task 4：riding 三元变体（floor）——缺省二元仍合法；三元仅在
+// sidebar-fill / input-major 两键合法且过 +25 帽/整数校验（细矩阵见
+// tests/text-floor.test.mjs，此处钉 minSpec 形态下的载入合法性）。
+test("riding 三元变体：sidebar-fill 合法 floor 载入 + 仍过 minSpec 全链", () => {
+  const fx = defineSkin(minSpec({
+    riding: {
+      "--dsw-alias-bg-base": { light: ["250, 249, 246", 35], dark: ["18, 18, 26", 35] },
+      "--dsw-specific-sidebar-fill": { light: ["250, 249, 246", 40, 60], dark: ["18, 18, 26", 52] },
+    },
+  }));
+  assert.equal(typeof fx.project, "function");
+});
+
+test("riding 三元变体：二元缺省仍合法（现行为不变）", () => {
+  assert.doesNotThrow(() => defineSkin(minSpec()));
+});

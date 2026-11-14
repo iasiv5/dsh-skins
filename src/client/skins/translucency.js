@@ -36,13 +36,15 @@ export function createProjection(table) {
     const P = values.panelOpacity;
     const pct = (points) => (points / 100).toFixed(2);
     const pt = (baked) => Math.min(100, Math.max(0, P + baked - anchor));
-    const alpha = (rgb, baked) => `rgba(${rgb}, ${pct(pt(baked))})`;
+    // 地板钳制（ADR-0027 D1）：alpha = max(pt(baked), floor)；floor 缺省 0 →
+    // max(pt, 0) ≡ pt，二元条目行为逐字节不变。
+    const alpha = (rgb, baked, floor = 0) => `rgba(${rgb}, ${pct(Math.max(pt(baked), floor))})`;
 
     const tokenOverrides = { ...(table.constantTokens ?? {}) };
     for (const [key, modes] of Object.entries(riding)) {
       tokenOverrides[key] = {
-        light: alpha(modes.light[0], modes.light[1]),
-        dark: alpha(modes.dark[0], modes.dark[1]),
+        light: alpha(modes.light[0], modes.light[1], modes.light[2] ?? 0),
+        dark: alpha(modes.dark[0], modes.dark[1], modes.dark[2] ?? 0),
       };
     }
 
