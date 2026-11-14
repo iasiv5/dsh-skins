@@ -61,6 +61,8 @@ const SPEC = {
     "--dsw-specific-input-major": { light: ["250, 249, 246", 40, 85], dark: ["18, 18, 26", 45, 85] },
   },
   constantTokens: {
+    // 文字地板（ADR-0027 Task 6）：muted 次级字暗化至门禁 4.5（常量通道，B3 裁决；dark 维持宿主默认=达标）
+    "--dsw-alias-label-tertiary": { light: "#666970", dark: "#adb2b8" },
     // 常量族：品牌绯红 × 鎏金、浮层「较实」、控件态、导航态（设计定案 §视觉系统）。
     // 用户气泡（产品主人裁决，参照 openbmc/uefi 双 token 结构）：浅色态=品牌
     // 绯红轻透纱（深字，融进暖雾白面板）；深色态=玄夜面板族较实底（亮字）。
@@ -130,6 +132,15 @@ const SPEC = {
       + `background:radial-gradient(circle, rgba(250,249,246,.9) 0%, rgba(250,249,246,0) 70%);opacity:.12;animation:dsh-mrz-drift-b 47s ease-in-out infinite;pointer-events:none}`, "\n",
     `@media (prefers-reduced-motion:reduce){${SCOPE}::before,${SCOPE} #root::before,${SCOPE} #root::after{animation:none}}`, "\n",
     "frost",
+    // 文字地板段（ADR-0027 Task 6 新增裸串段；既有段零字节）：composer 占位字形
+    // （稳定属性锚 + :has 卡片锚；color/opacity 覆盖，content 不动）与实体面 1.4.11
+    // 常量边框（对壁纸 p95 ≥3:1 反解：light rgb(110,113,120) ≤124 灰界、dark rgb(196,199,206) ≥192 灰界）。
+    "\n  /* ---------- ADR-0027 text floor: composer placeholder + solid-face border ---------- */\n" +
+    "  body[data-dsh-meirenzhi-skin] [class*=\"_card\"]:has([data-composer-input=\"true\"])::before{color:var(--dsw-alias-label-tertiary)!important;opacity:1!important;}\n" +
+    "  body[data-dsh-meirenzhi-skin] [data-composer-input=\"true\"]::placeholder{color:var(--dsw-alias-label-tertiary)!important;opacity:1!important;}\n" +
+    "  body[data-dsh-meirenzhi-skin]:not([data-ds-dark-theme]) [class*=\"_card\"]:has([data-composer-input=\"true\"]){border:1px solid rgb(110, 113, 120);}\n" +
+    "  body[data-dsh-meirenzhi-skin][data-ds-dark-theme] [class*=\"_card\"]:has([data-composer-input=\"true\"]){border:1px solid rgb(196, 199, 206);}\n" +
+    "  body[data-dsh-meirenzhi-skin][data-ds-dark-theme] .dsh-mrz-name{background-image:linear-gradient(120deg,#A87B2F,#D9B45C 45%,#B8433F)!important;}\n"
   ],
 };
 
@@ -166,8 +177,11 @@ export function createMeirenzhiSkin(jsxRuntime) {
       },
       children: [
         jsx("span", {
+          className: "dsh-mrz-name",
           style: {
-            background: "linear-gradient(120deg, #A87B2F, #D9B45C 45%, #B8433F)",
+            // ADR-0027 Task 7：亮色止色暗化（门禁反解帽 L≤0.1706：#8C6228 0.1465 / #8C682D 0.157）；
+            // 深色态由 cssSegments !important 规则恢复原亮金（dark 品牌本达标，不连坐）。
+            background: "linear-gradient(120deg, #8C6228, #8C682D 45%, #B8433F)",
             WebkitBackgroundClip: "text",
             backgroundClip: "text",
             color: "transparent",

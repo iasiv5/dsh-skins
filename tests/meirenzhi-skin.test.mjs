@@ -41,12 +41,19 @@ test("brand contract: bundled mark, gradient name and badge inversion are pinned
   assert.ok(String(mark.props.src).length > 1500, "bundled bottle webp must be present");
   assert.equal(mark.props["aria-hidden"], "true");
   // Name = the original gradient-clipped text (brush letterform SVG was tried
-  // and reverted as unreadable, 2026-09-01).
+  // and reverted as unreadable, 2026-09-01). ADR-0027 Task 7: light stops
+  // darkened to the gate-derived cap (brightest ≤ L 0.1706); the ORIGINAL
+  // bright gold is restored in dark mode via the textfloor segment
+  // (!important rule — dark brand passes at the factory and must not inherit
+  // the light-side darkening).
   const name = skin.Name({});
   assert.equal(name.props.children[0].props.children, "凡人修仙传");
-  assert.equal(name.props.children[0].props.style.background, "linear-gradient(120deg, #A87B2F, #D9B45C 45%, #B8433F)");
+  assert.equal(name.props.children[0].props.className, "dsh-mrz-name");
+  assert.equal(name.props.children[0].props.style.background, "linear-gradient(120deg, #8C6228, #8C682D 45%, #B8433F)");
   assert.equal(name.props.children[1].props.children, "BEAUTY");
   const css = project({ panelOpacity: 35 }).staticCss; // 出厂锚点：无玻璃规则，即纯 CSS（ADR-0014/B13）
+  assert.ok(css.includes("body[data-dsh-meirenzhi-skin][data-ds-dark-theme] .dsh-mrz-name{background-image:linear-gradient(120deg,#A87B2F,#D9B45C 45%,#B8433F)!important;}"),
+    "dark mode restores the original bright gold (ADR-0027 Task 7)");
   assert.ok(css.includes("body[data-dsh-meirenzhi-skin][data-ds-dark-theme] .dsh-mrz-badge{background:#FAF9F6;color:#12121A}"));
   assert.ok(css.includes("@keyframes dsh-mrz-drift-a"));
   assert.ok(css.includes("@keyframes dsh-mrz-drift-b"));

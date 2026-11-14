@@ -68,12 +68,12 @@ const REGION_CENTER_Y_DESKTOP = { hero_band: 0.385, composer_area: 0.48 };
 // 值（Task 1 申报）；brand = mrz 金渐变最亮止色 #D9B45C（组件源码 index.js
 // MeiRenZhiName）。dark 侧 sidebar/footer = label-tertiary dark（bluish-400）。
 const T = {
-  sidebar_text: [[129, 133, 140], [173, 178, 184]],
-  sidebar_footer: [[129, 133, 140], [173, 178, 184]],
-  composer_placeholder: [[198, 198, 198], [92, 92, 92]],
+  sidebar_text: [[102, 105, 112], [173, 178, 184]],
+  sidebar_footer: [[102, 105, 112], [173, 178, 184]],
+  composer_placeholder: [[102, 105, 112], [173, 178, 184]],
   hero_slogan: [[15, 17, 21], [249, 250, 251]],
-  brand_mrz: [[217, 180, 92], [217, 180, 92]], // 金渐变最亮止色，明暗同表（组件内联无明暗分支）
-  composer_border: [null, null], // 初版无边框 → 断言红；Task 6 textfloor 段落地
+  brand_mrz: [[140, 104, 45], [217, 180, 92]], // Task 7 终版：亮色止色暗化（#8C682D，L 0.157 ≤ 反解帽 0.1706）；dark 经 cssSegments !important 恢复原亮金 #D9B45C
+  composer_border: [[110, 113, 120], [196, 199, 206]], // Task 6 终版：对壁纸 p95 ≥3:1 反解（light 最严 nangongwan 0.6872→≤124 灰；dark 最严 mupeiling 0.1395→≥192 灰）
 };
 const THRESHOLD = { text: 4.5, hero: 3.0, border: 3.0 }; // B8 口径：正文/大字/1.4.11 边界
 

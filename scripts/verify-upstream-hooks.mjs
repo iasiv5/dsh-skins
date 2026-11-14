@@ -74,6 +74,12 @@
  *                    skin owns the sidebar; a rename means re-derive).
  *                    Pre-veil runtimes (sidebar build <=0.2.2-rc.1) skip the
  *                    check — the neutralizer is inert there, nothing to pin.
+ *   10. text floor   the composer editor's stable data attributes
+ *                    (`data-composer-input`, `data-placeholder`) still exist
+ *                    in the dsh-web-frontend dist — the ADR-0027 textfloor
+ *                    staticCss segment (placeholder glyph + solid-face
+ *                    border) keys off them; a drift means re-derive the
+ *                    selectors (hero anchor provisional, re-pinned at装机定面).
  * Runtime resolution: $DSH_RUNTIME_ROOT, else ~/.local/share/dsh-runtime.
  * Two layouts are understood: the pnpm store (`node_modules/.pnpm/
  * @deepseek-ai+dsh-*@…`) and the direct desktop-asar form
@@ -445,6 +451,19 @@ if (!frontendDir || !existsSync(frontendDir)) {
 		.join("\n");
 	if (!frontendJs.includes('"@deepseek-ai/dsh-client-ui-slots"')) {
 		problems.push('service API drift: slots service — the "@deepseek-ai/dsh-client-ui-slots" module-map key no longer exists in the dsh-web-frontend dist; the plugin client inject will fail to resolve');
+	}
+	// 10. text floor anchors (ADR-0027): the composer editor's stable data
+	// attributes are the only non-hash hooks the textfloor staticCss segment
+	// keys off (placeholder glyph color/opacity + solid-face border via
+	// [data-composer-input="true"]). They ship in dsh-client-ui-conversation
+	// (live-verified 2026-11-14). A drift means re-derive the textfloor
+	// selectors; the hero anchor (pXSMma_titleGroup) is provisional and is
+	// re-pinned at装机定面 (Task 11), not pinned here against hashes.
+	const conversation = readAll("dsh-client-ui-conversation");
+	for (const attr of ["data-composer-input", "data-placeholder"]) {
+		if (!conversation.includes(attr)) {
+			problems.push(`text-floor hook dead: "${attr}" no longer in dsh-client-ui-conversation — the composer editor attr drifted, re-derive the ADR-0027 textfloor selectors`);
+		}
 	}
 }
 

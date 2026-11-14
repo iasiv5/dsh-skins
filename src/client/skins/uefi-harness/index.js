@@ -65,6 +65,8 @@ const SPEC = {
   // 常量族（ADR-0016 C1：原 css 模板手写行逐字迁入；等式钉在
   // tests/translucency-contract.test.mjs「uefi C1」）。
   constantTokens: {
+    // 文字地板（ADR-0027 Task 6）：muted 次级字暗化至门禁 4.5（常量通道；dark 维持宿主默认=达标）
+    "--dsw-alias-label-tertiary": { light: "#666970", dark: "#adb2b8" },
     "--dsw-alias-brand-primary": { light: "#6553d8", dark: "#a99cff" },
     "--dsw-alias-brand-primary-invert": { light: "#ffffff", dark: "#1b143a" },
     "--dsw-alias-brand-text": { light: "#5846c2", dark: "#b7acff" },
@@ -116,6 +118,14 @@ const SPEC = {
     "decoration",
     "\n\n  ",
     "frost",
+    // 文字地板段（ADR-0027 Task 6 新增裸串段；既有段零字节）：composer 占位字形
+    // （稳定属性锚 + :has 卡片锚；color/opacity 覆盖，content 不动）与实体面 1.4.11
+    // 常量边框（对壁纸 p95 ≥3:1 反解：light rgb(110,113,120) ≤124 灰界、dark rgb(196,199,206) ≥192 灰界）。
+    "\n  /* ---------- ADR-0027 text floor: composer placeholder + solid-face border ---------- */\n" +
+    "  body[data-dsh-uefi-harness] [class*=\"_card\"]:has([data-composer-input=\"true\"])::before{color:var(--dsw-alias-label-tertiary)!important;opacity:1!important;}\n" +
+    "  body[data-dsh-uefi-harness] [data-composer-input=\"true\"]::placeholder{color:var(--dsw-alias-label-tertiary)!important;opacity:1!important;}\n" +
+    "  body[data-dsh-uefi-harness]:not([data-ds-dark-theme]) [class*=\"_card\"]:has([data-composer-input=\"true\"]){border:1px solid rgb(110, 113, 120);}\n" +
+    "  body[data-dsh-uefi-harness][data-ds-dark-theme] [class*=\"_card\"]:has([data-composer-input=\"true\"]){border:1px solid rgb(196, 199, 206);}\n",
     "\n\n\n\n",
   ],
 };
