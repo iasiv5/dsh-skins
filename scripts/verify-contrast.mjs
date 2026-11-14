@@ -71,9 +71,10 @@ const T = {
   sidebar_text: [[102, 105, 112], [173, 178, 184]],
   // footer 行 = tertiary 代理（底栏与侧栏列同 fill 面，评审 O2：代理保守向无害）
   sidebar_footer: [[102, 105, 112], [173, 178, 184]],
-  // 占位字形 = caption token 覆写值（实施评审 B1 勘误：DraftEditor 兄弟元素
-  // .placeholder{color:var(--dsw-alias-label-caption)}——可骑 token，constantTokens
-  // 覆写即生效；初版「不可骑 token」裁决系 ::placeholder 探针误判，已勘误）
+  // 占位字形 = textfloor 定点规则值（B2 终版）：[data-composer-placeholder] 模式分色
+  // ！important（light rgb(102,105,112) / dark rgb(173,178,184)）；caption 为全局
+  // token（宿主 38 文件 75 处骑跨）——B2 主人裁定不动全局。初版「不可骑 token」
+  // 裁决系 ::placeholder 探针误判（B1 勘误），caption 覆写中间态已撤。
   composer_placeholder: [[102, 105, 112], [173, 178, 184]],
   hero_slogan: [[15, 17, 21], [249, 250, 251]],
   brand_mrz: [[140, 104, 45], [217, 180, 92]], // Task 7 终版：亮色止色暗化（#8C682D，L 0.157 ≤ 反解帽 0.1706）；dark 经 cssSegments !important 恢复原亮金 #D9B45C

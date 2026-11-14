@@ -76,12 +76,12 @@
  *                    check — the neutralizer is inert there, nothing to pin.
  *   10. text floor   the composer editor's stable data attributes
  *                    (`data-composer-input` editor, `data-composer-placeholder`
- *                    placeholder glyph sibling —实施评审 B1 勘误：字形色源为
- *                    可骑 token --dsw-alias-label-caption，机制即 caption 覆写，
- *                    原 data-placeholder 伪元素锚与 ::placeholder 死规则作废) still
- *                    exist in dsh-client-ui-conversation — the ADR-0027
- *                    caption-token channel keys off them; a drift means
- *                    re-derive the channel (hero anchor provisional,
+ *                    placeholder glyph sibling) still exist in
+ *                    dsh-client-ui-conversation — the ADR-0027 textfloor
+ *                    targeted color rules key off them (B2 终版：glyph 色走
+ *                    textfloor 定点规则，caption 全局 token 不动；初版
+ *                    caption 覆写/伪元素锚经 B1/B2 勘误作废); a drift means
+ *                    re-derive the targeted selectors (hero anchor provisional,
  *                    re-pinned at装机定面).
  * Runtime resolution: $DSH_RUNTIME_ROOT, else ~/.local/share/dsh-runtime.
  * Two layouts are understood: the pnpm store (`node_modules/.pnpm/
