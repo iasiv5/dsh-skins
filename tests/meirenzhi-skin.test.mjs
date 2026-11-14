@@ -72,10 +72,10 @@ test("project at factory P=35: riding alphas, constants, scrim and factory-crisp
   const t = fx.tokenOverrides;
   assert.equal(t["--dsw-alias-bg-base"].light, "rgba(250, 249, 246, 0.35)");
   assert.equal(t["--dsw-alias-bg-base"].dark, "rgba(18, 18, 26, 0.35)");
-  assert.equal(t["--dsw-specific-sidebar-fill"].light, "rgba(250, 249, 246, 0.40)");
+  assert.equal(t["--dsw-specific-sidebar-fill"].light, "rgba(250, 249, 246, 0.65)", "ADR-0027 sidebar-fill light floor 65（出厂申报变化：亮色侧栏变实一档）");
   assert.equal(t["--dsw-specific-sidebar-fill"].dark, "rgba(18, 18, 26, 0.52)");
   assert.equal(t["--dsw-alias-bg-module-platform"].dark, "rgba(18, 18, 26, 0.40)");
-  assert.equal(t["--dsw-specific-input-major"].dark, "rgba(18, 18, 26, 0.45)");
+  assert.equal(t["--dsw-specific-input-major"].dark, "rgba(18, 18, 26, 0.85)", "ADR-0027 input-major 实体面 floor 85");
   assert.equal(t["--dsw-alias-brand-primary"].light, "#B8433F");
   assert.equal(t["--dsw-alias-brand-primary"].dark, "#E58A80");
   assert.equal(t["--dsw-alias-brand-text"].dark, "#D9B45C");

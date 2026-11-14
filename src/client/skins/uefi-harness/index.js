@@ -59,8 +59,8 @@ const SPEC = {
     "--dsw-alias-bg-layer-1": { light: ["255, 255, 255", 48], dark: ["31, 25, 59", 55] },
     "--dsw-alias-bg-layer-2": { light: ["247, 245, 255", 56], dark: ["39, 31, 73", 60] },
     "--dsw-alias-bg-layer-3": { light: ["241, 238, 255", 62], dark: ["48, 38, 88", 64] },
-    "--dsw-specific-sidebar-fill": { light: ["238, 235, 255", 60], dark: ["25, 20, 48", 72] },
-    "--dsw-specific-input-major": { light: ["255, 255, 255", 62], dark: ["42, 34, 78", 55] },
+    "--dsw-specific-sidebar-fill": { light: ["238, 235, 255", 60, 60], dark: ["25, 20, 48", 72, 72] },
+    "--dsw-specific-input-major": { light: ["255, 255, 255", 62, 62], dark: ["42, 34, 78", 55, 55] },
   },
   // 常量族（ADR-0016 C1：原 css 模板手写行逐字迁入；等式钉在
   // tests/translucency-contract.test.mjs「uefi C1」）。

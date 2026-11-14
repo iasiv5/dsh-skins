@@ -100,8 +100,8 @@ const SPEC = {
     "--dsw-alias-bg-layer-1": { light: ["255, 255, 255", 48], dark: ["18, 38, 53", 55] },
     "--dsw-alias-bg-layer-2": { light: ["255, 255, 255", 56], dark: ["22, 48, 67", 60] },
     "--dsw-alias-bg-layer-3": { light: ["255, 255, 255", 62], dark: ["26, 58, 80", 64] },
-    "--dsw-specific-sidebar-fill": { light: ["238, 246, 251", 60], dark: ["13, 30, 44", 72] },
-    "--dsw-specific-input-major": { light: ["255, 255, 255", 60], dark: ["18, 42, 60", 65] },
+    "--dsw-specific-sidebar-fill": { light: ["238, 246, 251", 60, 60], dark: ["13, 30, 44", 72, 72] },
+    "--dsw-specific-input-major": { light: ["255, 255, 255", 60, 60], dark: ["18, 42, 60", 65, 65] },
     "--dsw-specific-login-input": { light: ["255, 255, 255", 60], dark: ["18, 42, 60", 65] },
   },
   // 常量族（ADR-0016 C1：原 CSS 模板手写行逐字迁入，明暗同键；等式钉在

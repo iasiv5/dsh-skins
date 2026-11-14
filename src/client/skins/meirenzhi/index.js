@@ -56,9 +56,9 @@ const SPEC = {
   bodyAttribute: "dshMeirenzhiSkin",
   riding: {
     "--dsw-alias-bg-base": { light: ["250, 249, 246", 35], dark: ["18, 18, 26", 35] },
-    "--dsw-specific-sidebar-fill": { light: ["250, 249, 246", 40], dark: ["18, 18, 26", 52] },
+    "--dsw-specific-sidebar-fill": { light: ["250, 249, 246", 40, 65], dark: ["18, 18, 26", 52, 52] },
     "--dsw-alias-bg-module-platform": { light: ["250, 249, 246", 35], dark: ["18, 18, 26", 40] },
-    "--dsw-specific-input-major": { light: ["250, 249, 246", 40], dark: ["18, 18, 26", 45] },
+    "--dsw-specific-input-major": { light: ["250, 249, 246", 40, 85], dark: ["18, 18, 26", 45, 85] },
   },
   constantTokens: {
     // 常量族：品牌绯红 × 鎏金、浮层「较实」、控件态、导航态（设计定案 §视觉系统）。

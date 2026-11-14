@@ -33,8 +33,8 @@ const GOLD = {
       "--dsw-alias-bg-layer-1": { light: ["255, 255, 255", 48], dark: ["18, 38, 53", 55] },
       "--dsw-alias-bg-layer-2": { light: ["255, 255, 255", 56], dark: ["22, 48, 67", 60] },
       "--dsw-alias-bg-layer-3": { light: ["255, 255, 255", 62], dark: ["26, 58, 80", 64] },
-      "--dsw-specific-sidebar-fill": { light: ["238, 246, 251", 60], dark: ["13, 30, 44", 72] },
-      "--dsw-specific-input-major": { light: ["255, 255, 255", 60], dark: ["18, 42, 60", 65] },
+      "--dsw-specific-sidebar-fill": { light: ["238, 246, 251", 60, 60], dark: ["13, 30, 44", 72, 72] },
+      "--dsw-specific-input-major": { light: ["255, 255, 255", 60, 60], dark: ["18, 42, 60", 65, 65] },
       "--dsw-specific-login-input": { light: ["255, 255, 255", 60], dark: ["18, 42, 60", 65] },
     },
     scrimStops: {
@@ -53,8 +53,8 @@ const GOLD = {
       "--dsw-alias-bg-layer-1": { light: ["255, 255, 255", 48], dark: ["31, 25, 59", 55] },
       "--dsw-alias-bg-layer-2": { light: ["247, 245, 255", 56], dark: ["39, 31, 73", 60] },
       "--dsw-alias-bg-layer-3": { light: ["241, 238, 255", 62], dark: ["48, 38, 88", 64] },
-      "--dsw-specific-sidebar-fill": { light: ["238, 235, 255", 60], dark: ["25, 20, 48", 72] },
-      "--dsw-specific-input-major": { light: ["255, 255, 255", 62], dark: ["42, 34, 78", 55] },
+      "--dsw-specific-sidebar-fill": { light: ["238, 235, 255", 60, 60], dark: ["25, 20, 48", 72, 72] },
+      "--dsw-specific-input-major": { light: ["255, 255, 255", 62, 62], dark: ["42, 34, 78", 55, 55] },
     },
     scrimStops: {
       light: [["248, 247, 255", 10], ["238, 234, 255", 22]],
@@ -68,9 +68,9 @@ const GOLD = {
     desktopBoost: { rate: 55, dark: "boost" },
     riding: {
       "--dsw-alias-bg-base": { light: ["250, 249, 246", 35], dark: ["18, 18, 26", 35] },
-      "--dsw-specific-sidebar-fill": { light: ["250, 249, 246", 40], dark: ["18, 18, 26", 52] },
+      "--dsw-specific-sidebar-fill": { light: ["250, 249, 246", 40, 65], dark: ["18, 18, 26", 52, 52] },
       "--dsw-alias-bg-module-platform": { light: ["250, 249, 246", 35], dark: ["18, 18, 26", 40] },
-      "--dsw-specific-input-major": { light: ["250, 249, 246", 40], dark: ["18, 18, 26", 45] },
+      "--dsw-specific-input-major": { light: ["250, 249, 246", 40, 85], dark: ["18, 18, 26", 45, 85] },
     },
     overlayScrim: { coefficient: 30, light: "252, 250, 246", dark: "16, 16, 26" },
   },
@@ -79,6 +79,8 @@ const GOLD = {
 // Test-side independent re-implementation of the projection math.
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const alpha2 = (P, baked, anchor) => (clamp(P + baked - anchor, 0, 100) / 100).toFixed(2);
+// floor-aware 变体（ADR-0027 D1）：alpha = max(pt(baked), floor)
+const alpha2f = (P, baked, anchor, floor) => (Math.max(clamp(P + baked - anchor, 0, 100), floor ?? 0) / 100).toFixed(2);
 const expectedBlurPx = (P, anchor, max) => Math.round(max * Math.max(0, (P - anchor) / (100 - anchor)) ** 2);
 const expectedDesktopBlur = (P, blurPx, boost) => {
   const boosted = Math.min(24, blurPx + P / boost.rate);
@@ -110,10 +112,10 @@ function projectorFor(id) {
 function assertRiding(fx, P, spec) {
   for (const [token, modes] of Object.entries(spec.riding)) {
     for (const mode of ["light", "dark"]) {
-      const [rgb, baked] = modes[mode];
+      const [rgb, baked, floor = 0] = modes[mode];
       assert.equal(
         fx.tokenOverrides[token][mode],
-        `rgba(${rgb}, ${alpha2(P, baked, spec.anchor)})`,
+        `rgba(${rgb}, ${alpha2f(P, baked, spec.anchor, floor)})`,
         `${id()} ${token} ${mode} @P=${P}`,
       );
     }
@@ -232,14 +234,14 @@ for (const [skinId, spec] of Object.entries(GOLD)) {
       assert.equal(at(100).tokenOverrides["--dsw-alias-bg-layer-1"].light, "rgba(255, 255, 255, 0.93)", "baked<anchor does NOT clamp to 1.00");
       assert.equal(at(100).tokenOverrides["--dsw-alias-bg-base"].light, "rgba(247, 250, 252, 1.00)", "baked=anchor clamps to 1.00");
       assert.equal(at(66).tokenOverrides["--dsw-specific-sidebar-fill"].dark, "rgba(13, 30, 44, 0.83)");
-      assert.equal(at(0).tokenOverrides["--dsw-specific-sidebar-fill"].dark, "rgba(13, 30, 44, 0.17)");
+      assert.equal(at(0).tokenOverrides["--dsw-specific-sidebar-fill"].dark, "rgba(13, 30, 44, 0.72)", "ADR-0027 floor=baked: P=0 holds at the factory alpha");
       assert.deepEqual(at(66).backdrop.desktopBlur, { light: 1 + 66 / 55, dark: 1 });
     }
     if (skinId === "uefi") {
       assert.equal(at(anchor).tokenOverrides["--dsw-specific-input-major"].dark, "rgba(42, 34, 78, 0.55)");
       assert.equal(at(anchor).tokenOverrides["--dsw-specific-input-major"].light, "rgba(255, 255, 255, 0.62)");
-      assert.equal(at(0).tokenOverrides["--dsw-specific-input-major"].light, "rgba(255, 255, 255, 0.07)");
-      assert.equal(at(0).tokenOverrides["--dsw-specific-input-major"].dark, "rgba(42, 34, 78, 0.00)");
+      assert.equal(at(0).tokenOverrides["--dsw-specific-input-major"].light, "rgba(255, 255, 255, 0.62)", "ADR-0027 floor=baked");
+      assert.equal(at(0).tokenOverrides["--dsw-specific-input-major"].dark, "rgba(42, 34, 78, 0.55)", "ADR-0027 floor=baked");
       assert.equal(at(100).tokenOverrides["--dsw-alias-bg-layer-1"].light, "rgba(255, 255, 255, 0.93)", "baked<anchor does NOT clamp to 1.00");
       assert.equal(at(66).tokenOverrides["--dsw-specific-sidebar-fill"].dark, "rgba(25, 20, 48, 0.83)");
       assert.deepEqual(at(66).backdrop.desktopBlur, { light: 1 + 66 / 55, dark: 1 + 66 / 55 });
@@ -247,6 +249,13 @@ for (const [skinId, spec] of Object.entries(GOLD)) {
     if (skinId === "meirenzhi") {
       assert.equal(at(anchor).tokenOverrides["--dsw-alias-bg-base"].light, "rgba(250, 249, 246, 0.35)");
       assert.equal(at(anchor).tokenOverrides["--dsw-specific-sidebar-fill"].dark, "rgba(18, 18, 26, 0.52)");
+      assert.equal(at(anchor).tokenOverrides["--dsw-specific-sidebar-fill"].light, "rgba(250, 249, 246, 0.65)", "ADR-0027 sidebar-fill light floor 65 = baked+25（亮色侧栏变实一档，出厂申报变化）");
+      assert.equal(at(anchor).tokenOverrides["--dsw-specific-input-major"].light, "rgba(250, 249, 246, 0.85)", "ADR-0027 input-major 实体面 floor");
+      assert.equal(at(anchor).tokenOverrides["--dsw-specific-input-major"].dark, "rgba(18, 18, 26, 0.85)", "ADR-0027 input-major 实体面 floor（dark）");
+      assert.equal(at(0).tokenOverrides["--dsw-specific-sidebar-fill"].light, "rgba(250, 249, 246, 0.65)", "P=0 地板生效：文字纱常驻");
+      assert.equal(at(0).tokenOverrides["--dsw-specific-sidebar-fill"].dark, "rgba(18, 18, 26, 0.52)", "P=0 floor=baked");
+      assert.equal(at(0).tokenOverrides["--dsw-specific-input-major"].light, "rgba(250, 249, 246, 0.85)", "P=0 实体面地板");
+      assert.equal(at(0).tokenOverrides["--dsw-specific-input-major"].dark, "rgba(18, 18, 26, 0.85)", "P=0 实体面地板（dark）");
       assert.equal(at(66).tokenOverrides["--dsw-alias-bg-base"].light, "rgba(250, 249, 246, 0.66)");
       assert.equal(at(66).tokenOverrides["--dsw-specific-sidebar-fill"].dark, "rgba(18, 18, 26, 0.83)");
       assert.equal(at(anchor).backdrop.overlayLight, "linear-gradient(rgba(252, 250, 246, 0.040) 0%, rgba(252, 250, 246, 0.040) 100%)");

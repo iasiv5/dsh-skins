@@ -438,10 +438,10 @@ test("the REAL meirenzhi factory projects single scrim, static palette and stati
   // Sidebar fill sits ABOVE the content base by the reference-skin deltas
   // (ruling #15: light +0.05, dark +0.17 — openbmc/uefi pattern).
   assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-bg-base"], { light: "rgba(250, 249, 246, 0.35)", dark: "rgba(18, 18, 26, 0.35)" });
-  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-sidebar-fill"], { light: "rgba(250, 249, 246, 0.40)", dark: "rgba(18, 18, 26, 0.52)" });
+  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-sidebar-fill"], { light: "rgba(250, 249, 246, 0.65)", dark: "rgba(18, 18, 26, 0.52)" });
   // Composer stays glass (1.0.0 user report): the input card is base +5/+10,
   // its embedded selector +0/+5 — never the host's solid input default.
-  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-input-major"], { light: "rgba(250, 249, 246, 0.40)", dark: "rgba(18, 18, 26, 0.45)" });
+  assert.deepEqual(result.effects.tokenOverrides["--dsw-specific-input-major"], { light: "rgba(250, 249, 246, 0.85)", dark: "rgba(18, 18, 26, 0.85)" });
   assert.deepEqual(result.effects.tokenOverrides["--dsw-alias-bg-module-platform"], { light: "rgba(250, 249, 246, 0.35)", dark: "rgba(18, 18, 26, 0.40)" });
   assert.equal(result.effects.backdrop.imageLight, 'url("builtin://meirenzhi/yuntai")', "factory default rides yuntai (001合照)");
   // Favicon is a static skin asset — the 掌天瓶 mark (bundled WebP data URL).
