@@ -113,7 +113,7 @@ Every skin's key visuals are open to adjustment. Click the gear button on a skin
 |---|---|---|
 | **Wallpaper** | Pick from the skin's built-in artwork, or upload your own images into a personal library | Each skin's default artwork |
 | **Slogan** | The new-session guidance line, one Chinese and one English copy | The skin's factory slogan |
-| **Translucency** | 0–100%, one value driving three visual layers: panel tint, wallpaper scrim and blur. 0% is pure, fully visible wallpaper; 100% hides it completely | meirenzhi: Web 35%, Desktop 66%; openbmc / uefi-harness: Web 55%, Desktop 66% |
+| **Translucency** | 0–100%, one value driving three visual layers: panel tint, wallpaper scrim and blur. 0% is pure, fully visible wallpaper; 100% hides it completely. Text-bearing zones keep a permanent text-veil floor (ADR-0027): at 0% everything fades except the text backing | meirenzhi: Web 35%, Desktop 66%; openbmc / uefi-harness: Web 55%, Desktop 66% |
 
 > meirenzhi ships zero wallpaper blur and no global glass at or below its Web factory value (35%) (ADR-0010) — the wallpaper stays native-crisp; blur ramps smoothly above 35% up to 12px at 100%.
 
@@ -173,6 +173,9 @@ This section answers: how the plugin is updated.
 The plugin ships no updater of its own (ADR-0008): update discovery and installation belong to the dsh-m marketplace, or to the DSH CLI — upgrade with `dsh plugin --profile web update @iasiv5/dsh-skins`; roll back by reinstalling an older exact version with `dsh plugin add --profile web @iasiv5/dsh-skins@X.Y.Z`. The `latest` exact version of `@iasiv5/dsh-skins` on npm remains the sole distribution form, and the version policy stays strict `X.Y.Z`.
 
 ## FAQ
+
+**Why do the sidebar and composer keep a tint even at 0%?**
+That is the **text-veil floor** (ADR-0027): the sidebar column and the composer face keep a permanent text backing that never disappears, so text over exposed wallpaper always stays readable. 0% therefore means "fully transparent except the text backing".
 
 **How do I get fully back to the official interface?**
 Pick "DeepSeek Harness (Official)" in the skin switcher, or open `/?skin=official`. It undoes the extension skin's branding, backdrop and favicon while keeping the switcher and the official light/dark palettes; your light/dark/system preference stays untouched.

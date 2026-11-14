@@ -113,7 +113,7 @@ dsh plugin --profile web remove @iasiv5/dsh-skins    # 卸载
 |---|---|---|
 | **壁纸** | 从皮肤自带的「内置精选」里挑，或上传自己的图片进「个人图库」 | 各皮肤的默认画作 |
 | **标语** | 新会话页的引导语，中文、英文各一份 | 皮肤出厂标语 |
-| **通透度** | 0–100% 单值联动三个视觉层：面板底色、壁纸遮罩、模糊。0% 纯壁纸完全透出，100% 完全遮蔽 | 美人志：Web 35%、Desktop 66%；openbmc / uefi-harness：Web 55%、Desktop 66% |
+| **通透度** | 0–100% 单值联动三个视觉层：面板底色、壁纸遮罩、模糊。0% 纯壁纸完全透出，100% 完全遮蔽；文字承载区设有常驻文字纱地板（ADR-0027），0% 时除文字衬底外全透 | 美人志：Web 35%、Desktop 66%；openbmc / uefi-harness：Web 55%、Desktop 66% |
 
 > 美人志在 Web 出厂值（35%）及以下不引入任何壁纸模糊与全局玻璃（ADR-0010），壁纸保持原生锐度；模糊自 35% 以上沿铰链曲线平滑爬升，100% 到顶 12px。
 
@@ -173,6 +173,9 @@ URL 也能切皮肤：`/?skin=official`、`/?skin=openbmc`、`/?skin=uefi-harnes
 插件不自带更新器（ADR-0008）：更新发现与安装交给 dsh-m 市场，或 DSH 官方 CLI——升级用 `dsh plugin --profile web update @iasiv5/dsh-skins`；回滚 = 重装旧精确版本 `dsh plugin add --profile web @iasiv5/dsh-skins@X.Y.Z`。npm 上 `@iasiv5/dsh-skins` 的 latest 精确版本仍是唯一分发形态，版本策略维持严格 X.Y.Z。
 
 ## FAQ
+
+**为什么 0% 时侧栏和输入框还留着一块底色？**
+那是「文字纱地板」（ADR-0027）：侧栏列与输入框面设有常驻的文字衬底，无论通透度拉到多低都不会消失，保证壁纸暴露区的文字始终可读。0% 的语义因此是「除文字衬底外全透」。
 
 **怎么彻底回到官方界面？**
 在皮肤切换器中选择「DeepSeek Harness（官方）」，或访问 `/?skin=official`。它撤销扩展皮肤的品牌、背景与 favicon，保留皮肤切换器与官方明暗配色，也不会改动你的浅色/深色/跟随系统偏好。

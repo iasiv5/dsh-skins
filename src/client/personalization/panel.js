@@ -83,7 +83,7 @@ export const PANEL_CSS = [
   '.dsh-skins-pz-thumb img{width:100%;height:100%;object-fit:cover}',
   '.dsh-skins-pz-thumb.on{border-color:var(--dsw-alias-brand-primary)}',
   '.dsh-skins-pz-thumb:disabled{opacity:.55;cursor:default}',
-  '.dsh-skins-pz-muted{font-size:11px;line-height:16px;color:var(--dsw-alias-label-secondary)}',
+  '.dsh-skins-pz-muted{font-size:11px;line-height:16px;color:var(--dsw-alias-label-primary)}',
   '.dsh-skins-pz-strip{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:10px;background:var(--dsw-alias-bg-layer-1);font-size:12px}',
   '.dsh-skins-pz-status{display:flex;align-items:center;gap:8px;justify-content:space-between}',
   '.dsh-skins-pz-warn{border-color:var(--dsw-alias-state-warning,#c77d00)}',

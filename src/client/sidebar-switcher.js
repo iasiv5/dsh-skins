@@ -173,7 +173,7 @@ const SHELL_CSS = [
   '.dsh-skins-pop::-webkit-scrollbar-track{background:transparent}',
   // 【共享原子】.dsh-skins-pop-title is shared vocabulary: the panel module
   // reuses it for its header heading (styled contextually in PANEL_CSS).
-  '.dsh-skins-pop-title{font-size:12px;line-height:18px;color:var(--dsw-alias-label-secondary);padding:0 4px}',
+  '.dsh-skins-pop-title{font-size:13.5px;line-height:20px;font-weight:500;color:var(--dsw-alias-label-primary);padding:0 4px}',
   '.dsh-skins-theme-grid{display:flex;align-items:stretch;gap:8px}',
   '.dsh-skins-theme-card{box-sizing:border-box;display:flex;flex:1;min-width:0;height:72px;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px 5px;border:1px solid var(--dsw-alias-border-l2);border-radius:12px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;cursor:pointer}',
   '.dsh-skins-theme-card:hover{background:var(--dsw-alias-interactive-bg-hover)}',
