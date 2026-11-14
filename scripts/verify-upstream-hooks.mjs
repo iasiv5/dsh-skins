@@ -387,6 +387,8 @@ for (const [pkg, anchors, label] of FONT_DEFAULT_ANCHORS) {
 // structural local names that live in the web-frontend stylesheet, not in
 // lib/*.js — resolved from the dsh-web-frontend package's dist/assets.
 let frontendChecked = false;
+let textFloorChecked = false;
+let textFloorAlive = true;
 const frontendDir = (() => {
 	if (existsSync(pnpmDir)) {
 		const entry = readdirSync(pnpmDir).find((e) => e.startsWith("@deepseek-ai+dsh-web-frontend@"));
@@ -462,9 +464,11 @@ if (!frontendDir || !existsSync(frontendDir)) {
 	const conversation = readAll("dsh-client-ui-conversation");
 	for (const attr of ["data-composer-input", "data-placeholder"]) {
 		if (!conversation.includes(attr)) {
+			textFloorAlive = false;
 			problems.push(`text-floor hook dead: "${attr}" no longer in dsh-client-ui-conversation — the composer editor attr drifted, re-derive the ADR-0027 textfloor selectors`);
 		}
 	}
+	textFloorChecked = frontendChecked;
 }
 
 // 7. shell-frame surface hooks (ADR-0009): the Windows-Desktop single-paint
@@ -633,4 +637,9 @@ const overlaySummary = frontendChecked
 const sidebarRootSummary = directAsarLayout
 	? "sidebar-root paint alive"
 	: "sidebar-root paint NOT JUDGED (desktop-only premise, ADR-0011 附录 P3)";
-console.log(`✓ upstream-hooks: VERIFIED ${modeSummary} — ${bubbleSummary}; dark attr alive; service-API anchors alive; ${overlaySummary}; shell-frame hooks alive (_frame/_sidebarCol/_rightbarCol/titlebar marker/content-radius/fullscreen marker); sidebar-fade hook alive (_scrollFade); ${sidebarRootSummary} (${packages.size} @deepseek-ai packages scanned)`);
+const textFloorSummary = !frontendChecked
+	? "text-floor anchors NOT CHECKED (frontend dist absent under the runtime)"
+	: textFloorAlive
+		? "text-floor anchors alive (data-composer-input/data-placeholder @ dsh-client-ui-conversation)"
+		: "text-floor anchors DEAD (see problems)";
+console.log(`✓ upstream-hooks: VERIFIED ${modeSummary} — ${bubbleSummary}; dark attr alive; service-API anchors alive; ${overlaySummary}; shell-frame hooks alive (_frame/_sidebarCol/_rightbarCol/titlebar marker/content-radius/fullscreen marker); sidebar-fade hook alive (_scrollFade); ${textFloorSummary}; ${sidebarRootSummary} (${packages.size} @deepseek-ai packages scanned)`);
