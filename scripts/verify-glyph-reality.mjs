@@ -59,6 +59,12 @@ async function installLightRewrite(context) {
   });
 }
 
+// 无活宿主（CI / 未起 DSH）→ 先于 chromium 启动即 SKIP exit 0。release.yml 的 check 链在 CI
+// 既无宿主、也未必装 chromium，此处不得因浏览器启动失败而判红（发版前阻断修复）。
+if (!(await hostReachable())) {
+  console.log(`REALITY SKIP: no live DSH host at ${BASE} (CI / no-host = not judged)`);
+  process.exit(0);
+}
 const browser = await chromium.launch({ headless: true });
 const out = [];
 let judged = false;
