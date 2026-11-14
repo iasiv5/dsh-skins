@@ -44,7 +44,7 @@ date: 2026-11-14
 
 ## Amendments
 
-- 无（首版）。
+- 2026-11-14（目验后修正，主人指认）：Consequences 中「`screenshots.json` 为零消费者孤儿文件」**仅在 dsh-skins 仓内成立**——dsh-m 市场侧（`src/core/primary-screenshots.ts`，ADR-0015 primary-screenshot-manifest）自插件 GitHub 仓库根抓取 `screenshots.json`（raw.githubusercontent.com + jsDelivr 双腿，≤8 张）作为精选详情截图清单，同族 dsh-quota-watch / dsh-stock-kanban 均随仓库携带该文件。Task 10 的退役已撤销、文件原样恢复；「退役或由门禁收编」选项作废。教训：孤儿断言必须含生态位消费者扫描（registry 同族 + 下游市场源码），仓内 grep 零命中不构成充分证据。
 
 ## 附录：grill 共识存档（2026-11-14 会话，主人逐轮确认「按推荐」）
 
