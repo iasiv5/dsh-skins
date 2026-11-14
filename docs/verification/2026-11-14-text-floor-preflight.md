@@ -22,7 +22,7 @@
 |---|---|---|---|---|
 | 侧栏导航主字（14px，插件/歸藏设计…） | 宿主 | rgb(15,17,21) / rgb(249,250,251) | `--dsw-alias-label-primary`（neutral-bluish-1000/50） | **constantTokens** |
 | 侧栏 muted 字（会话列表行、空态「暂无会话」13px）＝**基线侧栏失败行族** | 宿主 | rgb(129,133,140)（#81858c＝bluish-600） | `--dsw-alias-label-tertiary` | **constantTokens** |
-| composer 占位（16px） | 宿主 | 非 `::placeholder` 伪元素——Lexical 编辑器渲染型占位：`[data-composer-input="true"]` + `data-placeholder` 属性（data-phase=plain/inert）；字形色规则在宿主 app 哈希类 CSS 内，不可骑 token | 结构**属性选择器** `[data-composer-input="true"]`（稳定非哈希，可进守卫） | **staticCss（属性选择器）+ 守卫** |
+| composer 占位（16px） | 宿主 | light 渲染色 ≈ caption 默认（#ADB2B8 系）/ dark #81858C 系 | **勘误（实施评审 B1，2026-11-14）**：初判「不可骑 token」错误——字形为 DraftEditor 兄弟元素 `<div class={css.placeholder} data-composer-placeholder>`，色源 `InputBar.module.css .placeholder{color:var(--dsw-alias-label-caption)}` **为可骑 token**；修复 = constantTokens 覆写 caption（light #666970 / dark #adb2b8），staticCss 两条死规则（::placeholder / card::before）删除，守卫锚换 data-composer-placeholder | **constantTokens（caption token）** |
 | hero 标语（26px/500，pXSMma_titleGroup > span） | 宿主 | rgb(15,17,21) / rgb(249,250,251)（=label-primary，textShadow: none） | DOM 钩子 = `pXSMma_titleGroup` 结构类（哈希类，**provisional**，Task 6 装机定面复核）+ 文字色=常量族 | **constantTokens（色）+ 守卫（锚）** |
 | 品牌位（凡人修仙传字标 + BEAUTY 徽） | 插件自有（MeiRenZhiName/Mark 组件） | 组件源码即可取证（src/client/skins/meirenzhi/index.js），金渐变 bg-clip 在组件内部 | 插件自有组件 CSS 直改 | **组件 CSS（Task 7）** |
 | composer 容器边界 | 宿主 composer card（uV2eYG_card） | **现役 0px 无边界**（与基线 1.00x 一致） | 新增 staticCss 常量边框（textfloor 新段） | **staticCss（Task 6）** |

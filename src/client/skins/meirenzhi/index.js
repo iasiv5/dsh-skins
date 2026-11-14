@@ -62,6 +62,8 @@ const SPEC = {
   },
   constantTokens: {
     // 文字地板（ADR-0027 Task 6）：muted 次级字暗化至门禁 4.5（常量通道，B3 裁决；dark 维持宿主默认=达标）
+    // 占位字形（DraftEditor 兄弟元素 .placeholder{color:var(--dsw-alias-label-caption)}，实施评审 B1 实证）随本覆写生效
+    "--dsw-alias-label-caption": { light: "#666970", dark: "#adb2b8" },
     "--dsw-alias-label-tertiary": { light: "#666970", dark: "#adb2b8" },
     // 常量族：品牌绯红 × 鎏金、浮层「较实」、控件态、导航态（设计定案 §视觉系统）。
     // 用户气泡（产品主人裁决，参照 openbmc/uefi 双 token 结构）：浅色态=品牌
@@ -135,9 +137,7 @@ const SPEC = {
     // 文字地板段（ADR-0027 Task 6 新增裸串段；既有段零字节）：composer 占位字形
     // （稳定属性锚 + :has 卡片锚；color/opacity 覆盖，content 不动）与实体面 1.4.11
     // 常量边框（对壁纸 p95 ≥3:1 反解：light rgb(110,113,120) ≤124 灰界、dark rgb(196,199,206) ≥192 灰界）。
-    "\n  /* ---------- ADR-0027 text floor: composer placeholder + solid-face border ---------- */\n" +
-    "  body[data-dsh-meirenzhi-skin] [class*=\"_card\"]:has([data-composer-input=\"true\"])::before{color:var(--dsw-alias-label-tertiary)!important;opacity:1!important;}\n" +
-    "  body[data-dsh-meirenzhi-skin] [data-composer-input=\"true\"]::placeholder{color:var(--dsw-alias-label-tertiary)!important;opacity:1!important;}\n" +
+    "\n  /* ---------- ADR-0027 text floor: solid-face border（占位字形经 --dsw-alias-label-caption token 通道，B1 修正） ---------- */\n" +
     "  body[data-dsh-meirenzhi-skin]:not([data-ds-dark-theme]) [class*=\"_card\"]:has([data-composer-input=\"true\"]){border:1px solid rgb(110, 113, 120);}\n" +
     "  body[data-dsh-meirenzhi-skin][data-ds-dark-theme] [class*=\"_card\"]:has([data-composer-input=\"true\"]){border:1px solid rgb(196, 199, 206);}\n" +
     "  body[data-dsh-meirenzhi-skin][data-ds-dark-theme] .dsh-mrz-name{background-image:linear-gradient(120deg,#A87B2F,#D9B45C 45%,#B8433F)!important;}\n"

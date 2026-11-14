@@ -75,11 +75,14 @@
  *                    Pre-veil runtimes (sidebar build <=0.2.2-rc.1) skip the
  *                    check — the neutralizer is inert there, nothing to pin.
  *   10. text floor   the composer editor's stable data attributes
- *                    (`data-composer-input`, `data-placeholder`) still exist
- *                    in the dsh-web-frontend dist — the ADR-0027 textfloor
- *                    staticCss segment (placeholder glyph + solid-face
- *                    border) keys off them; a drift means re-derive the
- *                    selectors (hero anchor provisional, re-pinned at装机定面).
+ *                    (`data-composer-input` editor, `data-composer-placeholder`
+ *                    placeholder glyph sibling —实施评审 B1 勘误：字形色源为
+ *                    可骑 token --dsw-alias-label-caption，机制即 caption 覆写，
+ *                    原 data-placeholder/data-placeholder 伪元素锚作废) still
+ *                    exist in dsh-client-ui-conversation — the ADR-0027
+ *                    caption-token channel keys off them; a drift means
+ *                    re-derive the channel (hero anchor provisional,
+ *                    re-pinned at装机定面).
  * Runtime resolution: $DSH_RUNTIME_ROOT, else ~/.local/share/dsh-runtime.
  * Two layouts are understood: the pnpm store (`node_modules/.pnpm/
  * @deepseek-ai+dsh-*@…`) and the direct desktop-asar form
@@ -462,10 +465,10 @@ if (!frontendDir || !existsSync(frontendDir)) {
 	// selectors; the hero anchor (pXSMma_titleGroup) is provisional and is
 	// re-pinned at装机定面 (Task 11), not pinned here against hashes.
 	const conversation = readAll("dsh-client-ui-conversation");
-	for (const attr of ["data-composer-input", "data-placeholder"]) {
+	for (const attr of ["data-composer-input", "data-composer-placeholder"]) {
 		if (!conversation.includes(attr)) {
 			textFloorAlive = false;
-			problems.push(`text-floor hook dead: "${attr}" no longer in dsh-client-ui-conversation — the composer editor attr drifted, re-derive the ADR-0027 textfloor selectors`);
+			problems.push(`text-floor hook dead: "${attr}" no longer in dsh-client-ui-conversation — the composer editor/placeholder-glyph attr drifted, re-derive the ADR-0027 caption-token channel`);
 		}
 	}
 	textFloorChecked = frontendChecked;
@@ -640,6 +643,6 @@ const sidebarRootSummary = directAsarLayout
 const textFloorSummary = !frontendChecked
 	? "text-floor anchors NOT CHECKED (frontend dist absent under the runtime)"
 	: textFloorAlive
-		? "text-floor anchors alive (data-composer-input/data-placeholder @ dsh-client-ui-conversation)"
+		? "text-floor anchors alive (data-composer-input/data-composer-placeholder @ dsh-client-ui-conversation)"
 		: "text-floor anchors DEAD (see problems)";
 console.log(`✓ upstream-hooks: VERIFIED ${modeSummary} — ${bubbleSummary}; dark attr alive; service-API anchors alive; ${overlaySummary}; shell-frame hooks alive (_frame/_sidebarCol/_rightbarCol/titlebar marker/content-radius/fullscreen marker); sidebar-fade hook alive (_scrollFade); ${textFloorSummary}; ${sidebarRootSummary} (${packages.size} @deepseek-ai packages scanned)`);

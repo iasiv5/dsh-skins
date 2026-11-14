@@ -111,6 +111,8 @@ const SPEC = {
   // （与画面同色相，拒绝纯黑）；滚动条同系引用壳令牌。
   constantTokens: {
     // 文字地板（ADR-0027 Task 6）：muted 次级字暗化至门禁 4.5（常量通道；dark 维持宿主默认=达标）
+    // 占位字形（DraftEditor 兄弟元素 .placeholder{color:var(--dsw-alias-label-caption)}，实施评审 B1 实证）随本覆写生效
+    "--dsw-alias-label-caption": { light: "#666970", dark: "#adb2b8" },
     "--dsw-alias-label-tertiary": { light: "#666970", dark: "#adb2b8" },
     "--dsw-alias-brand-primary": { light: "#0083b0", dark: "#3ec1e8" },
     "--dsw-alias-brand-primary-invert": { light: "#ffffff", dark: "#06222e" },
@@ -179,9 +181,7 @@ const SPEC = {
     // 文字地板段（ADR-0027 Task 6 新增裸串段；既有段零字节）：composer 占位字形
     // （稳定属性锚 + :has 卡片锚；color/opacity 覆盖，content 不动）与实体面 1.4.11
     // 常量边框（对壁纸 p95 ≥3:1 反解：light rgb(110,113,120) ≤124 灰界、dark rgb(196,199,206) ≥192 灰界）。
-    "\n  /* ---------- ADR-0027 text floor: composer placeholder + solid-face border ---------- */\n" +
-    "  body[data-dsh-openbmc-skin] [class*=\"_card\"]:has([data-composer-input=\"true\"])::before{color:var(--dsw-alias-label-tertiary)!important;opacity:1!important;}\n" +
-    "  body[data-dsh-openbmc-skin] [data-composer-input=\"true\"]::placeholder{color:var(--dsw-alias-label-tertiary)!important;opacity:1!important;}\n" +
+    "\n  /* ---------- ADR-0027 text floor: solid-face border（占位字形经 --dsw-alias-label-caption token 通道，B1 修正） ---------- */\n" +
     "  body[data-dsh-openbmc-skin]:not([data-ds-dark-theme]) [class*=\"_card\"]:has([data-composer-input=\"true\"]){border:1px solid rgb(110, 113, 120);}\n" +
     "  body[data-dsh-openbmc-skin][data-ds-dark-theme] [class*=\"_card\"]:has([data-composer-input=\"true\"]){border:1px solid rgb(196, 199, 206);}\n",
     "\n\n\n\n",
