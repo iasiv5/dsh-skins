@@ -37,7 +37,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const FIXTURE = join(ROOT, "scripts", "fixtures", "wallpaper-luminance.json");
@@ -81,6 +81,10 @@ const T = {
   composer_border: [[110, 113, 120], [196, 199, 206]], // Task 6 终版：对壁纸 p95 ≥3:1 反解（light 最严 nangongwan 0.6872→≤124 灰；dark 最严 mupeiling 0.1395→≥192 灰）
 };
 const THRESHOLD = { text: 4.5, hero: 3.0, border: 3.0 }; // B8 口径：正文/大字/1.4.11 边界
+// 单源导出（verify-glyph-reality.mjs 交叉探针消费）：手抄值唯一出处在此，
+// 现实探针以本表核「渲染 == 契约」，防虚构契约复发（实施评审 B1/O1）。
+export const TEXT_FLOOR = T;
+export const THRESHOLDS = THRESHOLD;
 
 // ---- 数学独立重实现 ----
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -219,4 +223,5 @@ async function main() {
   process.exit(fails.length === 0 ? 0 : 1);
 }
 
-await main();
+// 直跑守卫：被 verify-glyph-reality.mjs import 时（TEXT_FLOOR 单源消费）不执行门禁体
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();
