@@ -78,7 +78,7 @@
  *                    (`data-composer-input` editor, `data-composer-placeholder`
  *                    placeholder glyph sibling —实施评审 B1 勘误：字形色源为
  *                    可骑 token --dsw-alias-label-caption，机制即 caption 覆写，
- *                    原 data-placeholder/data-placeholder 伪元素锚作废) still
+ *                    原 data-placeholder 伪元素锚与 ::placeholder 死规则作废) still
  *                    exist in dsh-client-ui-conversation — the ADR-0027
  *                    caption-token channel keys off them; a drift means
  *                    re-derive the channel (hero anchor provisional,
