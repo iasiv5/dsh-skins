@@ -1,6 +1,6 @@
 {
   "name": "@iasiv5/dsh-skins",
-  "description": "DSH Web 皮肤插件：多套品牌皮肤侧栏热切换。",
+  "description": "侧栏多皮肤热切换，一键回官方；壁纸、标语、通透度个性化，明暗随外观自适应，Web 与 Desktop 均可用。",
   "icon": "./icon.svg",
   "version": "1.5.33",
   "homepage": "https://github.com/iasiv5/dsh-skins#readme",
