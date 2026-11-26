@@ -1,5 +1,6 @@
 app.js
 .artifacts/
+.impeccable/
 boot.html
 .dsh-ci-runtime/
 .DS_Store

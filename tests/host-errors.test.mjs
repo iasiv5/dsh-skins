@@ -15,7 +15,7 @@ const zhTr = (key, params = {}) => {
   return formatTemplate(template, params);
 };
 
-test("resolveHostErrorText localizes coded errors and falls back to the raw message", () => {
+test("resolveHostErrorText localizes coded errors and never leaks the Host's raw text", () => {
   assert.equal(
     resolveHostErrorText({ code: "STORE_READONLY", text: "配置为更高版本创建，当前只读" }, enTr),
     "Created by a newer config version; read-only",
@@ -24,12 +24,24 @@ test("resolveHostErrorText localizes coded errors and falls back to the raw mess
     resolveHostErrorText({ code: "STORE_READONLY", text: "配置为更高版本创建，当前只读" }, zhTr),
     "配置为更高版本创建，当前只读",
   );
-  // Unknown code → raw host message, never a bare key.
+  // Unknown code → the localized generic naming the code, in the interface
+  // language. The Host's own message text never reaches users (fix H).
   assert.equal(
     resolveHostErrorText({ code: "SOMETHING_ELSE", text: "raw fallback" }, enTr),
-    "raw fallback",
+    "Unknown host error (SOMETHING_ELSE)",
   );
-  // Plain strings (client-side errors) pass through untouched.
+  assert.equal(
+    resolveHostErrorText({ code: "SOMETHING_ELSE", text: "原始兜底" }, zhTr),
+    "宿主返回未知错误（SOMETHING_ELSE）",
+  );
+  // Coded values keep their structured params alongside the code.
+  assert.equal(
+    resolveHostErrorText({ code: "SOMETHING_ELSE", params: { limit: 5 } }, enTr),
+    "Unknown host error (SOMETHING_ELSE)",
+  );
+  // Plain strings and code-less client-side shapes keep their own text —
+  // that text never went through the Host fence, so nothing leaks.
   assert.equal(resolveHostErrorText("offline", enTr), "offline");
+  assert.equal(resolveHostErrorText({ message: "boom" }, enTr), "boom");
   assert.equal(resolveHostErrorText(null, enTr), "");
 });

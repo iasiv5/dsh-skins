@@ -1,13 +1,19 @@
 import { projectSkin } from "./personalization/projector.js";
 import { BUILTIN_REF_PATTERN, defaultWallpaperRef } from "../shared/personalization/catalog.js";
 
-const SKIN_STORAGE_KEY = "dsh-skins:active";
+// Exported: the sidebar switcher reads it to detect the never-chosen
+// (factory-default) state for the first-run note.
+export const SKIN_STORAGE_KEY = "dsh-skins:active";
 const SKIN_URL_PARAM = "skin";
 const OFFICIAL_SKIN_ID = "official";
 const LEGACY_OFFICIAL_ALIAS = "default";
 const HERO_NS = "conversation";
 const HERO_KEY = "hero.headline";
 const ACTIVE_EVENT = "dsh-skins:active-changed";
+// Mount failures announce themselves beyond the console: the switcher
+// popover surfaces a localized strip (transient while open, sticky until
+// the next open otherwise).
+const MOUNT_FAILED_EVENT = "dsh-skins:mount-failed";
 
 /** dataset camelCase → attribute name: dshMeirenzhiSkin → data-dsh-meirenzhi-skin. */
 function datasetAttribute(key) {
@@ -320,6 +326,18 @@ export function createSkinRuntime({ profile = "web" } = {}) {
     if (typeof window.dispatchEvent === "function" && typeof CustomEvent === "function") {
       window.dispatchEvent(new CustomEvent(ACTIVE_EVENT, { detail: id }));
     }
+  }
+
+  // Mount-failure notice: the skin id (the UI layer localizes it) and what
+  // the failure restored. Best-effort, mirroring announce()'s guarded dispatch.
+  function announceMountFailure(failedName, restoredKind) {
+    try {
+      if (typeof window.dispatchEvent === "function" && typeof CustomEvent === "function") {
+        window.dispatchEvent(new CustomEvent(MOUNT_FAILED_EVENT, {
+          detail: { failedName, restoredKind },
+        }));
+      }
+    } catch {}
   }
 
   // -- personalization plumbing ----------------------------------------------
@@ -783,7 +801,9 @@ export function createSkinRuntime({ profile = "web" } = {}) {
       stop = buildEffects(skin, effects);
     } catch (error) {
       console.warn(`[dsh-skins] mounting "${skin.id}" failed`, error);
-      restorePrevious(previous, error);
+      // restorePrevious answers what the failure left mounted ("previous" |
+      // "official"); the switcher turns this into the localized strip.
+      announceMountFailure(skin.id, restorePrevious(previous, error));
       return false;
     }
     mounted = { skin, effects, overrides, stop };
@@ -807,7 +827,7 @@ export function createSkinRuntime({ profile = "web" } = {}) {
           mounted = { skin: previous.skin, effects: restored.effects, overrides: previous.overrides, stop };
           selectedId = previous.skin.id;
           announce(previous.skin.id);
-          return;
+          return "previous";
         }
       } catch (restoreError) {
         console.error("[dsh-skins] restoring the previous skin failed; falling back to official", restoreError);
@@ -816,6 +836,7 @@ export function createSkinRuntime({ profile = "web" } = {}) {
     void cause;
     selectedId = OFFICIAL_SKIN_ID;
     announce(OFFICIAL_SKIN_ID);
+    return "official";
   }
 
   /** Project + mount a skin; false = failed (previous restored or official). */
@@ -827,6 +848,7 @@ export function createSkinRuntime({ profile = "web" } = {}) {
       if (mounted !== null) return false; // projection failed, current skin untouched
       selectedId = OFFICIAL_SKIN_ID; // first boot fail-closed
       announce(OFFICIAL_SKIN_ID);
+      announceMountFailure(skin.id, "official");
       return false;
     }
     if (result.degraded !== "none") {

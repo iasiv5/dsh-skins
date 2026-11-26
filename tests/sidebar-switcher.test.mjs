@@ -79,7 +79,12 @@ function makeHarness(viewportHeight = 900, viewportWidth = 1400, workspacesEntri
   const runtime = {
     officialId: "official",
     active: () => active,
-    select: (id) => { active = id; },
+    // Mirrors the real runtime: a successful pick persists the storage key
+    // (runtime.js SKIN_STORAGE_KEY), which retires the first-run note.
+    select: (id) => {
+      active = id;
+      try { localStorage.setItem("dsh-skins:active", id); } catch {}
+    },
     list: () => [
       { id: "openbmc", label: "OpenBMC", description: "bmc" },
       { id: "uefi-harness", label: "UEFI", description: "uefi" },
@@ -164,7 +169,7 @@ function makeHarness(viewportHeight = 900, viewportWidth = 1400, workspacesEntri
   const collapseButton = () => inShell().find(
     (n) => n.type === "button" && String(n.props.className).includes("dsh-skins-pz-collapse"),
   ) ?? null;
-  const translucencyInput = () => inShell().find((n) => n.type === "input" && n.props["aria-label"] === "通透度 Transparency");
+  const translucencyInput = () => inShell().find((n) => n.type === "input" && n.props["aria-label"] === "通透度");
   const heading = () => inShell().find((n) => n.props?.role === "heading");
 
   render();
@@ -176,10 +181,15 @@ function makeHarness(viewportHeight = 900, viewportWidth = 1400, workspacesEntri
   };
 
   return { dom, configClient, tree: () => tree, render, shell, gearButton, cardButton, switcherButton, panelColumn, collapseButton, translucencyInput, heading, openShell, attachFocusRecorders, getActive: () => active, seesShellTakeover,
+    fireMountFailed: (detail) => dom.winListeners.get("dsh-skins:mount-failed")?.({ detail }),
+    mountFailureStrip: () => inShell().find((n) => n.props?.className === "dsh-skins-pz-status dsh-skins-pz-muted" && n.props.role === "alert") ?? null,
+    factoryNote: () => inShell().find((n) => n.props?.className === "dsh-skins-pz-muted" && typeof n.props.children === "string" && n.props.children.startsWith("当前为出厂皮肤")) ?? null,
     cssText: () => dom.created.map((el) => el.textContent ?? "").join("\n") };
 }
 
 const tick = () => new Promise((r) => setTimeout(r, 0));
+// Microtask checkpoint that survives t.mock.timers (setTimeout mocked).
+const flushMs = () => new Promise((r) => setImmediate(r));
 
 test("⓪ every skin card carries a stable data-skin-id hook (ADR-0021/R21)", async () => {
   const h = makeHarness();
@@ -614,4 +624,85 @@ test("⑯ switcher entry rides the host's horizontal scale (content start 20px, 
     1,
     "rail rule untouched (36×36 circle, wrap centers — already aligned)",
   );
+});
+
+// ---- UX fix campaign: mount-failure strip (G) + first-run note (I) ---------
+
+test("mount-failed while the popover is open: transient strip with localized copy, auto-dismissed on one beat", async (t) => {
+  const h = makeHarness();
+  await h.openShell();
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  h.fireMountFailed({ failedName: "meirenzhi", restoredKind: "official" });
+  await flushMs();
+  const strip = h.mountFailureStrip();
+  assert.notEqual(strip, null, "the strip renders immediately while the popover is open");
+  assert.equal(strip.props.children, "皮肤 MRZ 挂载失败，已恢复官方界面",
+    "official revert: the failed skin is named by its localized label");
+  assert.equal(strip.props.role, "alert", "a silent-looking failure asserts");
+
+  // A second failure replaces the strip and picks the previous-skin copy.
+  h.fireMountFailed({ failedName: "uefi-harness", restoredKind: "previous" });
+  await flushMs();
+  assert.equal(h.mountFailureStrip().props.children, "皮肤 UEFI 挂载失败，已恢复上一皮肤",
+    "previous-skin revert copy");
+
+  // Transient: gone after the 6s beat.
+  t.mock.timers.tick(6000);
+  await flushMs();
+  assert.equal(h.mountFailureStrip(), null, "transient strips auto-dismiss");
+});
+
+test("mount-failed while closed: sticky — shows on the next open, survives the beat, released once shown", async (t) => {
+  const h = makeHarness();
+  await flushMs(); // the mount effects (event listener) drain on the first checkpoint
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  h.fireMountFailed({ failedName: "meirenzhi", restoredKind: "official" });
+  await flushMs();
+  assert.equal(h.shell(), null, "the popover stays closed — nothing renders early");
+
+  // openShell awaits a mocked setTimeout; advance the mock to let it resume.
+  const opening = h.openShell();
+  t.mock.timers.tick(0);
+  await opening;
+  assert.notEqual(h.mountFailureStrip(), null, "the sticky strip renders on the next open");
+
+  t.mock.timers.tick(6000);
+  await flushMs();
+  assert.notEqual(h.mountFailureStrip(), null, "sticky: no auto-dismiss on the transient beat");
+
+  h.dom.fireOutsidePointer();
+  await flushMs();
+  assert.equal(h.shell(), null, "closed again");
+
+  const reopening = h.openShell();
+  t.mock.timers.tick(0);
+  await reopening;
+  assert.equal(h.mountFailureStrip(), null, "released once shown — the next open is clean");
+});
+
+test("first-run note: shows while no active-skin choice is persisted, retires on the first pick", async () => {
+  const saved = globalThis.localStorage;
+  try {
+    // No storage API (sandboxed frames): the note hides instead of nagging.
+    const bare = makeHarness();
+    await bare.openShell();
+    assert.equal(bare.factoryNote(), null, "storage unavailable → no note");
+
+    const store = new Map();
+    globalThis.localStorage = {
+      getItem: (key) => store.get(key) ?? null,
+      setItem: (key, value) => store.set(key, String(value)),
+    };
+    const h = makeHarness();
+    await h.openShell();
+    assert.notEqual(h.factoryNote(), null, "no persisted choice → the note shows under the skin list");
+
+    h.cardButton("meirenzhi").props.onClick();
+    await tick();
+    assert.equal(store.get("dsh-skins:active"), "meirenzhi", "the pick persists (mirrors runtime.js)");
+    assert.equal(h.factoryNote(), null, "the note retires once any skin is picked");
+  } finally {
+    if (saved === undefined) delete globalThis.localStorage;
+    else globalThis.localStorage = saved;
+  }
 });

@@ -87,7 +87,7 @@ function installDom({ desktop, confirmResponse }) {
   return confirms;
 }
 
-function mountPanel({ skinId, status, config, translations, desktop = true, confirmResponse = true } = {}) {
+function mountPanel({ skinId, status, config, translations, desktop = true, confirmResponse = true, localeOf } = {}) {
   const react = createFakeReact();
   const confirms = installDom({ desktop, confirmResponse });
   const configClient = config ?? makeConfigClient({ status });
@@ -109,6 +109,7 @@ function mountPanel({ skinId, status, config, translations, desktop = true, conf
     jsx, react, configClient, tr,
     builtinAssetsFor: () => ({}),
     labelFor: (id) => id,
+    localeOf,
   });
   let tree = null;
   react.render(() => {
@@ -301,7 +302,7 @@ test("Web profile keeps native reset confirmation and never mounts the HTML dial
   findButton(web.tree(), DICTS.zh["personalization.reset"]).props.onClick();
   await tick();
   assert.equal(web.confirms.length, 1, "Web still calls window.confirm once");
-  assert.equal(web.confirms[0], "以下设置将恢复为出厂默认：\n\n• 通透度 Transparency\n\n此操作立即生效，确认继续吗？",
+  assert.equal(web.confirms[0], "以下设置将恢复为出厂默认：\n\n• 通透度\n\n此操作立即生效，确认继续吗？",
     "Web native confirmation shows one affected field on its own bullet line");
   assert.equal(dialogOf(web), null, "Web does not mount the Desktop HTML dialog");
   assert.equal(config.calls.flushNow, 1, "approval preserves Web reset behavior");
@@ -320,8 +321,8 @@ test("Web native reset confirmation lists all three changed fields on separate l
     panelOpacity: 68,
   } };
   for (const [translations, expected] of [
-    [DICTS.zh, "以下设置将恢复为出厂默认：\n\n• 壁纸 Wallpaper\n• 标语 Slogan\n• 通透度 Transparency\n\n此操作立即生效，确认继续吗？"],
-    [DICTS.en, "These settings will be reset to factory defaults:\n\n• Wallpaper\n• Slogan\n• Panel translucency\n\nThis takes effect immediately. Continue?"],
+    [DICTS.zh, "以下设置将恢复为出厂默认：\n\n• 壁纸\n• 标语\n• 通透度\n\n此操作立即生效，确认继续吗？"],
+    [DICTS.en, "These settings will be reset to factory defaults:\n\n• Wallpaper\n• Slogan\n• Translucency\n\nThis takes effect immediately. Continue?"],
   ]) {
     const config = makeConfigClient({ skins });
     const web = mountPanel({ skinId: "meirenzhi", config, desktop: false, translations, confirmResponse: false });
@@ -375,8 +376,8 @@ test("清空图库 confirms with the affected list and clears via one atomic op 
   assert.equal(flatten(dialogOf(panel)).filter((node) => node.type === "li").length, 0,
     "gallery confirmations keep their original plain-text presentation");
   assert.ok(text.includes("count=2"), "count in the confirm text");
-  assert.ok(text.includes("meirenzhi · wallpaper"), "affected pair listed");
-  assert.ok(text.includes("openbmc · wallpaper"), "affected pair listed");
+  assert.ok(text.includes("meirenzhi · personalization.wallpaper"), "affected pair listed");
+  assert.ok(text.includes("openbmc · personalization.wallpaper"), "affected pair listed");
   assert.deepEqual(deleted, [], "no per-asset delete is issued");
   assert.equal(config.calls.clearLibrary, 0, "nothing before approval");
   await confirmDialog(panel);
@@ -420,7 +421,7 @@ test("Web profile retains native gallery confirmations for clear and referenced 
   findButton(clearPanel.tree(), "personalization.library.clear").props.onClick();
   await tick();
   assert.equal(clearPanel.confirms.length, 1);
-  assert.ok(clearPanel.confirms[0].includes("meirenzhi · wallpaper"));
+  assert.ok(clearPanel.confirms[0].includes("meirenzhi · personalization.wallpaper"));
   assert.deepEqual(clearedOps, ["clear"], "one atomic op after the native confirmation");
   assert.equal(dialogOf(clearPanel), null);
 
@@ -434,7 +435,7 @@ test("Web profile retains native gallery confirmations for clear and referenced 
   deleteButton.props.onClick();
   await tick();
   assert.equal(deletePanel.confirms.length, 1);
-  assert.ok(deletePanel.confirms[0].includes("meirenzhi · wallpaper"));
+  assert.ok(deletePanel.confirms[0].includes("meirenzhi · personalization.wallpaper"));
   assert.deepEqual(deleted, [], "declining the native confirmation still preserves the image");
   assert.equal(dialogOf(deletePanel), null);
 });
@@ -455,7 +456,7 @@ test("referenced image deletion requires renderer confirmation; Escape cancels a
   delButtonsOf(panel)[0].props.onClick();
   await tick();
   assert.equal(dialogOf(panel)?.open, true, "referenced image asks first");
-  assert.ok(textsOf(panel.tree()).some((text) => text.includes("meirenzhi · wallpaper")));
+  assert.ok(textsOf(panel.tree()).some((text) => text.includes("meirenzhi · personalization.wallpaper")));
   let prevented = false;
   dialogOf(panel).props.onCancel({ preventDefault: () => { prevented = true; } });
   await tick();
@@ -640,13 +641,15 @@ test("a rejected upload surfaces the server's reason — never the delete copy",
   assert.ok(textsA.includes("图片超过大小限制"), "mapped code renders its localized reason");
   assert.equal(textsA.includes("personalization.library.deleteFailed"), false, "delete copy never renders for an upload");
 
-  // Unmapped code (gate string / HTTP status): the generic upload copy.
+  // Unmapped code (gate string / HTTP status): the localized unknown-error
+  // copy naming the code (fix H) — never the Host's raw text, never a bare key.
   const generic = makeConfigClient({ status: "synced" }); // default stub errors "offline"
   const b = mountPanel({ skinId: "meirenzhi", status: "synced", config: generic });
   await tick();
   const inputB = flatten(b.tree()).find((n) => n.type === "input" && n.props.type === "file");
   await inputB.props.onChange({ target: { files: [{ name: "x.png" }], value: "" } });
-  assert.ok(textsOf(b.tree()).includes("personalization.library.uploadFailed"), "unmapped errors fall back to the upload copy");
+  assert.ok(textsOf(b.tree()).includes("host.personalization.unknownError code=offline"),
+    "unmapped codes render the localized generic naming the code");
   assert.equal(textsOf(b.tree()).includes("personalization.library.deleteFailed"), false, "delete copy still never renders");
 });
 
@@ -785,14 +788,16 @@ test("meirenzhi panel renders one wallpaper thumb per catalog builtinChoices (6)
 });
 
 test("PANEL_CSS owns the panel visual interface", () => {
-  // Ownership partition ratchet (45 shell + 59 panel = 104):
+  // Ownership partition ratchet (45 shell + 60 panel = 105):
   // a rule silently moving back to the shell changes this count even when
   // the final injected CSS stays byte-identical.
-  assert.equal(PANEL_CSS.split("\n").length, 59,
-    "PANEL_CSS freezes at 59 rules — including confirmation tag styles");
+  assert.equal(PANEL_CSS.split("\n").length, 60,
+    "PANEL_CSS freezes at 60 rules — including the locale badges and confirmation tag styles");
   assert.ok(PANEL_CSS.includes(".dsh-skins-pz-dialog::backdrop"), "modal backdrop belongs to the panel");
   assert.ok(PANEL_CSS.includes(".dsh-skins-pz-dialog-tags{display:flex;flex-wrap:wrap"), "tags wrap on narrow windows");
   assert.ok(PANEL_CSS.includes(".dsh-skins-pz-dialog-tag::before"), "a dot distinguishes each item beyond color alone");
+  assert.ok(PANEL_CSS.includes(".dsh-skins-pz-locale-tag{flex:none;align-self:center"),
+    "the ZH/EN badges sit inline with their inputs, vertically centered (stable resting height)");
   // The wallpaper grid and its full-row helpers (migrated from the switcher
   // test with the style-ownership refactor — the panel's visual interface is
   // this module's interface, so its assertions live here).
@@ -832,7 +837,7 @@ test("dangling-preview reversions render a named notice strip (ADR-0015)", async
   await tick();
   const texts = textsOf(panel.tree());
   assert.ok(texts.includes("personalization.fieldReverted"), "the notice strip renders");
-  assert.ok(texts.some((value) => typeof value === "string" && value.includes("openbmc · wallpaper")),
+  assert.ok(texts.some((value) => typeof value === "string" && value.includes("openbmc · personalization.wallpaper")),
     "the fallen-back field is named");
 
   const clean = makeConfigClient({ notices: [] });
@@ -853,7 +858,7 @@ test("delete confirm lists preview-layer references too, cross-skin (ADR-0015)",
   deleteButton.props.onClick();
   await tick();
   assert.equal(panel.confirms.length, 1, "a preview-only reference still opens the confirm");
-  assert.ok(panel.confirms[0].includes("openbmc · wallpaper"), "the cross-skin preview ref is listed");
+  assert.ok(panel.confirms[0].includes("openbmc · personalization.wallpaper"), "the cross-skin preview ref is listed");
   assert.ok(panel.confirms[0].includes("personalization.library.previewRef"), "marked as unsaved");
 });
 
@@ -866,7 +871,7 @@ test("clear-library confirm lists preview-layer references too (ADR-0015)", asyn
   findButton(panel.tree(), "personalization.library.clear").props.onClick();
   await tick();
   const text = textsOf(panel.tree()).find((value) => value.includes("personalization.library.clearConfirm"));
-  assert.ok(text.includes("openbmc · wallpaper"), "the preview-layer ref is listed in the clear confirm");
+  assert.ok(text.includes("openbmc · personalization.wallpaper"), "the preview-layer ref is listed in the clear confirm");
   assert.ok(text.includes("personalization.library.previewRef"), "marked as unsaved — same knowing consent as single delete");
 });
 
@@ -915,4 +920,179 @@ test("batch upload flushes once after the newest lands (ADR-0015 rider ②)", as
   assert.equal(uploads.length, 2, "sequential batch uploads preserved (Q43)");
   assert.equal(config.calls.flushNow, 1, "exactly one flush after the batch lands");
   assert.equal(config.calls.preview.at(-1).value, `u_2${"0".repeat(31)}`, "the newest upload wins");
+});
+
+// ---- UX fix campaign: labels, badges, live regions, slider hint ------------
+
+test("slogan inputs carry visible ZH/EN badges that are decorative to AT", async () => {
+  const panel = mountPanel({ skinId: "meirenzhi", status: "synced" });
+  await tick();
+  const tags = flatten(panel.tree()).filter(
+    (n) => typeof n.props?.className === "string" && n.props.className.includes("dsh-skins-pz-locale-tag"),
+  );
+  assert.deepEqual(tags.map((n) => n.props.children), ["ZH", "EN"], "one 2-char badge per locale input, inline");
+  assert.equal(tags.every((n) => n.props["aria-hidden"] === "true"), true,
+    "badges are decorative — the inputs' aria-labels already carry the locale");
+  // The inputs keep their locale-suffixed accessible names (gate scripts
+  // match the "(ZH)"/"(EN)" suffix).
+  const zhInput = flatten(panel.tree()).find((n) => n.type === "input" && n.props["aria-label"] === "personalization.slogan (ZH)");
+  const enInput = flatten(panel.tree()).find((n) => n.type === "input" && n.props["aria-label"] === "personalization.slogan (EN)");
+  assert.notEqual(zhInput, null);
+  assert.notEqual(enInput, null);
+});
+
+test("reference lists name fields by localized label and join per locale (fix C+D)", async () => {
+  const assets = [
+    { id: "u_0123456789abcdef0123456789abcdef", displayName: "a.png" },
+    { id: "u_0123456789abcdef0123456789abcdeff", displayName: "b.png" },
+  ];
+  const references = {
+    [assets[0].id]: [{ skinId: "meirenzhi", key: "wallpaper" }],
+    [assets[1].id]: [{ skinId: "openbmc", key: "wallpaper" }],
+  };
+  // zh: localized field labels, joined with 、
+  const zh = mountPanel({
+    skinId: "meirenzhi", status: "synced",
+    config: makeConfigClient({ status: "synced", library: assets, references }),
+    translations: DICTS.zh, localeOf: () => "zh",
+  });
+  await tick();
+  findButton(zh.tree(), DICTS.zh["personalization.library.clear"]).props.onClick();
+  await tick();
+  const zhText = textsOf(zh.tree()).find((t) => t.includes("meirenzhi · 壁纸"));
+  assert.ok(zhText, "zh users see the localized field label, never the raw key");
+  assert.ok(zhText.includes("openbmc · 壁纸"), "cross-skin references localize too");
+  assert.ok(zhText.includes("壁纸、"), "zh lists join with 、");
+
+  // en: the same list joins with ", "
+  const en = mountPanel({
+    skinId: "meirenzhi", status: "synced",
+    config: makeConfigClient({ status: "synced", library: assets, references }),
+    translations: DICTS.en, localeOf: () => "en",
+  });
+  await tick();
+  findButton(en.tree(), DICTS.en["personalization.library.clear"]).props.onClick();
+  await tick();
+  const enText = textsOf(en.tree()).find((t) => t.includes("meirenzhi · Wallpaper"));
+  assert.ok(enText, "en users see Wallpaper");
+  assert.ok(enText.includes("openbmc · Wallpaper"), "cross-skin references localize too");
+  assert.ok(enText.includes("Wallpaper, openbmc"), "en lists join with ', '");
+});
+
+test("reverted-field notice names the localized field (fix C)", async () => {
+  const config = makeConfigClient({
+    notices: [{ kind: "reverted", fields: [{ skinId: "openbmc", key: "wallpaper" }] }],
+  });
+  const panel = mountPanel({ skinId: "meirenzhi", config, translations: DICTS.zh });
+  await tick();
+  assert.ok(textsOf(panel.tree()).some((t) => typeof t === "string" && t.includes("openbmc · 壁纸")),
+    "the notice names 壁纸, not the raw catalog key");
+});
+
+test("footer strips carry role=status for info and role=alert for warn/error content (fix F)", async () => {
+  // Strip roots wrap their copy in child nodes — match the role by the text
+  // found anywhere in the strip's subtree.
+  const roleOf = (tree, text) => flatten(tree)
+    .find((n) => n.props?.role !== undefined && flatten(n).some((c) => c?.props?.children === text))
+    ?.props.role;
+
+  const loading = mountPanel({ skinId: "meirenzhi", config: makeConfigClient({ status: "loading" }) });
+  await tick();
+  assert.equal(roleOf(loading.tree(), "personalization.status.loading"), "status", "loading is polite");
+
+  const offline = mountPanel({ skinId: "meirenzhi", status: "offline-failed" });
+  await tick();
+  assert.equal(roleOf(offline.tree(), "personalization.status.offline"), "alert", "offline asserts");
+
+  const conflict = mountPanel({
+    skinId: "meirenzhi",
+    config: makeConfigClient({ notices: [{ kind: "conflict" }, { kind: "error", message: "x" }] }),
+  });
+  await tick();
+  assert.equal(roleOf(conflict.tree(), "personalization.saveConflict"), "alert", "conflict asserts");
+  assert.equal(textsOf(conflict.tree()).includes("personalization.saveFailed"), false,
+    "conflict and error stay kind-exclusive");
+
+  const failure = mountPanel({
+    skinId: "meirenzhi",
+    config: makeConfigClient({ notices: [{ kind: "error", message: "boom" }] }),
+  });
+  await tick();
+  assert.equal(roleOf(failure.tree(), "personalization.saveFailed"), "alert", "save failure asserts");
+
+  // Review P1: the flush-path strip resolves host bodies through
+  // resolveHostErrorText — mapped codes render their localized template,
+  // unmapped codes render the localized generic + code, the host's own
+  // prose never reaches the DOM, and only code-less failures keep the
+  // bare HTTP status string.
+  const leaky = mountPanel({
+    skinId: "meirenzhi",
+    translations: { "host.personalization.unknownError": "宿主返回未知错误（{code}）" },
+    config: makeConfigClient({
+      notices: [{ kind: "error", message: "operations 校验失败（zh 原文）", detail: { code: "STORE_WEIRD" } }],
+    }),
+  });
+  await tick();
+  const leakyText = textsOf(leaky.tree()).join("\n");
+  assert.ok(leakyText.includes("宿主返回未知错误（STORE_WEIRD）"), "unmapped code renders the localized generic + code");
+  assert.equal(leakyText.includes("operations 校验失败（zh 原文）"), false, "raw host prose suppressed");
+
+  const mapped = mountPanel({
+    skinId: "meirenzhi",
+    translations: { "host.personalization.invalidConfig": "配置校验失败（INVALID_CONFIG）" },
+    config: makeConfigClient({
+      notices: [{ kind: "error", message: "校验失败（zh 原文）", detail: { code: "INVALID_CONFIG" } }],
+    }),
+  });
+  await tick();
+  const mappedText = textsOf(mapped.tree()).join("\n");
+  assert.ok(mappedText.includes("配置校验失败（INVALID_CONFIG）"), "mapped code renders its localized template");
+  assert.equal(mappedText.includes("校验失败（zh 原文）"), false, "raw host prose suppressed for mapped codes too");
+
+  const plain = mountPanel({
+    skinId: "meirenzhi",
+    config: makeConfigClient({ notices: [{ kind: "error", message: "HTTP 500" }] }),
+  });
+  await tick();
+  assert.ok(textsOf(plain.tree()).join("\n").includes("HTTP 500"), "code-less failure keeps the status fallback");
+
+  const reverted = mountPanel({
+    skinId: "meirenzhi",
+    config: makeConfigClient({ notices: [{ kind: "reverted", fields: [{ skinId: "openbmc", key: "wallpaper" }] }] }),
+  });
+  await tick();
+  assert.equal(roleOf(reverted.tree(), "personalization.fieldReverted"), "alert", "reversion asserts");
+
+  // Library message strip: failure asserts, success is polite.
+  const asset = { id: "u_0123456789abcdef0123456789abcdef", displayName: "a.png" };
+  const okDelete = makeConfigClient({ status: "synced", library: [asset] });
+  okDelete.deleteImage = async () => ({ affectedSkins: [] });
+  const del = mountPanel({ skinId: "meirenzhi", status: "synced", config: okDelete });
+  await tick();
+  await delButtonsOf(del)[0].props.onClick();
+  const successStrip = flatten(del.tree()).find((n) => n.props?.role === "status");
+  assert.ok(String(successStrip?.props?.children ?? "").startsWith("personalization.library.deleted"),
+    "delete success strip is a polite status");
+
+  const badDelete = mountPanel({
+    skinId: "meirenzhi", status: "synced",
+    config: makeConfigClient({ status: "synced", library: [asset] }),
+  });
+  await tick();
+  await delButtonsOf(badDelete)[0].props.onClick();
+  assert.equal(roleOf(badDelete.tree(), "personalization.library.deleteFailed"), "alert",
+    "delete failure asserts");
+});
+
+test("translucency slider explains the veil floor and mirrors the readout as its value text (fix J)", async () => {
+  const panel = mountPanel({ skinId: "meirenzhi", status: "synced", translations: DICTS.zh });
+  await tick();
+  const slider = flatten(panel.tree()).find((n) => n.type === "input" && n.props["aria-label"] === DICTS.zh["personalization.panelTranslucency"]);
+  assert.equal(slider.props.title, DICTS.zh["personalization.panelTranslucency.hint"],
+    "the handle explains the 0% text-veil floor");
+  assert.equal(slider.props["aria-valuetext"], "66%", "value text mirrors the visible readout");
+  slider.props.onChange({ target: { value: "40" } });
+  await tick();
+  const moved = flatten(panel.tree()).find((n) => n.type === "input" && n.props["aria-label"] === DICTS.zh["personalization.panelTranslucency"]);
+  assert.equal(moved.props["aria-valuetext"], "40%", "value text follows the edit");
 });

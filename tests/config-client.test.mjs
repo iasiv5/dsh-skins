@@ -1287,7 +1287,28 @@ test("flush: a dangling-coded issue with a malformed payload stays a named error
   const state = client.getState();
   assert.deepEqual((state.notices.find((n) => n.kind === "reverted")?.fields ?? []), [], "nothing named → nothing excised");
   assert.equal(state.notices.find((n) => n.kind === "error")?.message, "校验失败", "the strip survives");
+  assert.deepEqual(state.notices.find((n) => n.kind === "error")?.detail,
+    { code: "INVALID_CONFIG", params: { code: "MISSING_ASSET", issues: [{ opIndex: 0, code: "MISSING_ASSET" }] } },
+    "code+params ride along so the panel renders localized copy, never the host prose");
   assert.equal(state.dirtyCount, 1, "the preview stays dirty for retry");
+  client.dispose();
+});
+
+test("unknown 409 bodies carry their code for localized rendering — the host prose never rides alone (review P1)", async () => {
+  const fetchImpl = makeFetch((path, url, init) => {
+    if (init?.method === "PATCH") {
+      return jsonResponse(409, { error: "写入被拒（zh 原文）", code: "STORE_WEIRD" });
+    }
+    return snapshotBody();
+  });
+  const client = flushingClient(fetchImpl);
+  await client.boot();
+  client.preview("openbmc", "wallpaper", "u_ffffffffffffffffffffffffffffffff");
+  const result = await client.flushNow();
+  assert.deepEqual(result, { flushed: 0, blocked: "error", errorMessage: "写入被拒（zh 原文）" });
+  const state = client.getState();
+  assert.deepEqual(state.notices.find((n) => n.kind === "error")?.detail,
+    { code: "STORE_WEIRD", params: undefined }, "the code survives to render time");
   client.dispose();
 });
 

@@ -142,13 +142,23 @@ export function createConfigClient(options = {}) {
 
   /** Replace the conflict/error notices (the kind-exclusive pair); the
    * reverted notice is untouched — only a healthy flush retires it. */
-  function setFlushFailure(code, message) {
+  function setFlushFailure(code, message, detail) {
     notices = notices.filter((notice) => notice.kind === "reverted");
     if (code === "REVISION_CONFLICT") notices.push({ kind: "conflict" });
     // Truthy on purpose: an empty-string host message is suppressed exactly
     // as the pre-notices panel's falsy strip check did (pixel-parity red line).
-    else if (message) notices.push({ kind: "error", message });
+    else if (message) notices.push({ kind: "error", message, detail });
   }
+
+  /** Host body → the render-time resolution detail ({code, params}); the
+   * body's own prose never rides along — GLOSSARY「Host 错误文案」rules the
+   * client renders code-keyed templates, never the Host's source-language
+   * text (review P1: the save-flush path was the last unguarded leak). */
+  const flushFailureDetail = (body) => (body === null || typeof body !== "object"
+    ? undefined
+    : (body.code === undefined && body.params === undefined
+      ? undefined
+      : { code: body.code, params: body.params }));
 
   /** Name one excised dangling field on the reverted notice (dedup by field). */
   function noteReverted(entry) {
@@ -359,7 +369,7 @@ export function createConfigClient(options = {}) {
               return decision;
             }
             if (code === "STORE_RECOVERY_REQUIRED") {
-              const decision = await policy.onRecoveryRequired(errorMessage);
+              const decision = await policy.onRecoveryRequired(errorMessage, conflictBody);
               // Contract tripwire (ADR-0018, review note): only the conflict /
               // unknown-409 policies may resolve RETRY; a recovery policy doing
               // so would leak the sentinel to callers — fail closed instead,
@@ -369,7 +379,7 @@ export function createConfigClient(options = {}) {
               }
               return decision;
             }
-            const decision = await policy.onUnknown409({ attempt, errorMessage });
+            const decision = await policy.onUnknown409({ attempt, errorMessage, body: conflictBody });
             if (decision === RETRY) continue;
             return decision;
           }
@@ -448,19 +458,19 @@ export function createConfigClient(options = {}) {
         emit();
         return { flushed: 0, blocked: "conflict" };
       },
-      onRecoveryRequired: async (errorMessage) => {
+      onRecoveryRequired: async (errorMessage, body) => {
         const refreshed = await refetch();
         if (refreshed.mode === "recovery") {
           setFlushFailure(null, null);
           emit();
           return { flushed: 0, blocked: "recovery" };
         }
-        setFlushFailure(null, errorMessage);
+        setFlushFailure(null, errorMessage, flushFailureDetail(body));
         emit();
         return { flushed: 0, blocked: "error", errorMessage };
       },
-      onUnknown409: ({ errorMessage }) => {
-        setFlushFailure(null, errorMessage);
+      onUnknown409: ({ errorMessage, body }) => {
+        setFlushFailure(null, errorMessage, flushFailureDetail(body));
         emit();
         return { flushed: 0, blocked: "error", errorMessage };
       },
@@ -498,7 +508,7 @@ export function createConfigClient(options = {}) {
         // issue with a malformed payload (no skinId/key) keeps its named
         // error: unknown shapes never pass silently.
         const healed = onlyDangling && excised;
-        setFlushFailure(null, healed ? null : errorMessage);
+        setFlushFailure(null, healed ? null : errorMessage, healed ? undefined : flushFailureDetail(errorBody));
         emit();
         // Self-healing continuation: re-flush the surviving previews
         // without waiting for the user's next edit. Bounded — each

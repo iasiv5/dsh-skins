@@ -57,3 +57,33 @@ test("meirenzhi wallpaper labels are localized with the factory-default marker",
   assert.ok(DICTS.zh["personalization.meirenzhi.yuntai"].includes("默认壁纸"));
   assert.ok(DICTS.en["personalization.meirenzhi.yuntai"].includes("default"));
 });
+
+test("campaign copy rulings: canonical switcher term, zh labels without latin tails, new keys exist", () => {
+  // USER OVERRIDE (lead, 2026-11-26): the switcher control keeps its
+  // canonical name — 主题切换 / Theme Switcher (the GLOSSARY 主题切换弹层
+  // entry names the popover, not this control).
+  assert.equal(DICTS.zh["skins.switch"], "主题切换");
+  assert.equal(DICTS.en["skins.switch"], "Theme Switcher");
+  // zh field labels drop their old English tails (campaign item B).
+  for (const key of ["personalization.wallpaper", "personalization.slogan", "personalization.panelTranslucency"]) {
+    assert.ok(!/[A-Za-z]/.test(DICTS.zh[key]), `zh "${key}" must not carry a latin tail`);
+  }
+  assert.equal(DICTS.en["personalization.panelTranslucency"], "Translucency",
+    "the 面板透明度-era 'Panel' qualifier is retired from en too");
+  // GLOSSARY adjudicates 内置精选 (its Avoid list retires 默认壁纸); no en
+  // term is listed there, so en keeps a semantic equivalent.
+  assert.equal(DICTS.zh["personalization.builtin"], "内置精选");
+  assert.equal(DICTS.en["personalization.builtin"], "Built-in picks");
+  // New campaign keys exist in both locales (placeholder parity is the
+  // generic test above).
+  for (const key of [
+    "skins.factoryNote",
+    "skins.mountFailed.official",
+    "skins.mountFailed.previous",
+    "personalization.panelTranslucency.hint",
+    "host.personalization.unknownError",
+  ]) {
+    assert.ok(DICTS.zh[key]?.length > 0, `zh missing ${key}`);
+    assert.ok(DICTS.en[key]?.length > 0, `en missing ${key}`);
+  }
+});

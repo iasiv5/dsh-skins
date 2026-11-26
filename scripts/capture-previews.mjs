@@ -378,7 +378,7 @@ await writeShot(`${skin}-dark.webp`, await toWebp(page, await page.screenshot())
 await clickThemeCard(page, 0);
 await writeShot(`${skin}-light.webp`, await toWebp(page, await page.screenshot()));
 
-// 3. Switcher close-up (dark): popover AND its 皮肤切换 trigger button in one frame
+// 3. Switcher close-up (dark): popover AND its 主题切换 trigger button in one frame
 await clickThemeCard(page, 1);
 await openSwitcher(page);
 const pop = await page.locator(".dsh-skins-pop").boundingBox();

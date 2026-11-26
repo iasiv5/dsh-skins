@@ -6,7 +6,8 @@
  * `params`) to every user-facing error and keeps a human-readable zh
  * `message` as the fallback for logs and non-UI consumers. The client maps
  * the code to a localized template via HOST_ERROR_KEYS (src/client/host-errors.js)
- * and falls back to the raw message for unknown codes.
+ * and renders a localized generic naming the code for unknown codes — the
+ * raw message stays log-only and never reaches the UI (GLOSSARY「Host 错误文案」).
  */
 
 /**

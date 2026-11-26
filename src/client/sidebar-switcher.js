@@ -1,4 +1,5 @@
 import { DICTS, NS, formatTemplate } from "./dicts.js";
+import { SKIN_STORAGE_KEY } from "./runtime.js";
 import { createPersonalizationPanel, PANEL_CSS } from "./personalization/panel.js";
 import { getSkinSchema } from "../shared/personalization/catalog.js";
 
@@ -6,6 +7,11 @@ const TAG_ID = "dsh-skins/sidebar.css";
 
 /** The shell width/height animation beat (keep in sync with the CSS below). */
 const SWEEP_MS = 200;
+
+/** Transient mount-failure strips auto-dismiss on this beat; sticky ones (the
+ * failure landed while the popover was closed) survive until shown and the
+ * shell closes again. */
+const MOUNT_FAILURE_TOAST_MS = 6000;
 
 /**
  * Height+width sweep across gear expand/collapse/retarget (field issue #13,
@@ -281,6 +287,31 @@ export function installSidebarSwitcher(ctx, { runtime, jsx, react, reactDom, con
     return fallbackTranslate(key, params);
   }
 
+  /** Interface locale tag ("zh" | "en", …) from the host locale runtime —
+   * the same source localeTranslate rides on; "zh" when unavailable (the
+   * fallback dictionaries are zh). */
+  function activeLocale() {
+    try {
+      const active = ctx.locale?.getLocale?.()?.active;
+      return typeof active === "string" && active !== "" ? active : "zh";
+    } catch {
+      return "zh";
+    }
+  }
+
+  /** Whether an active-skin choice is persisted. runtime.js writes
+   * SKIN_STORAGE_KEY on every successful pick (URL ?skin= included), so an
+   * absent key means the factory default is active and the user never chose.
+   * Storage failures (sandboxed frames) read as "chosen" — the first-run
+   * note hides instead of nagging. */
+  function hasStoredSkinChoice() {
+    try {
+      return localStorage.getItem(SKIN_STORAGE_KEY) !== null;
+    } catch {
+      return true;
+    }
+  }
+
   function labelFor(skinId) {
     if (skinId === runtime.officialId) return localeTranslate("skins.official.label");
     const listed = runtime.list().find((skin) => skin.id === skinId);
@@ -294,6 +325,7 @@ export function installSidebarSwitcher(ctx, { runtime, jsx, react, reactDom, con
   const PersonalizationPanel = configClient
     ? createPersonalizationPanel({
       jsx, react, configClient, tr: localeTranslate, builtinAssetsFor, labelFor,
+      localeOf: activeLocale,
     })
     : null;
 
@@ -357,6 +389,39 @@ export function installSidebarSwitcher(ctx, { runtime, jsx, react, reactDom, con
     const buttonRef = react.useRef(null);
     const shellRef = react.useRef(null);
     const shellSizeRef = react.useRef(null);
+    // Mount-failure strip state: { failedName, restoredKind, transient }. A
+    // failure while the popover is OPEN shows the strip for one beat
+    // (auto-dismiss); a failure while CLOSED stays sticky and renders on the
+    // next open. The ref mirrors the state so closeShell (whose closure may
+    // predate the latest failure) still clears the right thing.
+    const [mountFailure, setMountFailure] = react.useState(null);
+    const mountFailureRef = react.useRef(null);
+    const clearMountFailure = () => {
+      mountFailureRef.current = null;
+      setMountFailure(null);
+    };
+
+    react.useEffect(() => {
+      const onFailed = (event) => {
+        const detail = event?.detail ?? {};
+        const next = {
+          failedName: String(detail.failedName ?? ""),
+          restoredKind: detail.restoredKind === "previous" ? "previous" : "official",
+          transient: open,
+        };
+        mountFailureRef.current = next;
+        setMountFailure(next);
+      };
+      window.addEventListener("dsh-skins:mount-failed", onFailed);
+      return () => window.removeEventListener("dsh-skins:mount-failed", onFailed);
+    }, [open]);
+
+    // Transient showing: one beat, then gone (no timer for sticky notices).
+    react.useEffect(() => {
+      if (mountFailure === null || !mountFailure.transient) return undefined;
+      const timer = setTimeout(clearMountFailure, MOUNT_FAILURE_TOAST_MS);
+      return () => clearTimeout(timer);
+    }, [mountFailure]);
 
     // Capture the shell's current box (width AND height) during render — i.e.
     // BEFORE React mutates the DOM for this render — so the size sweep
@@ -379,6 +444,9 @@ export function installSidebarSwitcher(ctx, { runtime, jsx, react, reactDom, con
 
     const closeShell = () => {
       setOpen(false);
+      // A sticky mount-failure notice was shown during this open session —
+      // release it once seen (it survives only until its next open).
+      if (mountFailureRef.current !== null && !mountFailureRef.current.transient) clearMountFailure();
       // The gear unmounts with the shell; focus lands on the persistent trigger.
       buttonRef.current?.focus?.();
     };
@@ -568,6 +636,31 @@ export function installSidebarSwitcher(ctx, { runtime, jsx, react, reactDom, con
             jsx("div", { key: "grid", className: "dsh-skins-theme-grid", children: themeCards }),
             jsx("div", { key: "d1", className: "dsh-skins-pop-divider", "aria-hidden": "true" }),
             jsx("div", { key: "skins", className: "dsh-skins-pop-title", children: tr("skins.title") }),
+            // Mount-failure strip (runtime 'dsh-skins:mount-failed'): assertive
+            // announce — the user's last action silently didn't take. Reuses
+            // the panel strip vocabulary; the failed skin is named by its
+            // localized label.
+            mountFailure !== null ? jsx("div", {
+              key: "mount-failure",
+              className: "dsh-skins-pz-status dsh-skins-pz-muted",
+              role: "alert",
+              children: localeTranslate(
+                mountFailure.restoredKind === "previous"
+                  ? "skins.mountFailed.previous"
+                  : "skins.mountFailed.official",
+                { name: labelFor(mountFailure.failedName) },
+              ),
+            }) : null,
+            // First-run note: only while NO active-skin choice is persisted
+            // (factory default OpenBMC Studio active). runtime.js writes the
+            // storage key on every successful pick, so the note disappears
+            // with the first (successful) selection. Existing muted styling,
+            // no height games — the popover is content-sized.
+            hasStoredSkinChoice() ? null : jsx("div", {
+              key: "factory-note",
+              className: "dsh-skins-pz-muted",
+              children: localeTranslate("skins.factoryNote"),
+            }),
             ...skinCards,
           ] }),
           showPersonalization ? jsx("div", {

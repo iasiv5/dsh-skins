@@ -109,6 +109,9 @@ export const PANEL_CSS = [
   '.dsh-skins-pz-danger{color:var(--dsw-alias-error-text,var(--dsw-static-red-500,#d33));border-color:var(--dsw-alias-error-text,var(--dsw-static-red-500,#d33))}',
   '.dsh-skins-pz-fields-locale{flex-direction:row;gap:6px}',
   '.dsh-skins-pz-fields-locale .dsh-skins-pz-input{flex:1;min-width:0}',
+  // Locale badge for the bilingual slogan inputs (visible ZH/EN markers,
+  // aria-hidden — the inputs' aria-labels already carry the locale).
+  '.dsh-skins-pz-locale-tag{flex:none;align-self:center;font-size:11px;line-height:16px;font-weight:600;color:var(--dsw-alias-label-secondary)}',
   // HTML <dialog>.showModal() stays inside the renderer's top layer: unlike
   // window.confirm(), it never opens the Windows/Electron JavaScript dialog
   // that can leave the Desktop window unfocused after dismissal.
@@ -129,8 +132,24 @@ export const PANEL_CSS = [
 // the first 18 assets render inline, the rest hide behind "还有 N 张未显示".
 const PAGE_SIZE = 18;
 
-export function createPersonalizationPanel({ jsx, react, configClient, tr, builtinAssetsFor, labelFor }) {
+export function createPersonalizationPanel({ jsx, react, configClient, tr, builtinAssetsFor, labelFor, localeOf }) {
   const { useState, useEffect, useRef } = react;
+
+  // Reference lists name fields by their localized label: a raw catalog key
+  // ("wallpaper") is internal vocabulary, never user copy. Unknown keys
+  // (e.g. references from a since-uninstalled skin) fall back to the raw key.
+  const fieldLabelFor = (skinId, key) => {
+    const field = getSkinSchema(skinId)?.fields.find((candidate) => candidate.key === key);
+    return field === undefined ? key : tr(field.labelKey);
+  };
+
+  // Locale-aware list separator for reference lists: zh joins with 、,
+  // every other interface locale with ", ". The locale comes from the
+  // shell's ctx.locale.getLocale (the same source tr rides on).
+  const referenceSeparator = () => {
+    const locale = typeof localeOf === "function" ? String(localeOf() ?? "") : "zh";
+    return locale.startsWith("zh") ? "、" : ", ";
+  };
 
   function useConfigState() {
     const [state, setState] = useState(() => configClient.getState());
@@ -142,20 +161,28 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
 
   function TextField({ field, value, onValue, disabled }) {
     const inputs = field.scope === "locale"
-      ? ["zh", "en"].map((locale) => jsx("input", {
+      ? ["zh", "en"].flatMap((locale) => [
+        // Visible 2-char badge inline before its input (stable resting
+        // height: no extra row); decorative — the aria-label names the locale.
+        jsx("span", {
+          key: `${locale}-tag`, className: "dsh-skins-pz-locale-tag",
+          "aria-hidden": "true", children: locale.toUpperCase(),
+        }),
+        jsx("input", {
           key: locale, type: "text", className: "dsh-skins-pz-input",
           value: value?.[locale] ?? "", maxLength: field.maxLength,
           disabled, "aria-label": `${tr(field.labelKey)} (${locale.toUpperCase()})`,
           placeholder: field.default?.[locale] ?? "",
           onChange: (event) => onValue({ ...value, [locale]: event.target.value }),
-        }, locale))
+        }, locale),
+      ])
       : [jsx("input", {
-          key: "single", type: "text", className: "dsh-skins-pz-input",
-          value: value ?? "", maxLength: field.maxLength, disabled,
-          "aria-label": tr(field.labelKey),
-          placeholder: field.default ?? "",
-          onChange: (event) => onValue(event.target.value),
-        })];
+        key: "single", type: "text", className: "dsh-skins-pz-input",
+        value: value ?? "", maxLength: field.maxLength, disabled,
+        "aria-label": tr(field.labelKey),
+        placeholder: field.default ?? "",
+        onChange: (event) => onValue(event.target.value),
+      })];
     // Locale inputs sit side by side (v2.4.1 #3): the wide panel makes the
     // stacked zh/en pair both ugly and needlessly tall.
     return jsx("label", { className: "dsh-skins-pz-row", children: [
@@ -176,6 +203,13 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
           type: "range", min: field.min, max: field.max, step: field.step,
           value: current, disabled,
           "aria-label": tr(field.labelKey),
+          // The veil floor is invisible at face value — the handle explains
+          // it on hover/focus, and the readout doubles as the value text.
+          // The catalog registers exactly one range field per skin today
+          // (panelOpacity); a second one will need its own hintKey on the
+          // field definition.
+          title: tr("personalization.panelTranslucency.hint"),
+          "aria-valuetext": `${current}%`,
           onChange: (event) => onValue(Number(event.target.value)),
         }),
         jsx("output", { children: `${current}${field.unit ?? ""}` }),
@@ -201,7 +235,7 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
 
   function WallpaperSection({ skinId, field, value, onValue, state, disabled, requestConfirm }) {
     const uploadRef = useRef(null);
-    const [message, setMessage] = useState(null);
+    const [message, setMessage] = useState(null); // { text, alert } — alert strips announce assertively
     const [deletingId, setDeletingId] = useState(null);
     const [clearing, setClearing] = useState(false);
     const [visible, setVisible] = useState(PAGE_SIZE);
@@ -219,10 +253,10 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
         // Success is announced too: the refetch inside deleteImage removes the
         // cell, but the outcome must never read as "did it actually delete?"
         setMessage(result.error
-          ? tr("personalization.library.deleteFailed")
-          : tr("personalization.library.deleted", { name: asset.displayName }));
+          ? { text: tr("personalization.library.deleteFailed"), alert: true }
+          : { text: tr("personalization.library.deleted", { name: asset.displayName }), alert: false });
       } catch {
-        setMessage(tr("personalization.library.deleteFailed"));
+        setMessage({ text: tr("personalization.library.deleteFailed"), alert: true });
       } finally {
         setDeletingId(null);
       }
@@ -232,13 +266,14 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
     // persisted snapshot's references with preview-layer (unsaved) ones —
     // dirty previews may point at assets the snapshot knows nothing about;
     // they will be excised and reverted on flush, so the confirm dialogs must
-    // show them too (marked as unsaved). The marking joins with the same
-    // " · " separator as persisted refs, so no locale-specific punctuation
-    // is hardcoded here.
+    // show them too (marked as unsaved). Fields are named by their localized
+    // label (fieldLabelFor) — raw catalog keys never reach user copy; the
+    // marking joins with the same separator as persisted refs, resolved per
+    // interface locale (referenceSeparator).
     const referenceLabelsFor = (assetId) => configClient.referencesFor(assetId).map((entry) =>
       entry.layer === "preview"
-        ? `${labelFor(entry.skinId)} · ${entry.key} · ${tr("personalization.library.previewRef")}`
-        : `${labelFor(entry.skinId)} · ${entry.key}`);
+        ? `${labelFor(entry.skinId)} · ${fieldLabelFor(entry.skinId, entry.key)} · ${tr("personalization.library.previewRef")}`
+        : `${labelFor(entry.skinId)} · ${fieldLabelFor(entry.skinId, entry.key)}`);
 
     const removeAsset = (asset) => {
       if (deletingId !== null || clearing) return;
@@ -256,7 +291,7 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
           names.set(label, true);
         }
       }
-      const listed = [...names.keys()].join("、");
+      const listed = [...names.keys()].join(referenceSeparator());
       requestConfirm(tr("personalization.library.clearConfirm", {
         count: library.length,
         names: listed === "" ? "—" : listed,
@@ -267,11 +302,11 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
           // nothing stops halfway, every affected field falls back at once.
           const result = await configClient.clearLibrary();
           if (result.error) {
-            setMessage(tr("personalization.library.clearFailed"));
+            setMessage({ text: tr("personalization.library.clearFailed"), alert: true });
             void configClient.refetch();
           }
         } catch {
-          setMessage(tr("personalization.library.clearFailed"));
+          setMessage({ text: tr("personalization.library.clearFailed"), alert: true });
           void configClient.refetch();
         } finally {
           setClearing(false);
@@ -330,7 +365,11 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
               className: "dsh-skins-pz-muted", children: tr("personalization.library.empty"),
             }) : null,
           ] }),
-          message === null ? null : jsx("div", { className: "dsh-skins-pz-status dsh-skins-pz-muted", children: message }),
+          message === null ? null : jsx("div", {
+            className: "dsh-skins-pz-status dsh-skins-pz-muted",
+            role: message.alert ? "alert" : "status",
+            children: message.text,
+          }),
           jsx("div", { className: "dsh-skins-pz-rowbtns", children: [
             jsx("button", {
               type: "button", className: "dsh-skins-pz-btn",
@@ -362,9 +401,9 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
                 let lastAssetId = null;
                 let firstError = null;
                 for (let index = 0; index < files.length; index += 1) {
-                  setMessage(tr("personalization.library.uploadingBatch", {
+                  setMessage({ text: tr("personalization.library.uploadingBatch", {
                     done: index + 1, total: files.length,
-                  }));
+                  }), alert: false });
                   const result = await configClient.uploadImage(files[index]);
                   if (result.asset) {
                     ok += 1;
@@ -385,10 +424,10 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
                 setMessage(firstError === null
                   ? null
                   : ok === 0
-                    ? firstError
-                    : tr("personalization.library.uploadSomeFailed", {
+                    ? { text: firstError, alert: true }
+                    : { text: tr("personalization.library.uploadSomeFailed", {
                         ok, failed: files.length - ok, reason: firstError,
-                      }));
+                      }), alert: true });
                 return;
               }
 
@@ -399,14 +438,15 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
                 await configClient.flushNow(); // rider ②: save the upload at once
               } else {
                 // Surface WHY the upload was rejected (server code → localized
-                // reason; unmapped codes fall back to the generic copy). The
-                // delete-failed text must never render for an upload — field
-                // report: a failed upload showed 删除失败 and misdirected the
-                // bug hunt.
-                setMessage(resolveHostErrorText(
+                // reason; unmapped codes fall back to the localized unknown-
+                // error copy naming the code — the Host's own text never
+                // leaks). The delete-failed text must never render for an
+                // upload — field report: a failed upload showed 删除失败 and
+                // misdirected the bug hunt.
+                setMessage({ text: resolveHostErrorText(
                   { code: result.error, message: tr("personalization.library.uploadFailed") },
                   tr,
-                ));
+                ), alert: true });
               }
             },
           }),
@@ -511,9 +551,12 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
     // moment a skin had any override — panel heights then differed between
     // modified and pristine skins (and when re-targeting between them). It
     // now lives in the header row, whose height is fixed.
+    // Live-region roles: info strips are polite `status`, warn/error strips
+    // (recovery/offline/conflict/error/reverted) assert as `alert`. Roles
+    // carry no layout — the height ruling stays intact.
     const statusCluster = [];
     if (state.mode === "recovery") {
-      statusCluster.push(jsx("div", { key: "recovery", className: "dsh-skins-pz-status dsh-skins-pz-warn", children: [
+      statusCluster.push(jsx("div", { key: "recovery", className: "dsh-skins-pz-status dsh-skins-pz-warn", role: "alert", children: [
         jsx("div", { children: tr("personalization.status.recovery") }),
         jsx("div", { className: "dsh-skins-pz-muted", children: tr("personalization.status.recoveryHint") }),
         jsx("button", {
@@ -524,12 +567,12 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
       ] }));
     }
     if (state.status === "loading") {
-      statusCluster.push(jsx("div", { key: "loading", className: "dsh-skins-pz-status", children: [
+      statusCluster.push(jsx("div", { key: "loading", className: "dsh-skins-pz-status", role: "status", children: [
         jsx("span", { children: tr("personalization.status.loading") }),
       ] }));
     }
     if (state.status === "offline-failed") {
-      statusCluster.push(jsx("div", { key: "offline", className: "dsh-skins-pz-status", children: [
+      statusCluster.push(jsx("div", { key: "offline", className: "dsh-skins-pz-status", role: "alert", children: [
         jsx("span", { children: tr("personalization.status.offline") }),
         jsx("button", {
           type: "button", className: "dsh-skins-pz-btn",
@@ -539,7 +582,7 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
       ] }));
     }
     if (state.status === "unsupported-readonly") {
-      statusCluster.push(jsx("div", { key: "ro", className: "dsh-skins-pz-status", children: [
+      statusCluster.push(jsx("div", { key: "ro", className: "dsh-skins-pz-status", role: "status", children: [
         jsx("span", { children: tr("personalization.status.unsupported") }),
       ] }));
     }
@@ -550,13 +593,21 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
     const conflictNotice = notices.find((notice) => notice.kind === "conflict");
     const errorNotice = notices.find((notice) => notice.kind === "error");
     if (conflictNotice !== undefined) {
-      statusCluster.push(jsx("div", { key: "save-conflict", className: "dsh-skins-pz-status dsh-skins-pz-warn", children: [
+      statusCluster.push(jsx("div", { key: "save-conflict", className: "dsh-skins-pz-status dsh-skins-pz-warn", role: "alert", children: [
         jsx("span", { children: tr("personalization.saveConflict") }),
       ] }));
     } else if (errorNotice !== undefined) {
-      statusCluster.push(jsx("div", { key: "save-error", className: "dsh-skins-pz-status dsh-skins-pz-warn", children: [
+      statusCluster.push(jsx("div", { key: "save-error", className: "dsh-skins-pz-status dsh-skins-pz-warn", role: "alert", children: [
         jsx("span", { children: tr("personalization.saveFailed") }),
-        jsx("div", { className: "dsh-skins-pz-muted", children: errorNotice.message }),
+        // GLOSSARY「Host 错误文案」: the strip resolves code-keyed templates
+        // (unknown code → localized generic + code); the host's own prose is
+        // suppressed whenever a code rode along, and only code-less failures
+        // fall back to the bare HTTP status string (review P1: the flush
+        // path was the last unguarded leak).
+        jsx("div", { className: "dsh-skins-pz-muted", children: resolveHostErrorText(
+          { code: errorNotice.detail?.code, params: errorNotice.detail?.params, message: errorNotice.message },
+          tr,
+        ) }),
       ] }));
     }
     // Dangling-preview reversions (ADR-0015): the client excised a preview
@@ -565,11 +616,13 @@ export function createPersonalizationPanel({ jsx, react, configClient, tr, built
     // the transient footer strip slot and existing classes (zero new CSS).
     const revertedNotice = notices.find((notice) => notice.kind === "reverted");
     if (revertedNotice !== undefined && revertedNotice.fields.length > 0) {
-      statusCluster.push(jsx("div", { key: "reverted", className: "dsh-skins-pz-status", children: [
+      statusCluster.push(jsx("div", { key: "reverted", className: "dsh-skins-pz-status", role: "alert", children: [
         jsx("div", { children: tr("personalization.fieldReverted") }),
         jsx("div", {
           className: "dsh-skins-pz-muted",
-          children: revertedNotice.fields.map((entry) => `${labelFor(entry.skinId)} · ${entry.key}`).join("、"),
+          children: revertedNotice.fields
+            .map((entry) => `${labelFor(entry.skinId)} · ${fieldLabelFor(entry.skinId, entry.key)}`)
+            .join(referenceSeparator()),
         }),
       ] }));
     }

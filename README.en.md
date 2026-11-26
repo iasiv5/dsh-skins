@@ -22,7 +22,7 @@ dsh plugin --profile web add @iasiv5/dsh-skins
 1. Run the install command above.
 2. Restart DSH Web (for example `systemctl restart` the matching service, depending on your deployment).
 3. Refresh the page.
-4. Click **Skin Switcher** at the bottom of the sidebar and pick a skin.
+4. Click **Theme Switcher** at the bottom of the sidebar and pick a skin.
 
 On a fresh install with no saved choice, OpenBMC Studio (the `openbmc` skin) is the factory-default skin (since v1.0.6; meirenzhi before that). For reproducible installs, pin the exact version:
 
@@ -74,7 +74,7 @@ This section answers: which skins exist and what each feels like.
 | `uefi-harness` | full skin | Violet spark · sunset wash · indigo-blue palette |
 | `meirenzhi` | full skin | Jade faces & flowered looks · moonlit silks by night · asking the Dao in mortal dust |
 
-- `official` restores the official DeepSeek Harness branding, backdrop and favicon, while keeping the skin switcher and the official light/dark palettes.
+- `official` restores the official DeepSeek Harness branding, backdrop and favicon, while keeping the theme switcher and the official light/dark palettes.
 - `openbmc` (OpenBMC Studio): the brand slots reuse the OpenBMC project's official logo letterforms and blue-green brand gradient, used solely for identification; all rights remain with the OpenBMC project. The backdrop is the "Left Wind, Right Thunder" storm artwork, ice-blue in both light and dark, slogan "Govern before the storm" (察于未萌 · 治于未乱).
 - `uefi-harness` (UEFI Studio): the brand slots carry the UEFI Forum's official logo (rights note under "Known limits"). The backdrop is the "Integrated Circuits" circuit-board artwork, violet-and-indigo in both light and dark, slogan "Boot before everything" (启于固件 · 行于万象).
 - `meirenzhi` (凡人修仙传 · A Mortal's Journey: Beauty Chronicle) is an **unofficial fan work** with no affiliation with or authorization from the copyright holders; the 6 bundled wallpapers are AI-generated fan art, the Reach-for-the-Sky Vial site icon embeds the owner-provided emblem artwork, the BEAUTY badge is rendered with HTML/CSS, and the fireflies use CSS pseudo-elements and radial gradients — no official artwork is bundled. Vermilion-and-gold in both light and dark, slogan "From mortal dust, immortals bloom" (风起凡尘 · 红颜问道).
@@ -107,11 +107,11 @@ Solo portraits in order: Ziling, Nangong Que (dark), Yinyue, Mu Peiling and Nang
 
 This section answers: what you can tune, how, and where the settings live.
 
-Every skin's key visuals are open to adjustment. Click the gear button on a skin card and that skin's personalization panel docks beside the switcher (stacked vertically on narrow windows). All three skins (`openbmc` / `uefi-harness` / `meirenzhi`) share the same field set:
+Every skin's key visuals are open to adjustment. Click the gear button on a skin card and that skin's personalization panel docks beside the theme switcher (stacked vertically on narrow windows). All three skins (`openbmc` / `uefi-harness` / `meirenzhi`) share the same field set:
 
 | Field | What you can do | Factory value |
 |---|---|---|
-| **Wallpaper** | Pick from the skin's built-in artwork, or upload your own images into a personal library | Each skin's default artwork |
+| **Wallpaper** | Pick from the skin's built-in picks, or upload your own images into a personal library | Each skin's default artwork |
 | **Slogan** | The new-session guidance line, one Chinese and one English copy | The skin's factory slogan |
 | **Translucency** | 0–100%, one value driving three visual layers: panel tint, wallpaper scrim and blur. 0% is pure, fully visible wallpaper; 100% hides it completely. Text-bearing zones keep a permanent text-veil floor (ADR-0027): at 0% everything fades except the text backing | meirenzhi: Web 35%, Desktop 66%; openbmc / uefi-harness: Web 55%, Desktop 66% |
 
@@ -151,16 +151,16 @@ In the **DSH Desktop app**, the shell chrome — sidebar, caption strip, right p
 - Verified with dsh Desktop `0.2.1-rc.2` (Windows); macOS / Linux Desktop currently follow the Web form and will be adapted in a later release.
 - The right panel in fullscreen is the solid skin base color; the wallpaper is not shown through it.
 
-## The skin switcher
+## The theme switcher
 
-This section answers: what lives in the switcher and how to use it.
+This section answers: what lives in the theme switcher and how to use it.
 
-The **Skin Switcher** popover at the bottom of the sidebar has two sections:
+The **Theme Switcher** popover at the bottom of the sidebar has two sections:
 
 1. **Appearance**: Light, Dark, System. It calls the official theme service and stays in sync with Settings → General → Appearance.
 2. **Choose Skin**: the first entry is DeepSeek Harness (Official), followed by the extension skins. Clicking switches instantly and persists the choice; the popover stays open for continuous preview.
 
-![Skin switcher popover — appearance and skin list](docs/assets/preview-switcher.webp)
+![Theme switcher popover — appearance and skin list](docs/assets/preview-switcher.webp)
 
 When the sidebar is collapsed, the entry folds into a round palette icon; multiple `sidebar.footer.action` entries stack vertically without overlapping. Choosing "Official" only undoes the extension skins — your light/dark/system preference is untouched.
 
@@ -178,10 +178,10 @@ The plugin ships no updater of its own (ADR-0008): update discovery and installa
 That is the **text-veil floor** (ADR-0027): the sidebar column and the composer face keep a permanent text backing that never disappears, so text over exposed wallpaper always stays readable. 0% therefore means "fully transparent except the text backing".
 
 **How do I get fully back to the official interface?**
-Pick "DeepSeek Harness (Official)" in the skin switcher, or open `/?skin=official`. It undoes the extension skin's branding, backdrop and favicon while keeping the switcher and the official light/dark palettes; your light/dark/system preference stays untouched.
+Pick "DeepSeek Harness (Official)" in the theme switcher, or open `/?skin=official`. It undoes the extension skin's branding, backdrop and favicon while keeping the theme switcher and the official light/dark palettes; your light/dark/system preference stays untouched.
 
 **Why is there no "check for updates" button?**
-Update duty has moved to the dsh-m marketplace and the DSH CLI (ADR-0008); the skin switcher only handles skins and personalization.
+Update duty has moved to the dsh-m marketplace and the DSH CLI (ADR-0008); the theme switcher only handles skins and personalization.
 
 **Which DSH Web versions are supported?**
 Verified with DSH Web `0.2.0-rc.2`, `0.2.1-rc.3` and `0.2.1-rc.4` (the 1.5.21 gate suite ran green on rc.4). `0.2.1-rc.5` is a contract-surface equivalent re-release of the same series (host web-app patch is zero-diff against rc.4), so the rc.4 conclusions carry over to rc.5. `0.2.2-rc.1`, the first release of a new minor line, has been live-verified (2026-11-04: settings endpoint 200, client bundle delivered normally through the upgraded host static-asset path; the host webserver/frontend-static evolution was audited dimension-by-dimension as non-replacement-surface). Later rc builds of the same series are expected to work, but unverified versions carry no promise. Requires DSH `0.2.0-rc.1` or later; older DSH versions are blocked from upgrading to 1.5.8+ by the peer dependency floor.
