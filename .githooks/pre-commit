@@ -3,10 +3,13 @@
 # dangling binding before they reach a commit. The full gate stays in
 # `pnpm run check` (CI runs it); this hook is deliberately quick.
 #
-# Why these two checks: lib/ ships with the repo, so a src/ change without a
+# Why these checks: lib/ ships with the repo, so a src/ change without a
 # rebuilt lib/ only fails at the lib-sync step of check (after the commit
 # already exists). no-undef catches a dangling binding that node --check
-# misses. Both are cheap; the slow suite is not run here.
+# misses. The bundle ceiling rides here too (2026-11-26 retro): the campaign
+# loop (pnpm test) never runs verify:bundle, so copy/code growth only went
+# red at release check — one commit-amend cycle wasted. All three are cheap;
+# the slow suite is not run here.
 set -e
 
 if ! command -v pnpm >/dev/null 2>&1; then
@@ -29,3 +32,5 @@ if ! git diff --quiet HEAD -- lib/; then
     exit 1
   fi
 fi
+
+node scripts/verify-bundle-guard.mjs
