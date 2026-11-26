@@ -2,7 +2,7 @@
   "name": "@iasiv5/dsh-skins",
   "description": "侧栏多皮肤热切换，一键回官方；壁纸、标语、通透度个性化，明暗随外观自适应，Web 与 Desktop 均可用。",
   "icon": "./icon.svg",
-  "version": "1.5.34",
+  "version": "1.5.35",
   "homepage": "https://github.com/iasiv5/dsh-skins#readme",
   "repository": {
     "type": "git",
