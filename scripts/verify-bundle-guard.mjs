@@ -9,9 +9,15 @@
  * 1.5.21, 94.4% inline image data). ADR-0023 externalized the non-factory
  * artwork to assets/ + the host asset route, so the ceiling becomes FIXED:
  *
- *   1. lib/client.js ≤ 351,737 (= 331,257 measured at the 1.5.22 externalized
- *      build + 20,480 accidental-growth slack; ratchet down with future
- *      shrinkage, never up for asset reasons — assets belong in assets/).
+ *   1. lib/client.js ≤ 374,529 (= 354,049 measured at the 1.5.35 build
+ *      + 20,480 accidental-growth slack; ratchet down with future
+ *      shrinkage, never up for asset reasons — assets belong in assets/.
+ *      Raised once from 351,737 at 1.5.35 for CODE reasons: the reviewed
+ *      UX campaign + P1 fix added 7,554 bytes of client code and bilingual
+ *      copy (assets/ untouched, manifest deltas zero); the prior ceiling's
+ *      20,480 slack was exhausted at 5,242 headroom in 1.5.34).
+ *      Earlier: ≤ 351,737 (= 331,257 measured at the 1.5.22 externalized
+ *      build + 20,480 accidental-growth slack).
  *   2. No single line may exceed 150,000 bytes (the inline openbmc art line
  *      is ~139,458; a mega-string regression trips this before the ceiling).
  *   3. assets/manifest.json drift checks: unique entries, files exist and
@@ -30,7 +36,7 @@ import { join } from "node:path";
 const CLIENT = "lib/client.js";
 const MANIFEST = "assets/manifest.json";
 const ASSETS_DIR = "assets";
-const MAX_CLIENT_BYTES = 351_737;
+const MAX_CLIENT_BYTES = 374_529;
 const MAX_LINE_BYTES = 150_000;
 const MAX_SINGLE_WEBP_BYTES = 640_000;
 const MAX_MEIRENZHI_TOTAL_BYTES = 2_300_000;
